@@ -1,45 +1,79 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - CampusCoffeeSystem</title>
+    <meta name="description" content="Campus Coffee & Catering — fresh coffee, honest food and easy event catering for campus life." />
+    <title>@ViewData["Title"] | Campus Coffee & Catering</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/CampusCoffeeSystem.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">CampusCoffeeSystem</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <div class="announcement-bar">
+        <p>Fresh coffee, honest food, right here on campus.</p>
+        <a asp-area="" asp-controller="Home" asp-action="Index" asp-fragment="catering">Planning an event? <span>Let us help</span></a>
+    </div>
+    <header class="site-header" data-header>
+        <nav class="navbar navbar-expand-lg site-nav" aria-label="Primary navigation">
+            <div class="site-shell site-nav__inner">
+                <a class="brand" asp-area="" asp-controller="Home" asp-action="Index" aria-label="Campus Coffee and Catering home">
+                    <span class="brand__mark" aria-hidden="true">
+                        <svg viewBox="0 0 44 44" role="img"><path d="M11 16h19v9a9 9 0 0 1-9 9h-1a9 9 0 0 1-9-9v-9Z"/><path d="M30 19h2a5 5 0 0 1 0 10h-3M16 11c0-2 2-2 2-4M23 11c0-2 2-2 2-4"/></svg>
+                    </span>
+                    <span class="brand__text"><strong>CAMPUS</strong><small>COFFEE &amp; CATERING</small></span>
+                </a>
+                <button class="navbar-toggler site-nav__toggle" type="button" data-bs-toggle="collapse" data-bs-target="#primaryNav" aria-controls="primaryNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span></span><span></span><span></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+                <div class="collapse navbar-collapse site-nav__collapse" id="primaryNav">
+                    <ul class="navbar-nav site-nav__links">
+                        <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="Home" asp-action="Menu">Menu</a></li>
+                        <li class="nav-item"><a class="nav-link" href="@Url.Action("Index", "Home")#catering">Catering</a></li>
+                        <li class="nav-item"><a class="nav-link" href="@Url.Action("Index", "Home")#story">Our story</a></li>
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - CampusCoffeeSystem - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <main id="main-content" role="main">
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        <div class="site-shell site-footer__grid">
+            <div class="site-footer__brand">
+                <a class="brand brand--footer" asp-area="" asp-controller="Home" asp-action="Index">
+                    <span class="brand__mark" aria-hidden="true">
+                        <svg viewBox="0 0 44 44"><path d="M11 16h19v9a9 9 0 0 1-9 9h-1a9 9 0 0 1-9-9v-9Z"/><path d="M30 19h2a5 5 0 0 1 0 10h-3M16 11c0-2 2-2 2-4M23 11c0-2 2-2 2-4"/></svg>
+                    </span>
+                    <span class="brand__text"><strong>CAMPUS</strong><small>COFFEE &amp; CATERING</small></span>
+                </a>
+                <p>Good coffee and good food,<br />made for campus life.</p>
+            </div>
+            <div>
+                <p class="site-footer__label">Explore</p>
+                <a asp-area="" asp-controller="Home" asp-action="Menu">Menu</a>
+                <a href="@Url.Action("Index", "Home")#catering">Catering</a>
+                <a href="@Url.Action("Index", "Home")#story">Our story</a>
+            </div>
+            <div>
+                <p class="site-footer__label">Your account</p>
+                <a asp-area="Identity" asp-page="/Account/Login">Sign in</a>
+                <a asp-area="Identity" asp-page="/Account/Register">Create account</a>
+                <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            </div>
+            <div>
+                <p class="site-footer__label">Opening hours</p>
+                <p>Open weekdays during semester.<br />Hours may vary during breaks.</p>
+            </div>
+        </div>
+        <div class="site-shell site-footer__bottom">
+            <span>© 2026 Campus Coffee &amp; Catering</span>
+            <span>Made for the campus community.</span>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

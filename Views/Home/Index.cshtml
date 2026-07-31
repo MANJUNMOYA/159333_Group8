@@ -1,8 +1,155 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Coffee, made for campus";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<section class="hero" aria-labelledby="hero-title" data-hero>
+    <div class="hero__slides" aria-hidden="true">
+        <div class="hero__slide is-active" style="background-image: url('@Url.Content("~/images/home/coffee-hero-cafe.jpg")')"></div>
+        <div class="hero__slide" style="background-image: url('@Url.Content("~/images/home/coffee-hero-campus-study.jpg")')"></div>
+        <div class="hero__slide" style="background-image: url('@Url.Content("~/images/home/coffee-hero-latte-pastry.jpg")')"></div>
+    </div>
+    <div class="hero__shade"></div>
+    <div class="site-shell hero__content">
+        <p class="eyebrow eyebrow--light">Brewed for campus life</p>
+        <h1 id="hero-title">Good coffee.<br />Better days.</h1>
+        <p class="hero__intro">Freshly made coffee, honest food and thoughtful catering—ready when your campus day is.</p>
+        <div class="hero__actions">
+            <a class="button button--cream" href="#menu">Explore the menu</a>
+            <a class="text-link text-link--light" href="#catering">Plan an event <span aria-hidden="true">↗</span></a>
+        </div>
+    </div>
+    <div class="hero__controls site-shell" aria-label="Hero images">
+        <button class="hero__dot is-active" type="button" aria-label="Show café image" aria-current="true"></button>
+        <button class="hero__dot" type="button" aria-label="Show campus study image"></button>
+        <button class="hero__dot" type="button" aria-label="Show coffee and pastry image"></button>
+    </div>
+    <a class="hero__scroll" href="#menu" aria-label="Scroll to menu">
+        <span>Discover</span>
+        <span aria-hidden="true">↓</span>
+    </a>
+</section>
+
+<div class="promise-strip" aria-label="Our service promise">
+    <div class="promise-strip__track">
+        <span>Freshly made</span><i></i><span>Campus pickup</span><i></i><span>Event catering</span><i></i><span>Good coffee, no fuss</span><i></i>
+    </div>
 </div>
+
+<section class="section section--cream" id="menu">
+    <div class="site-shell">
+        <div class="section-heading reveal">
+            <div>
+                <p class="eyebrow">Your daily ritual</p>
+                <h2>Find your campus favourite.</h2>
+            </div>
+            <p class="section-heading__copy">From the first lecture to the late-afternoon catch-up, there is something here for every kind of day.</p>
+        </div>
+
+        <div class="category-grid">
+            <article class="category-card reveal">
+                <img src="~/images/home/coffee-hero-latte-art.jpg" alt="Latte with leaf art in a ceramic cup" />
+                <div class="category-card__shade"></div>
+                <div class="category-card__content">
+                    <p>01 / Coffee</p>
+                    <h3>Comfort in a cup</h3>
+                    <span>Espresso · Flat white · Filter</span>
+                </div>
+            </article>
+            <article class="category-card reveal">
+                <img src="~/images/home/coffee-hero-iced.jpg" alt="Refreshing iced coffee" />
+                <div class="category-card__shade"></div>
+                <div class="category-card__content">
+                    <p>02 / Cold drinks</p>
+                    <h3>Keep it cool</h3>
+                    <span>Iced latte · Cold brew · Seasonal</span>
+                </div>
+            </article>
+            <article class="category-card reveal">
+                <img src="~/images/home/coffee-hero-latte-pastry.jpg" alt="Latte and freshly baked croissant" />
+                <div class="category-card__shade"></div>
+                <div class="category-card__content">
+                    <p>03 / From the kitchen</p>
+                    <h3>A little something</h3>
+                    <span>Breakfast · Bakery · Lunch</span>
+                </div>
+            </article>
+        </div>
+
+        <div class="menu-note reveal">
+            <p><span aria-hidden="true">✦</span> Made fresh each day, with vegetarian and plant-based choices available.</p>
+            <a class="text-link" asp-area="Identity" asp-page="/Account/Register">Create an account <span aria-hidden="true">→</span></a>
+        </div>
+    </div>
+</section>
+
+<section class="story" id="story">
+    <div class="story__image reveal">
+        <img src="~/images/home/coffee-hero-farm-to-cup.jpg" alt="Coffee beans and a finished cup showing the journey from farm to cup" />
+        <div class="story__stamp" aria-hidden="true"><span>Made with</span><strong>CARE</strong><span>every day</span></div>
+    </div>
+    <div class="story__content reveal">
+        <p class="eyebrow">From bean to campus</p>
+        <h2>Simple things,<br />done properly.</h2>
+        <p>We believe campus coffee should be worth slowing down for. That means quality beans, careful preparation and food made to feel familiar—not complicated.</p>
+        <p>Every cup and every catering order is prepared with the same idea in mind: make the day a little better.</p>
+        <a class="text-link" href="#values">What matters to us <span aria-hidden="true">→</span></a>
+    </div>
+</section>
+
+<section class="catering" id="catering">
+    <div class="catering__image" role="img" aria-label="Coffee shared between two people"></div>
+    <div class="catering__panel reveal">
+        <p class="eyebrow eyebrow--light">Campus catering</p>
+        <h2>Bring people together.</h2>
+        <p>Morning tea for ten, lunch for a department, or coffee for a full-day event. Tell us what you are planning and we will help make it easy.</p>
+        <ul class="catering__features">
+            <li><span>01</span> Flexible menus</li>
+            <li><span>02</span> Dietary options</li>
+            <li><span>03</span> On-campus delivery</li>
+        </ul>
+        <a class="button button--outline-light" asp-area="Identity" asp-page="/Account/Register">Create account to enquire</a>
+    </div>
+</section>
+
+<section class="section section--paper" id="values">
+    <div class="site-shell">
+        <div class="values-heading reveal">
+            <p class="eyebrow">Coffee with purpose</p>
+            <h2>The good stuff,<br />without the fuss.</h2>
+        </div>
+        <div class="values-grid">
+            <article class="value-card reveal">
+                <span class="value-card__number">01</span>
+                <h3>Fresh every day</h3>
+                <p>Prepared in small batches so your coffee and food arrive at their best.</p>
+            </article>
+            <article class="value-card reveal">
+                <span class="value-card__number">02</span>
+                <h3>Made for campus</h3>
+                <p>Quick pickup, useful ordering and a service shaped around real study days.</p>
+            </article>
+            <article class="value-card reveal">
+                <span class="value-card__number">03</span>
+                <h3>Less waste</h3>
+                <p>Thoughtful portions, reusable choices and better planning for every event.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="closing-banner">
+    <img src="~/images/home/coffee-hero-beans-dark.jpg" alt="Roasted coffee beans in warm low light" />
+    <div class="closing-banner__shade"></div>
+    <div class="closing-banner__content reveal">
+        <p class="eyebrow eyebrow--light">Your next cup is closer than you think</p>
+        <h2>Make room for a good break.</h2>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <a class="button button--cream" href="#menu">Choose your favourite</a>
+        }
+        else
+        {
+            <a class="button button--cream" asp-area="Identity" asp-page="/Account/Register">Join Campus Coffee</a>
+        }
+    </div>
+</section>
