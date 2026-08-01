@@ -1,0 +1,89 @@
+@{
+    ViewData["Title"] = "Campus Flat White";
+}
+
+<section class="catering" aria-labelledby="product-title" data-product-details>
+    <div class="catering__image"
+         style="background-image: url('@Url.Content("~/images/menu/Campus Flat White.jpg")');"
+         role="img"
+         aria-label="Campus Flat White with leaf art in a ceramic cup"></div>
+
+    <div class="catering__panel reveal">
+        <a class="text-link text-link--light mb-5" asp-area="" asp-controller="Home" asp-action="Menu">
+            <span aria-hidden="true">←</span> Back to menu
+        </a>
+
+        <p class="eyebrow eyebrow--light">Coffee · House favourite</p>
+        <h2 id="product-title">Campus Flat White</h2>
+        <p>Double espresso finished with smooth, velvety steamed milk. Carefully made for an easy start, a study break, or the space between lectures.</p>
+
+        <ul class="catering__features">
+            <li><span>Price</span><strong>$4.80</strong></li>
+            <li class="flex-wrap">
+                <span>Dietary</span>
+                <span class="border border-light px-2 py-1">Vegetarian</span>
+                <span class="border border-light px-2 py-1">Contains milk</span>
+            </li>
+            <li><span>Status</span>In stock</li>
+        </ul>
+
+        <div class="d-flex w-100 flex-column flex-sm-row align-items-sm-end gap-3">
+            <fieldset class="m-0 border-0 p-0">
+                <legend class="eyebrow eyebrow--light mb-2">Quantity</legend>
+                <div class="d-flex align-items-stretch">
+                    <button class="button button--outline-light px-3" type="button" data-quantity-decrease aria-label="Decrease quantity" disabled>−</button>
+                    <output class="d-inline-flex align-items-center justify-content-center border-top border-bottom border-light px-4 py-3 fw-bold" data-quantity-value aria-live="polite">1</output>
+                    <button class="button button--outline-light px-3" type="button" data-quantity-increase aria-label="Increase quantity">+</button>
+                </div>
+            </fieldset>
+
+            <button class="button button--cream flex-grow-1" type="button" data-product-add>Add to cart</button>
+        </div>
+
+        <p class="visually-hidden" data-product-status aria-live="polite"></p>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (() => {
+            const product = document.querySelector('[data-product-details]');
+            if (!product) return;
+
+            const decreaseButton = product.querySelector('[data-quantity-decrease]');
+            const increaseButton = product.querySelector('[data-quantity-increase]');
+            const quantityValue = product.querySelector('[data-quantity-value]');
+            const addButton = product.querySelector('[data-product-add]');
+            const status = product.querySelector('[data-product-status]');
+            const maximumQuantity = 10;
+            let quantity = 1;
+            let resetTimer;
+
+            const updateQuantity = () => {
+                quantityValue.textContent = quantity;
+                decreaseButton.disabled = quantity === 1;
+                increaseButton.disabled = quantity === maximumQuantity;
+            };
+
+            decreaseButton.addEventListener('click', () => {
+                quantity = Math.max(1, quantity - 1);
+                updateQuantity();
+            });
+
+            increaseButton.addEventListener('click', () => {
+                quantity = Math.min(maximumQuantity, quantity + 1);
+                updateQuantity();
+            });
+
+            addButton.addEventListener('click', () => {
+                window.clearTimeout(resetTimer);
+                addButton.textContent = 'Added';
+                status.textContent = `${quantity} × Campus Flat White added to cart.`;
+
+                resetTimer = window.setTimeout(() => {
+                    addButton.textContent = 'Add to cart';
+                }, 1800);
+            });
+        })();
+    </script>
+}
