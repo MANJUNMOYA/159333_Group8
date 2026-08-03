@@ -18,6 +18,21 @@ namespace CampusCoffeeSystem.Controllers
             return View();
         }
 
+        public IActionResult Menu()
+        {
+            return View();
+        }
+
+        public IActionResult ProductDetails()
+        {
+            return View();
+        }
+
+        public IActionResult ShoppingCart()
+        {
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();
