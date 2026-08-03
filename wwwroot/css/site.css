@@ -58,7 +58,10 @@ button { font: inherit; }
 
 .hero { position: relative; min-height: max(720px, 100svh); overflow: hidden; color: white; background: var(--espresso); }
 .hero__slides, .hero__slide, .hero__shade { position: absolute; inset: 0; }
-.hero__slide { background-position: center; background-size: cover; opacity: 0; transform: scale(1.04); transition: opacity 1s ease, transform 7s linear; }
+.hero__slide { background-position: var(--hero-focus-x, 50%) var(--hero-focus-y, 50%); background-size: cover; opacity: 0; transform: scale(1.04); transition: opacity 1s ease, transform 7s linear; }
+.hero__slide--cafe { --hero-focus-x: 82%; --hero-focus-y: 54%; }
+.hero__slide--study { --hero-focus-x: 24%; --hero-focus-y: 55%; }
+.hero__slide--pastry { --hero-focus-x: 78%; --hero-focus-y: 56%; }
 .hero__slide.is-active { z-index: 1; opacity: 1; transform: scale(1); }
 .hero__shade { z-index: 2; background: linear-gradient(90deg, rgba(19, 12, 9, .78) 0%, rgba(19, 12, 9, .5) 42%, rgba(19, 12, 9, .12) 72%), linear-gradient(0deg, rgba(20, 13, 10, .44), transparent 55%); }
 .hero__content { position: relative; z-index: 3; min-height: max(720px, 100svh); padding-top: 220px; padding-bottom: 155px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
@@ -89,7 +92,10 @@ button { font: inherit; }
 .section-heading__copy { max-width: 460px; margin: 0 0 5px; font-size: 1.02rem; line-height: 1.75; }
 .category-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .category-card { position: relative; min-height: 590px; overflow: hidden; color: white; background: var(--espresso); }
-.category-card img { width: 100%; height: 100%; object-fit: cover; transition: transform .8s cubic-bezier(.2,.7,.2,1); }
+.category-card img { width: 100%; height: 100%; object-fit: cover; object-position: var(--card-focus-x, 50%) var(--card-focus-y, 50%); transition: transform .8s cubic-bezier(.2,.7,.2,1); }
+.category-card--latte { --card-focus-x: 72%; --card-focus-y: 56%; }
+.category-card--iced { --card-focus-x: 22%; --card-focus-y: 54%; }
+.category-card--pastry { --card-focus-x: 78%; --card-focus-y: 56%; }
 .category-card:hover img { transform: scale(1.045); }
 .category-card__shade { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(20, 12, 9, .78) 0%, rgba(20, 12, 9, .05) 55%); }
 .category-card__content { position: absolute; right: 34px; bottom: 36px; left: 34px; }
@@ -102,7 +108,7 @@ button { font: inherit; }
 
 .story { min-height: 830px; display: grid; grid-template-columns: 1.08fr .92fr; background: #d7c9b2; }
 .story__image { position: relative; min-height: 690px; overflow: hidden; }
-.story__image img { width: 100%; height: 100%; object-fit: cover; }
+.story__image img { width: 100%; height: 100%; object-fit: cover; object-position: 80% 58%; }
 .story__stamp { position: absolute; right: -65px; bottom: 70px; width: 150px; height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; background: var(--rust); border-radius: 50%; line-height: 1; text-align: center; transform: rotate(-8deg); }
 .story__stamp span { font-size: .56rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
 .story__stamp strong { margin: 7px 0; font-family: var(--serif); font-size: 2rem; font-weight: 400; }
@@ -111,7 +117,7 @@ button { font: inherit; }
 .story__content .text-link { margin-top: 38px; }
 
 .catering { min-height: 810px; display: grid; grid-template-columns: 1.1fr .9fr; color: white; background: var(--espresso); }
-.catering__image { min-height: 650px; background: url('/images/home/coffee-hero-two-cups.jpg') center / cover no-repeat; }
+.catering__image { min-height: 650px; background: url('/images/home/coffee-hero-two-cups.jpg') 28% 56% / cover no-repeat; }
 .catering__panel { padding: clamp(70px, 9vw, 145px) clamp(40px, 7vw, 110px); display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
 .catering__panel > p:not(.eyebrow) { max-width: 580px; margin: 34px 0; color: rgba(255, 255, 255, .78); font-size: 1.04rem; line-height: 1.8; }
 .catering__features { width: 100%; max-width: 570px; margin: 0 0 42px; padding: 0; list-style: none; border-top: 1px solid rgba(255,255,255,.22); }
@@ -184,6 +190,9 @@ button { font: inherit; }
   .brand__text small { font-size: .46rem; }
   .hero, .hero__content { min-height: 740px; }
   .hero__content { padding-top: 170px; padding-bottom: 120px; justify-content: flex-end; }
+  .hero__slide--cafe { --hero-focus-x: 97%; }
+  .hero__slide--study { --hero-focus-x: 7%; }
+  .hero__slide--pastry { --hero-focus-x: 97%; }
   .hero h1 { width: 100%; max-width: 100%; font-size: clamp(3.45rem, 15vw, 4.5rem); line-height: .9; }
   .hero__intro { max-width: 390px; margin-top: 26px; font-size: .96rem; }
   .hero__actions { width: 100%; margin-top: 30px; flex-direction: column; align-items: flex-start; gap: 24px; }

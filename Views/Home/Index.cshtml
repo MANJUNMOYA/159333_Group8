@@ -4,9 +4,9 @@
 
 <section class="hero" aria-labelledby="hero-title" data-hero>
     <div class="hero__slides" aria-hidden="true">
-        <div class="hero__slide is-active" style="background-image: url('@Url.Content("~/images/home/coffee-hero-cafe.jpg")')"></div>
-        <div class="hero__slide" style="background-image: url('@Url.Content("~/images/home/coffee-hero-campus-study.jpg")')"></div>
-        <div class="hero__slide" style="background-image: url('@Url.Content("~/images/home/coffee-hero-latte-pastry.jpg")')"></div>
+        <div class="hero__slide hero__slide--cafe is-active" style="background-image: url('@Url.Content("~/images/home/coffee-hero-cafe.jpg")')"></div>
+        <div class="hero__slide hero__slide--study" style="background-image: url('@Url.Content("~/images/home/coffee-hero-campus-study.jpg")')"></div>
+        <div class="hero__slide hero__slide--pastry" style="background-image: url('@Url.Content("~/images/home/coffee-hero-latte-pastry.jpg")')"></div>
     </div>
     <div class="hero__shade"></div>
     <div class="site-shell hero__content">
@@ -46,7 +46,7 @@
         </div>
 
         <div class="category-grid">
-            <article class="category-card reveal">
+            <article class="category-card category-card--latte reveal">
                 <img src="~/images/home/coffee-hero-latte-art.jpg" alt="Latte with leaf art in a ceramic cup" />
                 <div class="category-card__shade"></div>
                 <div class="category-card__content">
@@ -55,7 +55,7 @@
                     <span>Espresso · Flat white · Filter</span>
                 </div>
             </article>
-            <article class="category-card reveal">
+            <article class="category-card category-card--iced reveal">
                 <img src="~/images/home/coffee-hero-iced.jpg" alt="Refreshing iced coffee" />
                 <div class="category-card__shade"></div>
                 <div class="category-card__content">
@@ -64,7 +64,7 @@
                     <span>Iced latte · Cold brew · Seasonal</span>
                 </div>
             </article>
-            <article class="category-card reveal">
+            <article class="category-card category-card--pastry reveal">
                 <img src="~/images/home/coffee-hero-latte-pastry.jpg" alt="Latte and freshly baked croissant" />
                 <div class="category-card__shade"></div>
                 <div class="category-card__content">
