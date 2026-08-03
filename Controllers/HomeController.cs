@@ -23,12 +23,32 @@ namespace CampusCoffeeSystem.Controllers
             return View();
         }
 
+        public IActionResult Catering()
+        {
+            return View();
+        }
+
+        public IActionResult OurStory()
+        {
+            return View();
+        }
+
         public IActionResult ProductDetails()
         {
             return View();
         }
 
         public IActionResult ShoppingCart()
+        {
+            return View();
+        }
+
+        public IActionResult Checkout()
+        {
+            return View();
+        }
+
+        public IActionResult OrderConfirmation()
         {
             return View();
         }

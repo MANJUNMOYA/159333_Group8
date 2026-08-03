@@ -17,16 +17,16 @@
     </div>
 </div>
 
-<section class="menu-catalog">
+<section class="menu-catalog" data-shopping-cart>
     <div class="site-shell">
         <div class="row g-4 g-xl-5 align-items-start">
             <div class="col-xl-8">
                 <div class="menu-group__heading d-block reveal">
                     <p class="eyebrow">In your cart</p>
-                    <h2>Three campus favourites.</h2>
+                    <h2 data-cart-heading>Three campus favourites.</h2>
                 </div>
 
-                <div class="cart-items">
+                <div class="cart-items" data-cart-items hidden>
                     <article class="product-card cart-item reveal">
                         <div class="row g-0 align-items-stretch">
                             <div class="cart-item__media">
@@ -129,6 +129,52 @@
                         </div>
                     </article>
                 </div>
+
+                <div class="product-card" data-cart-empty hidden>
+                    <div class="product-card__body">
+                        <div class="product-card__heading">
+                            <h3>Your cart is empty</h3>
+                        </div>
+                        <p class="product-card__description">Add a coffee or something fresh from the menu to get started.</p>
+                        <a class="button product-card__button align-self-start" asp-area="" asp-controller="Home" asp-action="Menu">Browse the menu</a>
+                    </div>
+                </div>
+
+                <template data-cart-item-template>
+                    <article class="product-card cart-item reveal is-visible" data-cart-item>
+                        <div class="row g-0 align-items-stretch">
+                            <div class="cart-item__media">
+                                <div class="product-card__image h-100">
+                                    <img data-cart-image src="" alt="" />
+                                    <span class="product-card__category" data-cart-category></span>
+                                </div>
+                            </div>
+                            <div class="cart-item__content">
+                                <div class="product-card__body h-100">
+                                    <div class="product-card__heading">
+                                        <h3 data-cart-name></h3>
+                                    </div>
+                                    <p class="product-card__description" data-cart-description></p>
+                                    <div class="product-card__footer cart-item__footer">
+                                        <div class="cart-item__quantity">
+                                            <span class="cart-item__label">Quantity</span>
+                                            <div class="d-flex align-items-stretch" data-cart-quantity-controls>
+                                                <button class="button product-card__button px-3" type="button" data-cart-decrease>&minus;</button>
+                                                <span class="cart-item__quantity-value d-inline-flex align-items-center justify-content-center border-top border-bottom px-3 fw-bold" data-cart-quantity></span>
+                                                <button class="button product-card__button px-3" type="button" data-cart-increase>+</button>
+                                            </div>
+                                        </div>
+                                        <div class="cart-item__unit-price">
+                                            <span class="cart-item__label">Unit price</span>
+                                            <span class="product-card__price" data-cart-price></span>
+                                        </div>
+                                        <button class="cart-item__remove text-link bg-transparent border-top-0 border-start-0 border-end-0 p-0" type="button" data-cart-remove>Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </template>
             </div>
 
             <div class="col-xl-4">
@@ -140,22 +186,24 @@
 
                         <div class="menu-note mt-4">
                             <span>Subtotal</span>
-                            <strong>$25.70</strong>
+                            <strong data-cart-subtotal>$25.70</strong>
                         </div>
                         <div class="menu-note mt-0">
                             <span>Delivery fee</span>
-                            <strong>$3.50</strong>
+                            <strong data-cart-delivery>$3.50</strong>
                         </div>
                         <div class="menu-note mt-0 align-items-center">
                             <strong>Total</strong>
-                            <span class="product-card__price">$29.20</span>
+                            <span class="product-card__price" data-cart-total>$29.20</span>
                         </div>
 
-                        <button class="button product-card__button w-100 mt-4" type="button">Checkout</button>
+                        <a class="button product-card__button w-100 mt-4" asp-area="" asp-controller="Home" asp-action="Checkout">Checkout</a>
                         <a class="text-link justify-content-center mt-4" asp-area="" asp-controller="Home" asp-action="Menu">Continue shopping <span aria-hidden="true">→</span></a>
                     </div>
                 </aside>
             </div>
         </div>
+
+        <p class="visually-hidden" data-cart-status aria-live="polite"></p>
     </div>
 </section>
