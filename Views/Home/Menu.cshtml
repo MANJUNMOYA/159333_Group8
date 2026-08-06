@@ -2,9 +2,13 @@
     ViewData["Title"] = "Menu";
 }
 
-<section class="menu-hero" aria-labelledby="menu-title">
-    <div class="menu-hero__shade"></div>
-    <div class="site-shell menu-hero__content">
+<section class="menu-hero page-hero--animated" data-video-hero aria-labelledby="menu-title">
+    <video class="page-hero__video" data-hero-video autoplay muted loop playsinline preload="auto"
+           poster="@Url.Content("~/images/home/coffee-hero-top-view.jpg")" aria-hidden="true" tabindex="-1">
+        <source src="@Url.Content("~/videos/menuvideo.mp4")" type="video/mp4" />
+    </video>
+    <div class="menu-hero__shade page-hero__overlay"></div>
+    <div class="site-shell menu-hero__content page-hero__copy">
         <p class="eyebrow eyebrow--light">Made fresh on campus</p>
         <h1 id="menu-title">Find your<br />favourite.</h1>
         <p>Good coffee, honest food and something for every kind of campus day.</p>
@@ -188,6 +192,12 @@
                     </div>
                 </article>
             </div>
+
+            <nav class="menu-pagination" aria-label="Coffee pagination" data-menu-pagination="coffee">
+                <button class="menu-pagination__direction" type="button" data-page-previous aria-label="Previous Coffee page">← Previous</button>
+                <div class="menu-pagination__pages" data-page-numbers></div>
+                <button class="menu-pagination__direction" type="button" data-page-next aria-label="Next Coffee page">Next →</button>
+            </nav>
         </section>
 
         <section class="menu-group" data-menu-section="food" aria-labelledby="food-heading">
@@ -332,13 +342,13 @@
                     </div>
                 </article>
             </div>
-        </section>
 
-        <nav class="menu-pagination" aria-label="Menu pagination" data-menu-pagination>
-            <button class="menu-pagination__direction" type="button" data-page-previous aria-label="Previous page">← Previous</button>
-            <div class="menu-pagination__pages" data-page-numbers></div>
-            <button class="menu-pagination__direction" type="button" data-page-next aria-label="Next page">Next →</button>
-        </nav>
+            <nav class="menu-pagination" aria-label="Food pagination" data-menu-pagination="food">
+                <button class="menu-pagination__direction" type="button" data-page-previous aria-label="Previous Food page">← Previous</button>
+                <div class="menu-pagination__pages" data-page-numbers></div>
+                <button class="menu-pagination__direction" type="button" data-page-next aria-label="Next Food page">Next →</button>
+            </nav>
+        </section>
     </div>
 
     <p class="visually-hidden" data-cart-status aria-live="polite"></p>

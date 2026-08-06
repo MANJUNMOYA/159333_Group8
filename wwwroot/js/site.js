@@ -98,6 +98,32 @@
   updateHeader();
   window.addEventListener('scroll', updateHeader, { passive: true });
 
+  const videoHeroes = [...document.querySelectorAll('[data-video-hero]')];
+  let videoHeroFrame;
+
+  const updateVideoHeroParallax = () => {
+    videoHeroFrame = undefined;
+    videoHeroes.forEach((videoHero) => {
+      const bounds = videoHero.getBoundingClientRect();
+      if (bounds.bottom < 0 || bounds.top > window.innerHeight) return;
+
+      const offset = Math.max(-24, Math.min(24, -bounds.top * 0.06));
+      videoHero.querySelector('[data-hero-video]')
+        ?.style.setProperty('--hero-parallax', `${offset}px`);
+    });
+  };
+
+  const requestVideoHeroParallax = () => {
+    if (videoHeroFrame !== undefined) return;
+    videoHeroFrame = window.requestAnimationFrame(updateVideoHeroParallax);
+  };
+
+  if (!reducedMotion && videoHeroes.length) {
+    updateVideoHeroParallax();
+    window.addEventListener('scroll', requestVideoHeroParallax, { passive: true });
+    window.addEventListener('resize', requestVideoHeroParallax);
+  }
+
   if (hero) {
     const slides = [...hero.querySelectorAll('.hero__slide')];
     const dots = [...hero.querySelectorAll('.hero__dot')];
@@ -155,92 +181,110 @@
 
   const menuCatalog = document.querySelector('[data-menu-catalog]');
   if (menuCatalog) {
-    const cards = [...menuCatalog.querySelectorAll('[data-menu-card]')];
-    const sections = [...menuCatalog.querySelectorAll('[data-menu-section]')];
     const searchInput = menuCatalog.querySelector('[data-menu-search]');
     const filterButtons = [...menuCatalog.querySelectorAll('[data-menu-filter]')];
     const results = menuCatalog.querySelector('[data-menu-results]');
     const emptyState = menuCatalog.querySelector('[data-menu-empty]');
-    const pagination = menuCatalog.querySelector('[data-menu-pagination]');
-    const pageNumbers = menuCatalog.querySelector('[data-page-numbers]');
-    const previousButton = menuCatalog.querySelector('[data-page-previous]');
-    const nextButton = menuCatalog.querySelector('[data-page-next]');
     const cartStatus = menuCatalog.querySelector('[data-cart-status]');
-    const pageSize = 6;
+    const pageSize = 3;
     let activeCategory = 'all';
-    let currentPage = 1;
+    const sectionStates = [...menuCatalog.querySelectorAll('[data-menu-section]')]
+      .map((section) => ({
+        category: section.dataset.menuSection,
+        element: section,
+        cards: [...section.querySelectorAll('[data-menu-card]')],
+        pagination: section.querySelector('[data-menu-pagination]'),
+        pageNumbers: section.querySelector('[data-page-numbers]'),
+        previousButton: section.querySelector('[data-page-previous]'),
+        nextButton: section.querySelector('[data-page-next]'),
+        currentPage: 1
+      }));
 
-    const getMatchingCards = () => {
+    const getMatchingCards = (sectionState) => {
       const searchTerm = searchInput.value.trim().toLowerCase();
-      return cards
-        .filter((card) => {
-          const matchesCategory = activeCategory === 'all' || card.dataset.category === activeCategory;
-          const matchesSearch = !searchTerm || card.textContent.toLowerCase().includes(searchTerm);
-          return matchesCategory && matchesSearch;
-        })
+      return sectionState.cards
+        .filter((card) => !searchTerm || card.textContent.toLowerCase().includes(searchTerm))
         .sort((first, second) => Number(first.dataset.order) - Number(second.dataset.order));
     };
 
-    const goToPage = (page) => {
-      currentPage = page;
+    const resetSectionPages = () => {
+      sectionStates.forEach((sectionState) => {
+        sectionState.currentPage = 1;
+      });
+    };
+
+    const goToPage = (sectionState, page) => {
+      sectionState.currentPage = page;
       renderMenu();
-      menuCatalog.querySelector('.menu-tools').scrollIntoView({
+      sectionState.element.querySelector('.menu-group__heading').scrollIntoView({
         behavior: reducedMotion ? 'auto' : 'smooth',
         block: 'start'
       });
     };
 
     const renderMenu = () => {
-      const matchingCards = getMatchingCards();
-      const totalPages = Math.ceil(matchingCards.length / pageSize);
-      currentPage = Math.min(currentPage, Math.max(totalPages, 1));
+      let matchingCount = 0;
+      let shownCount = 0;
 
-      const firstItem = (currentPage - 1) * pageSize;
-      const visibleCards = new Set(matchingCards.slice(firstItem, firstItem + pageSize));
-      cards.forEach((card) => {
-        card.hidden = !visibleCards.has(card);
-      });
+      sectionStates.forEach((sectionState) => {
+        const categoryIsVisible = activeCategory === 'all' || activeCategory === sectionState.category;
+        const matchingCards = getMatchingCards(sectionState);
 
-      sections.forEach((section) => {
-        section.hidden = ![...section.querySelectorAll('[data-menu-card]')]
-          .some((card) => visibleCards.has(card));
-      });
-
-      const shownCount = visibleCards.size;
-      const itemLabel = matchingCards.length === 1 ? 'item' : 'items';
-      results.textContent = matchingCards.length
-        ? `Showing ${shownCount} of ${matchingCards.length} ${itemLabel}`
-        : 'No menu items found';
-      emptyState.hidden = matchingCards.length !== 0;
-      pagination.hidden = totalPages <= 1;
-
-      pageNumbers.replaceChildren();
-      for (let page = 1; page <= totalPages; page += 1) {
-        const pageButton = document.createElement('button');
-        pageButton.type = 'button';
-        pageButton.textContent = page;
-        pageButton.classList.toggle('is-active', page === currentPage);
-        pageButton.setAttribute('aria-label', `Go to page ${page}`);
-        if (page === currentPage) {
-          pageButton.setAttribute('aria-current', 'page');
+        if (!categoryIsVisible) {
+          sectionState.cards.forEach((card) => { card.hidden = true; });
+          sectionState.element.hidden = true;
+          sectionState.pagination.hidden = true;
+          return;
         }
-        pageButton.addEventListener('click', () => goToPage(page));
-        pageNumbers.append(pageButton);
-      }
 
-      previousButton.disabled = currentPage === 1;
-      nextButton.disabled = currentPage === totalPages || totalPages === 0;
+        matchingCount += matchingCards.length;
+        const totalPages = Math.ceil(matchingCards.length / pageSize);
+        sectionState.currentPage = Math.min(sectionState.currentPage, Math.max(totalPages, 1));
+
+        const firstItem = (sectionState.currentPage - 1) * pageSize;
+        const visibleCards = new Set(matchingCards.slice(firstItem, firstItem + pageSize));
+        sectionState.cards.forEach((card) => {
+          card.hidden = !visibleCards.has(card);
+        });
+
+        shownCount += visibleCards.size;
+        sectionState.element.hidden = matchingCards.length === 0;
+        sectionState.pagination.hidden = totalPages <= 1;
+        sectionState.pageNumbers.replaceChildren();
+
+        for (let page = 1; page <= totalPages; page += 1) {
+          const pageButton = document.createElement('button');
+          pageButton.type = 'button';
+          pageButton.textContent = page;
+          pageButton.classList.toggle('is-active', page === sectionState.currentPage);
+          pageButton.setAttribute('aria-label', `Go to ${sectionState.category} page ${page}`);
+          if (page === sectionState.currentPage) {
+            pageButton.setAttribute('aria-current', 'page');
+          }
+          pageButton.addEventListener('click', () => goToPage(sectionState, page));
+          sectionState.pageNumbers.append(pageButton);
+        }
+
+        sectionState.previousButton.disabled = sectionState.currentPage === 1;
+        sectionState.nextButton.disabled = sectionState.currentPage === totalPages || totalPages === 0;
+      });
+
+      const itemLabel = matchingCount === 1 ? 'item' : 'items';
+      results.textContent = matchingCount
+        ? `Showing ${shownCount} of ${matchingCount} ${itemLabel}`
+        : 'No menu items found';
+      emptyState.hidden = matchingCount !== 0;
     };
 
     searchInput.addEventListener('input', () => {
-      currentPage = 1;
+      resetSectionPages();
       renderMenu();
     });
 
     filterButtons.forEach((button) => {
       button.addEventListener('click', () => {
         activeCategory = button.dataset.menuFilter;
-        currentPage = 1;
+        resetSectionPages();
         filterButtons.forEach((filterButton) => {
           const isActive = filterButton === button;
           filterButton.classList.toggle('is-active', isActive);
@@ -250,13 +294,19 @@
       });
     });
 
-    previousButton.addEventListener('click', () => {
-      if (currentPage > 1) goToPage(currentPage - 1);
-    });
+    sectionStates.forEach((sectionState) => {
+      sectionState.previousButton.addEventListener('click', () => {
+        if (sectionState.currentPage > 1) {
+          goToPage(sectionState, sectionState.currentPage - 1);
+        }
+      });
 
-    nextButton.addEventListener('click', () => {
-      const totalPages = Math.ceil(getMatchingCards().length / pageSize);
-      if (currentPage < totalPages) goToPage(currentPage + 1);
+      sectionState.nextButton.addEventListener('click', () => {
+        const totalPages = Math.ceil(getMatchingCards(sectionState).length / pageSize);
+        if (sectionState.currentPage < totalPages) {
+          goToPage(sectionState, sectionState.currentPage + 1);
+        }
+      });
     });
 
     menuCatalog.querySelectorAll('[data-add-to-cart]').forEach((button) => {
@@ -547,4 +597,5 @@
       });
     }
   }
+
 })();

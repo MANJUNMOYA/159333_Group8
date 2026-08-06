@@ -1,0 +1,27 @@
+@{
+    ViewData["Title"] = "Customer Dashboard";
+}
+
+<section class="our-story-hero portal-surface" aria-labelledby="customer-dashboard-title">
+    <div class="site-shell reveal">
+        <p class="eyebrow eyebrow--light">Customer Dashboard</p>
+        <h1 id="customer-dashboard-title">Welcome Customer</h1>
+        <p class="our-story-hero__subtitle">Your Campus Coffee shortcuts in one place.</p>
+    </div>
+</section>
+
+<section class="section section--paper portal-surface">
+    <div class="site-shell">
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            <div class="col">
+                <article class="product-card portal-card h-100 reveal"><div class="product-card__body"><span class="value-card__number">01</span><div class="product-card__heading mt-5"><h3>Browse Menu</h3></div><p class="product-card__description">Explore coffee, food and current campus favourites.</p><a class="button product-card__button mt-auto" asp-area="" asp-controller="Home" asp-action="Menu">Browse Menu</a></div></article>
+            </div>
+            <div class="col">
+                <article class="product-card portal-card h-100 reveal"><div class="product-card__body"><span class="value-card__number">02</span><div class="product-card__heading mt-5"><h3>View Orders</h3></div><p class="product-card__description">A placeholder for current and previous customer orders.</p><a class="button product-card__button mt-auto" href="#">View Orders</a></div></article>
+            </div>
+            <div class="col">
+                <article class="product-card portal-card h-100 reveal"><div class="product-card__body"><span class="value-card__number">03</span><div class="product-card__heading mt-5"><h3>Shopping Cart</h3></div><p class="product-card__description">Review products saved in your frontend shopping cart.</p><a class="button product-card__button mt-auto" asp-area="" asp-controller="Home" asp-action="ShoppingCart">Shopping Cart</a></div></article>
+            </div>
+        </div>
+    </div>
+</section>

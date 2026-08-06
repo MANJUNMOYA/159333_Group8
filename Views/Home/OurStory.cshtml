@@ -2,8 +2,13 @@
     ViewData["Title"] = "Our Story";
 }
 
-<section class="our-story-hero" aria-labelledby="our-story-title">
-    <div class="site-shell reveal">
+<section class="our-story-hero our-story-hero--history page-hero--animated" data-video-hero aria-labelledby="our-story-title">
+    <video class="page-hero__video" data-hero-video autoplay muted loop playsinline preload="auto"
+           poster="@Url.Content("~/images/home/coffee-hero-farm-to-cup.jpg")" aria-hidden="true" tabindex="-1">
+        <source src="@Url.Content("~/videos/historyvideo.mp4")" type="video/mp4" />
+    </video>
+    <div class="page-hero__overlay" aria-hidden="true"></div>
+    <div class="site-shell page-hero__copy">
         <p class="eyebrow eyebrow--light">Campus Coffee &amp; Catering</p>
         <h1 id="our-story-title">OUR STORY</h1>
         <p class="our-story-hero__subtitle">Brewing coffee for campus life.</p>

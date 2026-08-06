@@ -2,9 +2,13 @@
     ViewData["Title"] = "Shopping Cart";
 }
 
-<section class="menu-hero" aria-labelledby="cart-title">
-    <div class="menu-hero__shade"></div>
-    <div class="site-shell menu-hero__content">
+<section class="menu-hero page-hero--animated" data-video-hero aria-labelledby="cart-title">
+    <video class="page-hero__video" data-hero-video autoplay muted loop playsinline preload="auto"
+           poster="@Url.Content("~/images/home/coffee-hero-top-view.jpg")" aria-hidden="true" tabindex="-1">
+        <source src="@Url.Content("~/videos/shoppingcart.mp4")" type="video/mp4" />
+    </video>
+    <div class="menu-hero__shade page-hero__overlay"></div>
+    <div class="site-shell menu-hero__content page-hero__copy">
         <p class="eyebrow eyebrow--light">Ready when you are</p>
         <h1 id="cart-title">Your<br />order.</h1>
         <p>Review your campus favourites before heading to checkout.</p>

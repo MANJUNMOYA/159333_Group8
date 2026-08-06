@@ -1,0 +1,64 @@
+@{
+    ViewData["Title"] = "Merchant Application";
+}
+
+<section class="our-story-hero portal-surface" aria-labelledby="merchant-application-title">
+    <div class="site-shell reveal">
+        <p class="eyebrow eyebrow--light">Merchant Access</p>
+        <h1 id="merchant-application-title">Merchant Application</h1>
+        <p class="our-story-hero__subtitle">Tell us about the service you would like to bring to campus.</p>
+    </div>
+</section>
+
+<section class="menu-catalog portal-surface">
+    <div class="site-shell">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 col-xl-8">
+                <div class="product-card auth-card reveal">
+                    <div class="product-card__body">
+                        <div class="product-card__heading mb-4"><h2>Request Merchant Account</h2></div>
+                        <form data-merchant-application>
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label cart-item__label" for="application-business-name">Business Name</label>
+                                    <input class="form-control form-control-lg rounded-0" id="application-business-name" name="businessName" type="text" autocomplete="organization" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label cart-item__label" for="application-contact-name">Contact Name</label>
+                                    <input class="form-control form-control-lg rounded-0" id="application-contact-name" name="contactName" type="text" autocomplete="name" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label cart-item__label" for="application-email">Business Email</label>
+                                    <input class="form-control form-control-lg rounded-0" id="application-email" name="email" type="email" autocomplete="email" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label cart-item__label" for="application-phone">Phone Number</label>
+                                    <input class="form-control form-control-lg rounded-0" id="application-phone" name="phone" type="tel" autocomplete="tel" required />
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label cart-item__label" for="application-address">Business Address</label>
+                                    <input class="form-control form-control-lg rounded-0" id="application-address" name="address" type="text" autocomplete="street-address" required />
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label cart-item__label" for="application-description">Business Description</label>
+                                    <textarea class="form-control rounded-0" id="application-description" name="description" rows="4" required></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label cart-item__label" for="application-reason">Reason for joining</label>
+                                    <textarea class="form-control rounded-0" id="application-reason" name="reason" rows="4" required></textarea>
+                                </div>
+                            </div>
+                            <button class="button product-card__button w-100 mt-4" type="submit">Submit Application</button>
+                            <div class="auth-status mt-4" data-auth-status aria-live="polite" hidden></div>
+                        </form>
+                    </div>
+                </div>
+                <a class="text-link mt-4" asp-area="" asp-controller="Home" asp-action="MerchantLogin"><span aria-hidden="true">←</span> Back to merchant login</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/portal-auth.js" asp-append-version="true"></script>
+}

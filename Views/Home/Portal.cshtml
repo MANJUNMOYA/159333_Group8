@@ -1,0 +1,79 @@
+@{
+    ViewData["Title"] = "Access Portal";
+}
+
+<section class="our-story-hero page-hero--animated portal-surface" data-video-hero aria-labelledby="portal-title">
+    <video class="page-hero__video" data-hero-video autoplay muted loop playsinline preload="auto" aria-hidden="true" tabindex="-1">
+        <source src="@Url.Content("~/videos/joinus.mp4")" type="video/mp4" />
+    </video>
+    <div class="page-hero__overlay" aria-hidden="true"></div>
+    <div class="site-shell page-hero__copy">
+        <p class="eyebrow eyebrow--light">Campus Coffee Accounts</p>
+        <h1 id="portal-title">ACCESS PORTAL</h1>
+        <p class="our-story-hero__subtitle">Choose the space that belongs to you.</p>
+        <p class="our-story-hero__intro">Access customer ordering, merchant operations or administration through a dedicated account area.</p>
+    </div>
+</section>
+
+<section class="section section--paper portal-surface" aria-labelledby="portal-options-title">
+    <div class="site-shell">
+        <div class="section-heading reveal">
+            <div>
+                <p class="eyebrow">Three account areas</p>
+                <h2 id="portal-options-title">Where would you like to go?</h2>
+            </div>
+            <p class="section-heading__copy">Select an account type to continue to its secure sign-in page.</p>
+        </div>
+
+        <div class="row row-cols-1 row-cols-lg-3 g-4">
+            <div class="col">
+                <article class="product-card portal-card h-100 reveal">
+                    <div class="product-card__body">
+                        <span class="value-card__number" aria-hidden="true">
+                            <svg width="42" height="42" viewBox="0 0 42 42" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="21" cy="14" r="6" />
+                                <path d="M9 34c1-8 5-12 12-12s11 4 12 12" />
+                            </svg>
+                        </span>
+                        <div class="product-card__heading mt-5"><h3>Customer</h3></div>
+                        <p class="product-card__description">Browse the menu, place orders, track purchases and manage favourites.</p>
+                        <a class="button product-card__button mt-auto" asp-area="" asp-controller="Home" asp-action="CustomerLogin">Continue</a>
+                    </div>
+                </article>
+            </div>
+
+            <div class="col">
+                <article class="product-card portal-card h-100 reveal">
+                    <div class="product-card__body">
+                        <span class="value-card__number" aria-hidden="true">
+                            <svg width="42" height="42" viewBox="0 0 42 42" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M7 18h28l-3-9H10l-3 9Z" />
+                                <path d="M9 18v16h24V18M16 34V24h10v10" />
+                                <path d="M7 18c0 3 5 4 7 0 1 3 6 3 7 0 1 3 6 3 7 0 2 4 7 3 7 0" />
+                            </svg>
+                        </span>
+                        <div class="product-card__heading mt-5"><h3>Merchant</h3></div>
+                        <p class="product-card__description">Manage products, orders and catering requests through one focused workspace.</p>
+                        <a class="button product-card__button mt-auto" asp-area="" asp-controller="Home" asp-action="MerchantLogin">Continue</a>
+                    </div>
+                </article>
+            </div>
+
+            <div class="col">
+                <article class="product-card portal-card h-100 reveal">
+                    <div class="product-card__body">
+                        <span class="value-card__number" aria-hidden="true">
+                            <svg width="42" height="42" viewBox="0 0 42 42" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 5 34 10v9c0 9-5 15-13 18C13 34 8 28 8 19v-9l13-5Z" />
+                                <path d="m15 21 4 4 8-9" />
+                            </svg>
+                        </span>
+                        <div class="product-card__heading mt-5"><h3>Administrator</h3></div>
+                        <p class="product-card__description">Manage users, system settings and reports across the Campus Coffee platform.</p>
+                        <a class="button product-card__button mt-auto" asp-area="" asp-controller="Home" asp-action="AdministratorLogin">Continue</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </div>
+</section>

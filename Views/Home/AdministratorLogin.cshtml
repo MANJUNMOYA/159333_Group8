@@ -1,0 +1,38 @@
+@{
+    ViewData["Title"] = "Administrator Login";
+}
+
+<section class="menu-closing portal-surface" aria-label="Administrator Login">
+    <div class="site-shell pt-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-6">
+                <div class="product-card auth-card reveal">
+                    <div class="product-card__body">
+                        <div class="product-card__heading mb-4"><h3>Administrator sign in</h3></div>
+                        <form data-auth-login data-role="administrator" data-redirect-url="@Url.Action("AdministratorDashboard", "Home")">
+                            <div class="mb-4">
+                                <label class="form-label cart-item__label" for="administrator-login-username">Username</label>
+                                <input class="form-control form-control-lg rounded-0" id="administrator-login-username" name="identifier" type="text" autocomplete="username" placeholder="Enter your username" required />
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label cart-item__label" for="administrator-login-password">Password</label>
+                                <input class="form-control form-control-lg rounded-0" id="administrator-login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required />
+                            </div>
+                            <div class="menu-note mb-4">
+                                <div><span class="cart-item__label d-block">Administrator Demo</span><strong>admin@test.com</strong></div>
+                                <div class="text-md-end"><span class="cart-item__label d-block">Password</span><strong>123456</strong></div>
+                            </div>
+                            <button class="button product-card__button w-100" type="submit">Sign In</button>
+                            <p class="auth-status mt-4" data-auth-status aria-live="polite" hidden></p>
+                        </form>
+                    </div>
+                </div>
+                <a class="text-link text-link--light mt-4" asp-area="" asp-controller="Home" asp-action="Portal"><span aria-hidden="true">←</span> Back to portal</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/portal-auth.js" asp-append-version="true"></script>
+}

@@ -2,8 +2,13 @@
     ViewData["Title"] = "Catering";
 }
 
-<section class="our-story-hero" aria-labelledby="catering-title">
-    <div class="site-shell reveal">
+<section class="our-story-hero our-story-hero--catering page-hero--animated" data-video-hero aria-labelledby="catering-title">
+    <video class="page-hero__video" data-hero-video autoplay muted loop playsinline preload="auto"
+           poster="@Url.Content("~/images/home/coffee-hero-two-cups.jpg")" aria-hidden="true" tabindex="-1">
+        <source src="@Url.Content("~/videos/catering.mp4")" type="video/mp4" />
+    </video>
+    <div class="page-hero__overlay" aria-hidden="true"></div>
+    <div class="site-shell page-hero__copy">
         <p class="eyebrow eyebrow--light">Campus Coffee &amp; Catering</p>
         <h1 id="catering-title">Campus Catering</h1>
         <p class="our-story-hero__subtitle">Fresh coffee and food for every campus event.</p>

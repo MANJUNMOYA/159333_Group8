@@ -1,0 +1,39 @@
+@{
+    ViewData["Title"] = "Customer Login";
+}
+
+<section class="menu-closing portal-surface" aria-label="Customer Login">
+    <div class="site-shell pt-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-6">
+                <div class="product-card auth-card reveal">
+                    <div class="product-card__body">
+                        <div class="product-card__heading mb-4"><h3>Sign in as a customer</h3></div>
+                        <form data-auth-login data-role="customer" data-redirect-url="@Url.Action("CustomerDashboard", "Home")">
+                            <div class="mb-4">
+                                <label class="form-label cart-item__label" for="customer-login-email">Email</label>
+                                <input class="form-control form-control-lg rounded-0" id="customer-login-email" name="identifier" type="email" autocomplete="email" placeholder="Enter your email" required />
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label cart-item__label" for="customer-login-password">Password</label>
+                                <input class="form-control form-control-lg rounded-0" id="customer-login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required />
+                            </div>
+                            <div class="menu-note mb-4">
+                                <div><span class="cart-item__label d-block">Customer Demo</span><strong>customer@test.com</strong></div>
+                                <div class="text-md-end"><span class="cart-item__label d-block">Password</span><strong>123456</strong></div>
+                            </div>
+                            <button class="button product-card__button w-100" type="submit">Sign In</button>
+                            <p class="mt-4 mb-0 text-center">New to Campus Coffee? <a class="text-link" asp-area="" asp-controller="Home" asp-action="CustomerRegister">Register</a></p>
+                            <p class="auth-status mt-4" data-auth-status aria-live="polite" hidden></p>
+                        </form>
+                    </div>
+                </div>
+                <a class="text-link text-link--light mt-4" asp-area="" asp-controller="Home" asp-action="Portal"><span aria-hidden="true">←</span> Back to portal</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/portal-auth.js" asp-append-version="true"></script>
+}
