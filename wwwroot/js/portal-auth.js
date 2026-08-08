@@ -42,15 +42,9 @@
     async signIn(role, identifier, password) {
       const normalisedIdentifier = identifier.trim().toLowerCase();
       const account = placeholderAccounts[role];
-      const registeredCustomer = role === 'customer' ? readDemoCustomer() : null;
-      const matchesPlaceholder = account
+      return Boolean(account
         && account.identifier === normalisedIdentifier
-        && account.password === password;
-      const matchesRegisteredCustomer = registeredCustomer
-        && registeredCustomer.email === normalisedIdentifier
-        && registeredCustomer.password === password;
-
-      return matchesPlaceholder || matchesRegisteredCustomer;
+        && account.password === password);
     },
 
     async registerCustomer(customer) {
@@ -90,13 +84,13 @@
       const isAuthenticated = await placeholderAuthService.signIn(form.dataset.role, identifier, password);
 
       if (!isAuthenticated) {
-        showStatus(form, 'The email or password does not match the placeholder account.', true);
+        showStatus(form, 'Invalid email or password.', true);
         setSubmitting(form, false);
         return;
       }
 
       savePortalSession(form.dataset.role, identifier.trim().toLowerCase());
-      showStatus(form, 'Sign in successful. Opening your dashboard…');
+      showStatus(form, 'Sign in successful. Redirecting…');
       window.setTimeout(() => window.location.assign(form.dataset.redirectUrl), 700);
     });
   });
