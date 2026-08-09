@@ -1,0 +1,116 @@
+@{
+    ViewData["Title"] = "Our Story";
+}
+
+<section class="our-story-hero our-story-hero--history page-hero--animated" data-video-hero aria-labelledby="our-story-title">
+    <video class="page-hero__video" data-hero-video autoplay muted loop playsinline preload="auto"
+           poster="@Url.Content("~/images/home/coffee-hero-farm-to-cup.jpg")" aria-hidden="true" tabindex="-1">
+        <source src="@Url.Content("~/videos/historyvideo.mp4")" type="video/mp4" />
+    </video>
+    <div class="page-hero__overlay" aria-hidden="true"></div>
+    <div class="site-shell page-hero__copy">
+        <p class="eyebrow eyebrow--light">Campus Coffee &amp; Catering</p>
+        <h1 id="our-story-title">OUR STORY</h1>
+        <p class="our-story-hero__subtitle">Brewing coffee for campus life.</p>
+        <p class="our-story-hero__intro">
+            We make thoughtful coffee and fresh food for the people who bring our campus to life—from the first lecture to the final study session.
+        </p>
+    </div>
+</section>
+
+<section class="section section--paper" aria-labelledby="who-we-are-title">
+    <div class="site-shell">
+        <div class="section-heading reveal">
+            <div>
+                <p class="eyebrow">Our beginnings</p>
+                <h2 id="who-we-are-title">Who We Are</h2>
+            </div>
+            <div class="section-heading__copy">
+                <p class="mb-4">Campus Coffee began with a simple idea: university days deserve coffee made with care and food that feels fresh, familiar and easy to enjoy.</p>
+                <p class="mb-4">Over the years, we have grown alongside our campus—serving early starts, quick catch-ups, club meetings and celebrations of every size.</p>
+                <p class="mb-0">We are still guided by the same purpose: make each visit welcoming, dependable and worth coming back for.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section--cream" aria-labelledby="values-title">
+    <div class="site-shell">
+        <div class="values-heading reveal">
+            <p class="eyebrow">What matters to us</p>
+            <h2 id="values-title">Made for every campus day.</h2>
+        </div>
+
+        <div class="values-grid">
+            <article class="value-card reveal">
+                <span class="value-card__number" aria-hidden="true">
+                    <svg width="42" height="42" viewBox="0 0 42 42" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 15h20v9a9 9 0 0 1-9 9h-2a9 9 0 0 1-9-9v-9Z" />
+                        <path d="M29 18h3a5 5 0 0 1 0 10h-4M15 10c0-2 2-2 2-4M23 10c0-2 2-2 2-4" />
+                    </svg>
+                </span>
+                <h3>Fresh Coffee</h3>
+                <p>Carefully selected beans, properly prepared and served with consistency from the first cup of the day.</p>
+            </article>
+
+            <article class="value-card reveal">
+                <span class="value-card__number" aria-hidden="true">
+                    <svg width="42" height="42" viewBox="0 0 42 42" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 31c9-1 17-8 22-21 5 12 1 22-9 23-5 .5-9-1-13-2Z" />
+                        <path d="M12 29c5-5 10-9 18-14" />
+                    </svg>
+                </span>
+                <h3>Fresh Food</h3>
+                <p>Simple ingredients and thoughtful preparation for breakfasts, lunches and breaks that fit real campus life.</p>
+            </article>
+
+            <article class="value-card reveal">
+                <span class="value-card__number" aria-hidden="true">
+                    <svg width="42" height="42" viewBox="0 0 42 42" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="21" cy="13" r="5" />
+                        <circle cx="10" cy="18" r="3.5" />
+                        <circle cx="32" cy="18" r="3.5" />
+                        <path d="M12 33c.6-7 3.8-11 9-11s8.4 4 9 11M4 32c.4-5 2.5-8 6-8 2 0 3.6.8 4.7 2.3M38 32c-.4-5-2.5-8-6-8-2 0-3.6.8-4.7 2.3" />
+                    </svg>
+                </span>
+                <h3>Campus Community</h3>
+                <p>A welcoming place to pause, connect and share the everyday moments that make campus feel like home.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="section section--paper" aria-labelledby="student-choice-title">
+    <div class="site-shell">
+        <div class="values-heading reveal">
+            <p class="eyebrow">Our campus story</p>
+            <h2 id="student-choice-title">Why Students Choose Us</h2>
+        </div>
+
+        <div class="values-grid">
+            <article class="value-card reveal">
+                <span class="value-card__number">10+</span>
+                <h3>Years Serving Campus</h3>
+                <p>A familiar part of university life, built one good coffee and one welcoming visit at a time.</p>
+            </article>
+            <article class="value-card reveal">
+                <span class="value-card__number">5000+</span>
+                <h3>Happy Customers</h3>
+                <p>Students, staff and visitors who choose Campus Coffee for everyday breaks and special occasions.</p>
+            </article>
+            <article class="value-card reveal">
+                <span class="value-card__number">Every Day</span>
+                <h3>Freshly Prepared</h3>
+                <p>Coffee made to order and food prepared fresh to keep every campus day moving.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="menu-closing" aria-labelledby="story-closing-title">
+    <div class="site-shell text-center reveal">
+        <p class="eyebrow eyebrow--light">From our team to yours</p>
+        <h2 class="mx-auto" id="story-closing-title">Thank you for being part of our campus community.</h2>
+        <a class="button button--cream mt-5" asp-area="" asp-controller="Home" asp-action="Menu">Explore Menu</a>
+    </div>
+</section>

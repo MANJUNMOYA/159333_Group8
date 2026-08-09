@@ -1,0 +1,119 @@
+@{
+    ViewData["Title"] = "Order Confirmation";
+}
+
+<section class="menu-hero">
+    <div class="menu-hero__shade" aria-hidden="true"></div>
+    <div class="site-shell menu-hero__content reveal">
+        <p class="eyebrow">Campus Coffee Order</p>
+        <h1>Order confirmed.</h1>
+        <p class="menu-hero__copy">Thanks for ordering with Campus Coffee. Your order details are below.</p>
+    </div>
+</section>
+
+<section class="menu-catalog" data-order-confirmation>
+    <div class="site-shell">
+        <div data-order-confirmation-content hidden>
+            <div class="row g-4 g-xl-5 align-items-start">
+                <div class="col-xl-7">
+                    <div class="product-card reveal">
+                        <div class="product-card__body">
+                            <div class="product-card__heading">
+                                <div>
+                                    <p class="eyebrow">Order Details</p>
+                                    <h2>Customer Information</h2>
+                                </div>
+                            </div>
+
+                            <div class="menu-note mt-4">
+                                <span>Order Number</span>
+                                <strong data-order-number></strong>
+                            </div>
+                            <div class="menu-note mt-0">
+                                <span>Name</span>
+                                <strong data-order-name></strong>
+                            </div>
+                            <div class="menu-note mt-0">
+                                <span>Email</span>
+                                <strong data-order-email></strong>
+                            </div>
+                            <div class="menu-note mt-0">
+                                <span>Phone Number</span>
+                                <strong data-order-phone></strong>
+                            </div>
+                            <div class="menu-note mt-0">
+                                <span>Pickup or Delivery</span>
+                                <strong data-order-method></strong>
+                            </div>
+                            <div class="menu-note mt-0">
+                                <span>Pickup Time</span>
+                                <strong data-order-pickup-time></strong>
+                            </div>
+                            <div class="menu-note mt-0 align-items-start">
+                                <span>Special Notes</span>
+                                <strong class="text-break" data-order-special-notes></strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-5">
+                    <aside class="product-card reveal">
+                        <div class="product-card__body">
+                            <div class="product-card__heading">
+                                <div>
+                                    <p class="eyebrow">Your Order</p>
+                                    <h2>Order Summary</h2>
+                                </div>
+                            </div>
+
+                            <div data-confirmation-items></div>
+
+                            <template data-confirmation-item-template>
+                                <div class="menu-note mt-0" data-confirmation-item>
+                                    <div>
+                                        <strong class="d-block" data-confirmation-name></strong>
+                                        <span data-confirmation-details></span>
+                                    </div>
+                                    <div class="text-xl-end">
+                                        <span class="cart-item__label d-block">Subtotal</span>
+                                        <strong class="d-block" data-confirmation-item-subtotal></strong>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <div class="pt-4">
+                                <div class="d-flex justify-content-between mb-3">
+                                    <span>Subtotal</span>
+                                    <strong data-confirmation-subtotal></strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-3">
+                                    <span>Delivery Fee</span>
+                                    <strong data-confirmation-delivery></strong>
+                                </div>
+                                <hr />
+                                <div class="d-flex justify-content-between align-items-center fs-5">
+                                    <strong>Total</strong>
+                                    <strong data-confirmation-total></strong>
+                                </div>
+                            </div>
+
+                            <a class="button product-card__button w-100 mt-4" data-order-continue
+                               asp-area="" asp-controller="Home" asp-action="Menu">Continue Shopping</a>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        </div>
+
+        <div class="product-card reveal" data-order-confirmation-empty hidden>
+            <div class="product-card__body">
+                <div class="product-card__heading">
+                    <h2>No order found.</h2>
+                </div>
+                <p class="product-card__description">Your order confirmation will appear here after checkout.</p>
+                <a class="button product-card__button align-self-start" asp-area="" asp-controller="Home" asp-action="Menu">Browse the menu</a>
+            </div>
+        </div>
+    </div>
+</section>

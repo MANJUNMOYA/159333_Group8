@@ -23,12 +23,82 @@ namespace CampusCoffeeSystem.Controllers
             return View();
         }
 
+        public IActionResult Catering()
+        {
+            return View();
+        }
+
+        public IActionResult OurStory()
+        {
+            return View();
+        }
+
+        public IActionResult Portal()
+        {
+            return View();
+        }
+
+        public IActionResult CustomerLogin()
+        {
+            return View();
+        }
+
+        public IActionResult CustomerRegister()
+        {
+            return View();
+        }
+
+        public IActionResult MerchantLogin()
+        {
+            return View();
+        }
+
+        public IActionResult MerchantRegister()
+        {
+            return View();
+        }
+
+        public IActionResult MerchantApplication()
+        {
+            return View();
+        }
+
+        public IActionResult AdministratorLogin()
+        {
+            return View();
+        }
+
+        public IActionResult CustomerDashboard()
+        {
+            return View();
+        }
+
+        public IActionResult MerchantDashboard()
+        {
+            return View();
+        }
+
+        public IActionResult AdministratorDashboard()
+        {
+            return View();
+        }
+
         public IActionResult ProductDetails()
         {
             return View();
         }
 
         public IActionResult ShoppingCart()
+        {
+            return View();
+        }
+
+        public IActionResult Checkout()
+        {
+            return View();
+        }
+
+        public IActionResult OrderConfirmation()
         {
             return View();
         }

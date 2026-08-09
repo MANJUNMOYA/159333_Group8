@@ -1,0 +1,60 @@
+@{
+    ViewData["Title"] = "Customer Registration";
+}
+
+<section class="our-story-hero portal-surface" aria-labelledby="customer-register-title">
+    <div class="site-shell reveal">
+        <p class="eyebrow eyebrow--light">Customer Access</p>
+        <h1 id="customer-register-title">Create Account</h1>
+        <p class="our-story-hero__subtitle">A simpler way to enjoy Campus Coffee.</p>
+    </div>
+</section>
+
+<section class="menu-catalog portal-surface">
+    <div class="site-shell">
+        <div class="row justify-content-center">
+            <div class="col-lg-9 col-xl-7">
+                <div class="product-card auth-card reveal">
+                    <div class="product-card__body">
+                        <div class="product-card__heading mb-4"><h2>Customer Registration</h2></div>
+                        <form data-customer-register data-login-url="@Url.Action("CustomerLogin", "Home")">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label cart-item__label" for="customer-register-first-name">First Name</label>
+                                    <input class="form-control form-control-lg rounded-0" id="customer-register-first-name" name="firstName" type="text" autocomplete="given-name" placeholder="First name" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label cart-item__label" for="customer-register-last-name">Last Name</label>
+                                    <input class="form-control form-control-lg rounded-0" id="customer-register-last-name" name="lastName" type="text" autocomplete="family-name" placeholder="Last name" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label cart-item__label" for="customer-register-email">Email</label>
+                                    <input class="form-control form-control-lg rounded-0" id="customer-register-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label cart-item__label" for="customer-register-phone">Phone Number</label>
+                                    <input class="form-control form-control-lg rounded-0" id="customer-register-phone" name="phone" type="tel" autocomplete="tel" placeholder="021 234 5678" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label cart-item__label" for="customer-register-password">Password</label>
+                                    <input class="form-control form-control-lg rounded-0" id="customer-register-password" name="password" type="password" autocomplete="new-password" placeholder="Create a password" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label cart-item__label" for="customer-register-confirm">Confirm Password</label>
+                                    <input class="form-control form-control-lg rounded-0" id="customer-register-confirm" name="confirmPassword" type="password" autocomplete="new-password" placeholder="Confirm your password" required />
+                                </div>
+                            </div>
+                            <button class="button product-card__button w-100 mt-4" type="submit">Create Account</button>
+                            <p class="mt-4 mb-0 text-center">Already registered? <a class="text-link" asp-area="" asp-controller="Home" asp-action="CustomerLogin">Sign In</a></p>
+                            <p class="auth-status mt-4" data-auth-status aria-live="polite" hidden></p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/portal-auth.js" asp-append-version="true"></script>
+}

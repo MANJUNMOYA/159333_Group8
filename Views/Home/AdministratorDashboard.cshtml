@@ -1,0 +1,188 @@
+@{
+    ViewData["Title"] = "Administrator Dashboard";
+    Layout = "_AdministratorDashboardLayout";
+}
+
+<div class="administrator-dashboard" data-administrator-dashboard>
+    <aside class="administrator-sidebar" aria-label="Administrator portal navigation">
+        <a class="brand administrator-sidebar__brand" asp-area="" asp-controller="Home" asp-action="Portal" aria-label="Campus Coffee Access Portal">
+            <span class="brand__mark" aria-hidden="true"><svg viewBox="0 0 44 44"><path d="M11 16h19v9a9 9 0 0 1-9 9h-1a9 9 0 0 1-9-9v-9Z"/><path d="M30 19h2a5 5 0 0 1 0 10h-3M16 11c0-2 2-2 2-4M23 11c0-2 2-2 2-4"/></svg></span>
+            <span class="brand__text"><strong>CAMPUS</strong><small>ADMINISTRATION</small></span>
+        </a>
+
+        <p class="administrator-sidebar__label">Platform control</p>
+        <nav class="administrator-sidebar__nav">
+            <button class="is-active" type="button" data-admin-nav="dashboard" aria-current="page"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-16v4h6V4h-6Z"/></svg></span><span>Dashboard</span></button>
+            <button type="button" data-admin-nav="users"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8-1a3 3 0 1 0 0-6m0 11a4 4 0 0 1 4 4v2"/></svg></span><span>Users</span><span class="administrator-nav-count">1,265</span></button>
+            <button type="button" data-admin-nav="merchants"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="M4 10h16v10H4V10Zm2-6h12l2 6H4l2-6Zm3 16v-6h6v6"/></svg></span><span>Merchants</span><span class="administrator-nav-count">2</span></button>
+            <button type="button" data-admin-nav="products"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Zm0 0v10l8 4 8-4V7M12 11v10"/></svg></span><span>Products</span></button>
+            <button type="button" data-admin-nav="orders"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14v17l-3-2-4 2-4-2-3 2V4Zm4 5h6m-6 4h6"/></svg></span><span>Orders</span></button>
+            <button type="button" data-admin-nav="feedback"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 4V5Zm4 5h8m-8 3h5"/></svg></span><span>Feedback</span><span class="administrator-nav-dot"></span></button>
+            <button type="button" data-admin-nav="reports"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="M5 20V10m5 10V4m5 16v-7m5 7H2"/></svg></span><span>Reports</span></button>
+            <button type="button" data-admin-nav="permissions"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3 8 8 10 5-2 8-5 8-10V6l-8-3Zm-3 9 2 2 4-5"/></svg></span><span>Permissions</span></button>
+            <button type="button" data-admin-nav="settings"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM19 12l2-1-2-4-2 .5L15 5l-.5-2h-5L9 5 7 7.5 5 7l-2 4 2 1-2 1 2 4 2-.5L9 19l.5 2h5l.5-2 2-2.5 2 .5 2-4-2-1Z"/></svg></span><span>System Settings</span></button>
+            <a asp-area="" asp-controller="Home" asp-action="Portal" data-administrator-logout><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="M10 5H4v14h6M14 8l4 4-4 4M8 12h10"/></svg></span><span>Logout</span></a>
+        </nav>
+
+        <div class="administrator-sidebar__profile">
+            <span class="administrator-avatar administrator-avatar--small">A</span>
+            <div><strong>System Administrator</strong><small>admin@test.com</small></div>
+        </div>
+    </aside>
+
+    <main class="administrator-main" id="administrator-main">
+        <header class="administrator-header">
+            <div>
+                <p class="administrator-kicker">Administrator portal</p>
+                <h1>Welcome back, Administrator</h1>
+                <time data-administrator-date></time>
+            </div>
+            <div class="administrator-header__tools">
+                <label class="administrator-search">
+                    <span class="visually-hidden">Search administrator portal</span>
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+                    <input type="search" placeholder="Search the platform" data-administrator-search />
+                    <kbd>⌘ K</kbd>
+                </label>
+                <button class="administrator-icon-button" type="button" aria-label="View recent activity" data-activity-button><svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/></svg><span></span></button>
+                <button class="administrator-profile" type="button" data-admin-nav="settings" aria-label="Open administrator settings"><span class="administrator-avatar">A</span><span><strong>Administrator</strong><small>Full access</small></span><svg viewBox="0 0 24 24"><path d="m8 10 4 4 4-4"/></svg></button>
+            </div>
+        </header>
+
+        <p class="administrator-notice" data-administrator-status aria-live="polite" hidden></p>
+
+        <section class="administrator-section administrator-section--first" id="admin-dashboard" data-admin-section="dashboard" aria-labelledby="system-overview-title">
+            <div class="administrator-section-heading administrator-reveal"><div><p class="administrator-kicker">Platform overview</p><h2 id="system-overview-title">One platform.<br />Every account.</h2></div><p>Monitor access, moderation and system-wide activity across the Campus Coffee platform.</p></div>
+            <div class="administrator-stat-grid">
+                <article class="administrator-stat-card administrator-reveal"><div><span>Registered Users</span><span class="administrator-trend administrator-trend--positive">↗ 7.8%</span></div><strong data-admin-count="1265">0</strong><small>All customer, merchant and administrator accounts</small><i>01</i></article>
+                <article class="administrator-stat-card administrator-reveal"><div><span>Registered Merchants</span><span class="administrator-trend">2 pending</span></div><strong data-admin-count="8">0</strong><small>Across the Campus Coffee platform</small><i>02</i></article>
+                <article class="administrator-stat-card administrator-reveal"><div><span>Today’s Platform Orders</span><span class="administrator-trend administrator-trend--positive">↗ 12%</span></div><strong data-admin-count="231">0</strong><small>Orders across every registered merchant</small><i>03</i></article>
+                <article class="administrator-stat-card administrator-stat-card--espresso administrator-reveal"><div><span>System Health</span><span class="administrator-trend administrator-trend--light">Operational</span></div><strong><span data-admin-decimal-count="99.8">0.0</span><span class="administrator-stat-suffix">%</span></strong><small>All platform services responding normally</small><i>04</i></article>
+            </div>
+        </section>
+
+        <section class="administrator-section administrator-platform-grid" aria-label="Administrator work queue">
+            <div class="administrator-content-card administrator-reveal" id="admin-activity">
+                <div class="administrator-card-title"><div><p class="administrator-kicker">Recent activities</p><h2 id="activity-title">Platform movements.</h2></div><span class="administrator-live-pill"><i></i> Live preview</span></div>
+                <div class="administrator-activity-list">
+                    <article data-admin-search-item><span class="administrator-activity-icon administrator-activity-icon--user"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-6 4-9 8-9s7 3 8 9"/></svg></span><div><strong>Emma created a new account</strong><p>Customer access was added to the platform.</p></div><time>6 min ago</time></article>
+                    <article data-admin-search-item><span class="administrator-activity-icon administrator-activity-icon--success"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg></span><div><strong>Merchant Mike was approved</strong><p>Merchant access is now active.</p></div><time>18 min ago</time></article>
+                    <article data-admin-search-item><span class="administrator-activity-icon administrator-activity-icon--order"><svg viewBox="0 0 24 24"><path d="M5 4h14v17l-3-2-4 2-4-2-3 2V4Zm4 6h6"/></svg></span><div><strong>Order #1052 archived</strong><p>The completed order was moved to platform records.</p></div><time>31 min ago</time></article>
+                    <article data-admin-search-item><span class="administrator-activity-icon administrator-activity-icon--coffee"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 4V5Zm4 5h8"/></svg></span><div><strong>Feedback reviewed</strong><p>A reported customer review was moderated.</p></div><time>44 min ago</time></article>
+                    <article data-admin-search-item><span class="administrator-activity-icon administrator-activity-icon--catering"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 2 3 3 7 3s7-1 7-3V6M5 12v6c0 2 3 3 7 3s7-1 7-3v-6"/></svg></span><div><strong>Database backup completed</strong><p>The static system status has been refreshed.</p></div><time>1 hr ago</time></article>
+                </div>
+            </div>
+
+            <div class="administrator-content-card administrator-reveal" id="admin-tasks">
+                <div class="administrator-card-title"><div><p class="administrator-kicker">Administrative tasks</p><h2>Needs attention.</h2></div><span class="administrator-task-total">11 pending</span></div>
+                <div class="administrator-task-list">
+                    <button type="button" data-admin-nav="merchants"><span class="administrator-task-icon">MA</span><span><strong>Merchant Applications</strong><small>Review new account requests</small></span><span class="administrator-badge administrator-badge--pending">2 Pending</span></button>
+                    <button type="button" data-admin-nav="products"><span class="administrator-task-icon">RP</span><span><strong>Reported Products</strong><small>Check product compliance</small></span><span class="administrator-badge administrator-badge--preparing">1 Pending Review</span></button>
+                    <button type="button" data-admin-nav="users"><span class="administrator-task-icon">CR</span><span><strong>Customer Reports</strong><small>Resolve account reports</small></span><span class="administrator-badge administrator-badge--inactive">5 Pending</span></button>
+                    <button type="button" data-admin-nav="feedback"><span class="administrator-task-icon">FM</span><span><strong>Feedback Moderation</strong><small>Review flagged comments</small></span><span class="administrator-badge administrator-badge--ready">3 Pending</span></button>
+                </div>
+            </div>
+        </section>
+
+        <section class="administrator-quick-actions administrator-reveal" aria-labelledby="quick-actions-title">
+            <div><p class="administrator-kicker">Quick actions</p><h2 id="quick-actions-title">Platform controls, close at hand.</h2></div>
+            <div>
+                <button type="button" data-admin-nav="merchants">Approve Merchant</button>
+                <button type="button" data-placeholder-action="Create Merchant">Create Merchant</button>
+                <button type="button" data-admin-nav="reports">Generate System Report</button>
+                <button type="button" data-admin-action="backup">Backup Database</button>
+                <button type="button" data-admin-nav="users">Manage Users</button>
+            </div>
+        </section>
+
+        <section class="administrator-section" id="admin-users" data-admin-section="users" aria-labelledby="users-title">
+            <div class="administrator-section-heading administrator-reveal"><div><p class="administrator-kicker">Users management</p><h2 id="users-title">People and access.</h2></div><p>Search, filter and review every role on the platform.</p></div>
+            <div class="administrator-content-card administrator-reveal">
+                <div class="administrator-user-tools"><label><span class="visually-hidden">Search users</span><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg><input type="search" placeholder="Search users" data-user-search /></label><label><span class="visually-hidden">Filter users by role</span><select data-user-role-filter><option value="all">All roles</option><option value="customer">Customer</option><option value="merchant">Merchant</option><option value="administrator">Administrator</option></select></label><button class="administrator-primary-button" type="button" data-placeholder-action="Add User">+ Add user</button></div>
+                <div class="table-responsive"><table class="administrator-table"><thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Last Login</th><th>Action</th></tr></thead><tbody>
+                <tr data-admin-search-item data-user-row data-user-role="customer"><td><span class="administrator-person"><span>EM</span><strong>Emma Wilson</strong></span></td><td>Customer</td><td><span class="administrator-badge administrator-badge--active">Active</span></td><td>Today</td><td><button type="button" data-user-action="View" data-user-name="Emma Wilson">View</button></td></tr>
+                <tr data-admin-search-item data-user-row data-user-role="merchant"><td><span class="administrator-person"><span>JA</span><strong>Jack Thompson</strong></span></td><td>Merchant</td><td><span class="administrator-badge administrator-badge--pending">Pending</span></td><td>Today</td><td><button type="button" data-user-action="Approve" data-user-name="Jack Thompson">Approve</button></td></tr>
+                <tr data-admin-search-item data-user-row data-user-role="administrator"><td><span class="administrator-person"><span>SO</span><strong>Sophia Chen</strong></span></td><td>Administrator</td><td><span class="administrator-badge administrator-badge--active">Active</span></td><td>Yesterday</td><td><button type="button" data-user-action="Manage" data-user-name="Sophia Chen">Manage</button></td></tr>
+                <tr data-admin-search-item data-user-row data-user-role="customer"><td><span class="administrator-person"><span>NO</span><strong>Noah Williams</strong></span></td><td>Customer</td><td><span class="administrator-badge administrator-badge--inactive">Inactive</span></td><td>4 days ago</td><td><button type="button" data-user-action="View" data-user-name="Noah Williams">View</button></td></tr>
+            </tbody></table></div></div>
+        </section>
+
+        <section class="administrator-section" id="admin-merchants" data-admin-section="merchants" aria-labelledby="merchants-title">
+            <div class="administrator-section-heading administrator-reveal"><div><p class="administrator-kicker">Merchant management</p><h2 id="merchants-title">Businesses on the platform.</h2></div><p>Approve, suspend and review merchant access across every campus location.</p></div>
+            <div class="administrator-merchant-grid">
+                <article class="administrator-merchant-card administrator-reveal" data-merchant-application data-merchant-name="Campus Coffee North"><div class="administrator-merchant-card__top"><span class="administrator-store-mark">CN</span><span class="administrator-badge administrator-badge--active" data-merchant-status>Approved</span></div><h3>Campus Coffee North</h3><p>North Campus · Student Commons</p><dl><div><dt>Contact</dt><dd>Mia Roberts</dd></div><div><dt>Account</dt><dd>Merchant #008</dd></div></dl><div><button type="button" data-merchant-action="view">View Details</button></div></article>
+                <article class="administrator-merchant-card administrator-reveal" data-merchant-application data-merchant-name="Engineering Cafe"><div class="administrator-merchant-card__top"><span class="administrator-store-mark">EC</span><span class="administrator-badge administrator-badge--pending" data-merchant-status>Pending Approval</span></div><h3>Engineering Cafe</h3><p>Engineering Building · Level 1</p><dl><div><dt>Contact</dt><dd>Aisha Patel</dd></div><div><dt>Submitted</dt><dd>Today, 08:40</dd></div></dl><div><button type="button" data-merchant-action="approve">Approve</button><button type="button" data-merchant-action="reject">Reject</button></div></article>
+                <article class="administrator-merchant-card administrator-reveal" data-merchant-application data-merchant-name="Business Cafe"><div class="administrator-merchant-card__top"><span class="administrator-store-mark">BC</span><span class="administrator-badge administrator-badge--inactive" data-merchant-status>Suspended</span></div><h3>Business Cafe</h3><p>Business School · Atrium</p><dl><div><dt>Contact</dt><dd>Daniel Lee</dd></div><div><dt>Account</dt><dd>Merchant #004</dd></div></dl><div><button type="button" data-merchant-action="view">View Details</button><button type="button" data-merchant-action="reject">Reject</button></div></article>
+            </div>
+        </section>
+
+        <section class="administrator-section" id="admin-products" data-admin-section="products" aria-labelledby="products-title">
+            <div class="administrator-section-heading administrator-reveal"><div><p class="administrator-kicker">Product moderation</p><h2 id="products-title">A trusted platform menu.</h2></div><p>Approve, hide or remove products submitted by registered merchants.</p></div>
+            <div class="administrator-product-grid">
+                <article class="administrator-product-card administrator-reveal" data-admin-search-item data-product-card data-product-name="Campus Flat White"><img src="~/images/menu/Campus Flat White.jpg" alt="Campus Flat White" /><div><span class="administrator-badge administrator-badge--active" data-product-status>Approved</span><h3>Campus Flat White</h3><p>Merchant A · Coffee</p><div class="administrator-product-actions"><button type="button" data-product-action="hide">Hide</button><button type="button" data-product-action="delete">Delete</button></div></div></article>
+                <article class="administrator-product-card administrator-reveal" data-admin-search-item data-product-card data-product-name="Roast Vegetable Focaccia"><img src="~/images/menu/Roast Vegetable Focaccia.jpg" alt="Roast Vegetable Focaccia" /><div><span class="administrator-badge administrator-badge--pending" data-product-status>Pending Review</span><h3>Roast Vegetable Focaccia</h3><p>Merchant B · Food</p><div class="administrator-product-actions"><button type="button" data-product-action="approve">Approve</button><button type="button" data-product-action="delete">Delete</button></div></div></article>
+                <article class="administrator-product-card administrator-reveal" data-admin-search-item data-product-card data-product-name="Cold Brew"><img src="~/images/menu/Vanilla Cold Brew.jpg" alt="Cold Brew" /><div><span class="administrator-badge administrator-badge--inactive" data-product-status>Hidden</span><h3>Cold Brew</h3><p>Merchant A · Coffee</p><div class="administrator-product-actions"><button type="button" data-product-action="approve">Approve</button><button type="button" data-product-action="delete">Delete</button></div></div></article>
+            </div>
+        </section>
+
+        <section class="administrator-section" id="admin-orders" data-admin-section="orders" aria-labelledby="orders-title">
+            <div class="administrator-section-heading administrator-reveal"><div><p class="administrator-kicker">Platform orders</p><h2 id="orders-title">Every merchant.<br />Every order.</h2></div><p>A system-wide record of orders placed through Campus Coffee.</p></div>
+            <div class="administrator-content-card administrator-reveal"><div class="table-responsive"><table class="administrator-table"><thead><tr><th>Order ID</th><th>Customer</th><th>Merchant</th><th>Status</th><th>Amount</th><th>Action</th></tr></thead><tbody>
+                <tr data-admin-search-item data-order-row data-order-id="#1001"><td><strong>#1001</strong></td><td>Emma</td><td>Merchant A</td><td><span class="administrator-badge administrator-badge--active" data-order-status>Completed</span></td><td>$18.00</td><td><button type="button" data-order-archive>Archive</button></td></tr>
+                <tr data-admin-search-item data-order-row data-order-id="#1002"><td><strong>#1002</strong></td><td>Jack</td><td>Merchant B</td><td><span class="administrator-badge administrator-badge--preparing" data-order-status>Preparing</span></td><td>$11.00</td><td><button type="button" data-order-archive>Archive</button></td></tr>
+                <tr data-admin-search-item data-order-row data-order-id="#1003"><td><strong>#1003</strong></td><td>Olivia</td><td>Merchant A</td><td><span class="administrator-badge administrator-badge--ready" data-order-status>Ready</span></td><td>$24.50</td><td><button type="button" data-order-archive>Archive</button></td></tr>
+                <tr data-admin-search-item data-order-row data-order-id="#1004"><td><strong>#1004</strong></td><td>Noah</td><td>Merchant C</td><td><span class="administrator-badge administrator-badge--pending" data-order-status>Pending</span></td><td>$15.00</td><td><button type="button" data-order-archive>Archive</button></td></tr>
+            </tbody></table></div></div>
+        </section>
+
+        <section class="administrator-section" id="admin-feedback" data-admin-section="feedback" aria-labelledby="feedback-title">
+            <div class="administrator-section-heading administrator-reveal"><div><p class="administrator-kicker">Feedback moderation</p><h2 id="feedback-title">Protecting the community.</h2></div><p>Keep helpful feedback visible and review content needing attention.</p></div>
+            <div class="administrator-feedback-grid">
+                <article class="administrator-feedback-card administrator-reveal" data-feedback-card data-feedback-author="Emma"><div><span class="administrator-stars" aria-label="5 out of 5 stars">★★★★★</span><span class="administrator-badge administrator-badge--active" data-feedback-status>Visible</span></div><blockquote>“Great coffee.”</blockquote><p>Emma · Campus Coffee North</p><div><button type="button" data-feedback-action="keep">Keep</button><button type="button" data-feedback-action="review">Mark Reviewed</button></div></article>
+                <article class="administrator-feedback-card administrator-reveal" data-feedback-card data-feedback-author="Jack"><div><span class="administrator-stars" aria-label="5 out of 5 stars">★★★★★</span><span class="administrator-badge administrator-badge--active" data-feedback-status>Visible</span></div><blockquote>“Friendly staff.”</blockquote><p>Jack · Engineering Cafe</p><div><button type="button" data-feedback-action="keep">Keep</button><button type="button" data-feedback-action="delete">Delete</button></div></article>
+                <article class="administrator-feedback-card administrator-reveal" data-feedback-card data-feedback-author="Olivia"><div><span class="administrator-stars administrator-stars--low" aria-label="1 out of 5 stars">★☆☆☆☆</span><span class="administrator-badge administrator-badge--pending" data-feedback-status>Review</span></div><blockquote>“Coffee too cold.”</blockquote><p>Olivia · Business Cafe</p><div><button type="button" data-feedback-action="hide">Hide</button><button type="button" data-feedback-action="delete">Delete</button><button type="button" data-feedback-action="review">Mark Reviewed</button></div></article>
+            </div>
+        </section>
+
+        <section class="administrator-section" id="admin-reports" data-admin-section="reports" aria-labelledby="reports-title">
+            <div class="administrator-section-heading administrator-reveal"><div><p class="administrator-kicker">Reports &amp; analytics</p><h2 id="reports-title">The platform,<br />measured clearly.</h2></div><button class="administrator-primary-button" type="button" data-export-report>Export report</button></div>
+            <div class="administrator-analytics-grid">
+                <article class="administrator-chart-card administrator-chart-card--wide administrator-reveal">
+                    <div class="administrator-card-heading"><div><span>Platform Revenue</span><strong>$92,480</strong><small>Across all merchants · +11.8% this month</small></div><span class="administrator-badge administrator-badge--active">Platform total</span></div>
+                    <svg class="administrator-line-chart" viewBox="0 0 720 260" role="img" aria-label="Static monthly platform revenue chart"><defs><linearGradient id="admin-revenue-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#a64b2a" stop-opacity=".25"/><stop offset="1" stop-color="#a64b2a" stop-opacity="0"/></linearGradient></defs><g class="administrator-chart-gridlines"><path d="M20 35H700M20 90H700M20 145H700M20 200H700M20 245H700"/></g><path class="administrator-chart-area" d="M20 205C70 190 85 195 125 181S190 150 230 158 290 128 335 135 405 101 445 112 515 70 560 84 625 52 700 42V245H20Z"/><path class="administrator-chart-line" d="M20 205C70 190 85 195 125 181S190 150 230 158 290 128 335 135 405 101 445 112 515 70 560 84 625 52 700 42"/><g class="administrator-chart-points"><circle cx="20" cy="205" r="5"/><circle cx="125" cy="181" r="5"/><circle cx="230" cy="158" r="5"/><circle cx="335" cy="135" r="5"/><circle cx="445" cy="112" r="5"/><circle cx="560" cy="84" r="5"/><circle cx="700" cy="42" r="5"/></g></svg>
+                    <div class="administrator-chart-days"><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span></div>
+                </article>
+                <article class="administrator-chart-card administrator-reveal"><div class="administrator-card-heading"><div><span>User Growth</span><strong>+186</strong><small>New platform accounts</small></div></div><div class="administrator-bar-chart" aria-label="Static user growth chart"><span style="height:42%"><i>Mar</i></span><span style="height:55%"><i>Apr</i></span><span style="height:49%"><i>May</i></span><span style="height:70%"><i>Jun</i></span><span style="height:82%"><i>Jul</i></span><span style="height:94%"><i>Aug</i></span></div></article>
+                <article class="administrator-chart-card administrator-reveal"><div class="administrator-card-heading"><div><span>Merchant Growth</span><strong>8 active</strong><small>2 applications awaiting review</small></div></div><div class="administrator-mini-trend"><svg viewBox="0 0 360 130" role="img" aria-label="Static merchant growth chart"><path class="administrator-chart-area" d="M5 112C55 112 58 96 100 96s56-22 92-22 52-19 84-19 53-24 79-24v96H5Z"/><path class="administrator-chart-line" d="M5 112C55 112 58 96 100 96s56-22 92-22 52-19 84-19 53-24 79-24"/></svg><div><span>Approved this quarter</span><strong>+3</strong></div></div></article>
+                <article class="administrator-chart-card administrator-reveal"><div class="administrator-card-heading"><div><span>Order Trend</span><strong>4,286</strong><small>System-wide orders this month</small></div></div><div class="administrator-mini-trend"><svg viewBox="0 0 360 130" role="img" aria-label="Static platform orders trend"><path class="administrator-chart-area" d="M5 105C50 90 55 95 95 76s55 10 88-8 55-12 82-31 58 3 90-28v116H5Z"/><path class="administrator-chart-line" d="M5 105C50 90 55 95 95 76s55 10 88-8 55-12 82-31 58 3 90-28"/></svg><div><span>Completion rate</span><strong>94%</strong></div></div></article>
+                <article class="administrator-chart-card administrator-reveal"><div class="administrator-card-heading"><div><span>Best Selling Menu Items</span><strong>Platform top four</strong><small>Across every merchant</small></div></div><ol class="administrator-sales-ranking"><li><b>01</b><span>Campus Flat White</span><i style="--value:96%"></i><strong>438</strong></li><li><b>02</b><span>Butter Croissant</span><i style="--value:78%"></i><strong>356</strong></li><li><b>03</b><span>Vanilla Cold Brew</span><i style="--value:66%"></i><strong>301</strong></li><li><b>04</b><span>Garden Salad Bowl</span><i style="--value:51%"></i><strong>234</strong></li></ol></article>
+                <article class="administrator-chart-card administrator-reveal"><div class="administrator-card-heading"><div><span>Monthly Catering Requests</span><strong>42</strong><small>Requests across campus</small></div></div><div class="administrator-bar-chart administrator-bar-chart--sage" aria-label="Static monthly catering requests chart"><span style="height:36%"><i>Mar</i></span><span style="height:52%"><i>Apr</i></span><span style="height:45%"><i>May</i></span><span style="height:68%"><i>Jun</i></span><span style="height:58%"><i>Jul</i></span><span style="height:84%"><i>Aug</i></span></div></article>
+            </div>
+        </section>
+
+        <section class="administrator-section" id="admin-permissions" data-admin-section="permissions" aria-labelledby="permissions-title">
+            <div class="administrator-section-heading administrator-reveal"><div><p class="administrator-kicker">Permissions</p><h2 id="permissions-title">The right access,<br />for every role.</h2></div><p>Static role definitions ready for future authorization policies.</p></div>
+            <div class="administrator-permission-grid">
+                <article class="administrator-permission-card administrator-reveal"><span>01</span><div><h3>Customer</h3><p>Basic Access</p></div><ul><li>Browse platform menus</li><li>Manage own orders</li><li>Submit feedback</li></ul><button type="button" data-placeholder-action="Review Customer Permissions">Review permissions</button></article>
+                <article class="administrator-permission-card administrator-reveal"><span>02</span><div><h3>Merchant</h3><p>Store Management</p></div><ul><li>Manage own products</li><li>Process own orders</li><li>Respond to catering</li></ul><button type="button" data-placeholder-action="Review Merchant Permissions">Review permissions</button></article>
+                <article class="administrator-permission-card administrator-permission-card--espresso administrator-reveal"><span>03</span><div><h3>Administrator</h3><p>Full Platform Access</p></div><ul><li>Manage every account</li><li>Moderate platform content</li><li>Control system settings</li></ul><button type="button" data-placeholder-action="Review Administrator Permissions">Review permissions</button></article>
+            </div>
+        </section>
+
+        <section class="administrator-section" id="admin-settings" data-admin-section="settings" aria-labelledby="settings-title">
+            <div class="administrator-section-heading administrator-reveal"><div><p class="administrator-kicker">System settings</p><h2 id="settings-title">Quietly running well.</h2></div><p>Frontend indicators only. No live infrastructure is connected.</p></div>
+            <div class="administrator-settings-grid">
+                <article class="administrator-setting-card administrator-reveal"><span class="administrator-setting-icon"><svg viewBox="0 0 24 24"><path d="M4 18h16M6 15a6 6 0 0 1 12 0H6Zm6-6V4"/></svg></span><div><h3>Maintenance Mode</h3><p>Temporarily pause customer access.</p></div><label class="administrator-toggle"><input type="checkbox" data-setting-name="Maintenance Mode" /><i></i></label></article>
+                <article class="administrator-setting-card administrator-reveal"><span class="administrator-setting-icon"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4V5Zm0 2 8 6 8-6"/></svg></span><div><h3>Email Notifications</h3><p>Receive important platform updates.</p></div><label class="administrator-toggle"><input type="checkbox" checked data-setting-name="Email Notifications" /><i></i></label></article>
+                <article class="administrator-setting-card administrator-reveal"><span class="administrator-setting-icon administrator-setting-icon--success"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v7c0 2 4 3 8 3s8-1 8-3V5M4 12v7c0 2 4 3 8 3s8-1 8-3v-7"/></svg></span><div><h3>Database Status</h3><p>Placeholder service indicator.</p></div><span class="administrator-setting-status administrator-setting-status--success">Operational</span></article>
+                <article class="administrator-setting-card administrator-reveal"><span class="administrator-setting-icon administrator-setting-icon--success"><svg viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M5 21h14"/></svg></span><div><h3>Backup Status</h3><p>Last sample backup: Today, 02:00.</p></div><span class="administrator-setting-status administrator-setting-status--success">Current</span></article>
+                <article class="administrator-setting-card administrator-reveal"><span class="administrator-setting-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5m0 3h.01"/></svg></span><div><h3>System Version</h3><p>Campus Coffee MVC application.</p></div><span class="administrator-setting-status">v1.0.0</span></article>
+                <article class="administrator-setting-card administrator-reveal"><span class="administrator-setting-icon administrator-setting-icon--success"><svg viewBox="0 0 24 24"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v11H5V10Z"/></svg></span><div><h3>Security Status</h3><p>All sample checks are passing.</p></div><span class="administrator-setting-status administrator-setting-status--success">Secure</span></article>
+            </div>
+        </section>
+    </main>
+</div>
+
+@section Scripts {
+    <script src="~/js/administrator-dashboard.js" asp-append-version="true"></script>
+}

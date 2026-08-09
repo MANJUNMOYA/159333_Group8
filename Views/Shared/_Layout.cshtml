@@ -13,7 +13,7 @@
     <a class="skip-link" href="#main-content">Skip to content</a>
     <div class="announcement-bar">
         <p>Fresh coffee, honest food, right here on campus.</p>
-        <a asp-area="" asp-controller="Home" asp-action="Index" asp-fragment="catering">Planning an event? <span>Let us help</span></a>
+        <a asp-area="" asp-controller="Home" asp-action="Catering">Planning an event? <span>Let us help</span></a>
     </div>
     <header class="site-header" data-header>
         <nav class="navbar navbar-expand-lg site-nav" aria-label="Primary navigation">
@@ -31,8 +31,8 @@
                     <ul class="navbar-nav site-nav__links">
                         <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="Home" asp-action="Menu">Menu</a></li>
                         <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="Home" asp-action="ShoppingCart">Cart</a></li>
-                        <li class="nav-item"><a class="nav-link" href="@Url.Action("Index", "Home")#catering">Catering</a></li>
-                        <li class="nav-item"><a class="nav-link" href="@Url.Action("Index", "Home")#story">Our story</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="Home" asp-action="Catering">Catering</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-area="" asp-controller="Home" asp-action="OurStory">Our story</a></li>
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>
@@ -58,8 +58,8 @@
             <div>
                 <p class="site-footer__label">Explore</p>
                 <a asp-area="" asp-controller="Home" asp-action="Menu">Menu</a>
-                <a href="@Url.Action("Index", "Home")#catering">Catering</a>
-                <a href="@Url.Action("Index", "Home")#story">Our story</a>
+                <a asp-area="" asp-controller="Home" asp-action="Catering">Catering</a>
+                <a asp-area="" asp-controller="Home" asp-action="OurStory">Our story</a>
             </div>
             <div>
                 <p class="site-footer__label">Your account</p>

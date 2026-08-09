@@ -1,0 +1,138 @@
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<section class="menu-hero">
+    <div class="menu-hero__shade" aria-hidden="true"></div>
+    <div class="site-shell menu-hero__content reveal">
+        <p class="eyebrow">Campus Coffee Checkout</p>
+        <h1>Almost there.</h1>
+        <p class="menu-hero__copy">
+            Confirm your details and choose how you would like to receive your order.
+        </p>
+    </div>
+</section>
+
+<section class="menu-catalog" data-checkout data-order-confirmation-url="@Url.Action("OrderConfirmation", "Home")">
+    <div class="site-shell">
+        <div class="row g-4 g-xl-5 align-items-start">
+            <div class="col-xl-8">
+                <div class="product-card reveal">
+                    <div class="product-card__body">
+                        <div class="product-card__heading mb-4">
+                            <p class="eyebrow">Your Details</p>
+                            <h2>Customer Information</h2>
+                        </div>
+
+                        <form id="checkout-form" data-checkout-form>
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label cart-item__label" for="customerName">Name</label>
+                                    <input class="form-control form-control-lg rounded-0" id="customerName" name="name" type="text"
+                                           placeholder="Alex Taylor" autocomplete="name" required />
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label cart-item__label" for="customerEmail">Email</label>
+                                    <input class="form-control form-control-lg rounded-0" id="customerEmail" name="email" type="email"
+                                           placeholder="alex@example.com" autocomplete="email" required />
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label cart-item__label" for="customerPhone">Phone Number</label>
+                                    <input class="form-control form-control-lg rounded-0" id="customerPhone" name="phone" type="tel"
+                                           placeholder="021 234 5678" autocomplete="tel" required />
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label cart-item__label" for="pickupTime">Pickup Time</label>
+                                    <select class="form-select form-select-lg rounded-0" id="pickupTime" name="pickupTime" required>
+                                        <option selected>Today, 10:30 AM</option>
+                                        <option>Today, 11:00 AM</option>
+                                        <option>Today, 11:30 AM</option>
+                                        <option>Today, 12:00 PM</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-12">
+                                    <fieldset>
+                                        <legend class="cart-item__label mb-3">Pickup or Delivery</legend>
+                                        <div class="d-flex flex-column flex-sm-row gap-3">
+                                            <label class="menu-filter is-active d-flex align-items-center justify-content-center gap-2">
+                                                <input class="form-check-input m-0" type="radio" name="orderMethod" value="Pickup" checked />
+                                                Pickup
+                                            </label>
+                                            <label class="menu-filter d-flex align-items-center justify-content-center gap-2">
+                                                <input class="form-check-input m-0" type="radio" name="orderMethod" value="Delivery" />
+                                                Delivery
+                                            </label>
+                                        </div>
+                                    </fieldset>
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label cart-item__label" for="specialNotes">Special Notes</label>
+                                    <textarea class="form-control rounded-0" id="specialNotes" name="specialNotes" rows="5"
+                                              placeholder="Add dietary requests, delivery instructions, or anything else we should know."></textarea>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-4">
+                <aside class="product-card reveal">
+                    <div class="product-card__body">
+                        <div class="product-card__heading">
+                            <p class="eyebrow">Your Order</p>
+                            <h2>Order Summary</h2>
+                        </div>
+
+                        <div data-checkout-items hidden></div>
+
+                        <div class="menu-note mt-4" data-checkout-empty hidden>
+                            <strong>Your cart is empty.</strong>
+                            <span>Add something from the menu when you are ready.</span>
+                        </div>
+
+                        <template data-checkout-item-template>
+                            <div class="menu-note mt-0" data-checkout-item>
+                                <div>
+                                    <strong class="d-block" data-checkout-name></strong>
+                                    <span data-checkout-details></span>
+                                </div>
+                                <div class="text-xl-end">
+                                    <span class="cart-item__label d-block">Subtotal</span>
+                                    <strong class="d-block" data-checkout-item-subtotal></strong>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div class="pt-4">
+                            <div class="d-flex justify-content-between mb-3">
+                                <span>Subtotal</span>
+                                <strong data-checkout-subtotal>$0.00</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span>Delivery Fee</span>
+                                <strong data-checkout-delivery>$0.00</strong>
+                            </div>
+                            <hr />
+                            <div class="d-flex justify-content-between align-items-center fs-5">
+                                <strong>Total</strong>
+                                <strong data-checkout-total>$0.00</strong>
+                            </div>
+                        </div>
+
+                        <button class="button product-card__button w-100 mt-4" type="submit" form="checkout-form" data-place-order disabled>Place Order</button>
+                        <p class="visually-hidden" data-order-status aria-live="polite"></p>
+                        <a class="text-link justify-content-center mt-4" asp-controller="Home" asp-action="Menu">
+                            Continue Shopping <span aria-hidden="true">→</span>
+                        </a>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+</section>

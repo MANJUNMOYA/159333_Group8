@@ -2,7 +2,12 @@
     ViewData["Title"] = "Campus Flat White";
 }
 
-<section class="catering" aria-labelledby="product-title" data-product-details>
+<section class="catering" aria-labelledby="product-title" data-product-details
+         data-product-id="campus-flat-white"
+         data-product-name="Campus Flat White"
+         data-product-price="4.80"
+         data-product-image="@Url.Content("~/images/menu/Campus Flat White.jpg")"
+         data-product-category="Coffee">
     <div class="catering__image"
          style="background-image: url('@Url.Content("~/images/menu/Campus Flat White.jpg")');"
          role="img"
@@ -76,6 +81,16 @@
             });
 
             addButton.addEventListener('click', () => {
+                window.campusCart.addItem({
+                    id: product.dataset.productId,
+                    name: product.dataset.productName,
+                    price: Number(product.dataset.productPrice),
+                    quantity,
+                    image: product.dataset.productImage,
+                    description: product.querySelector('#product-title + p').textContent.trim(),
+                    category: product.dataset.productCategory
+                });
+
                 window.clearTimeout(resetTimer);
                 addButton.textContent = 'Added';
                 status.textContent = `${quantity} × Campus Flat White added to cart.`;
