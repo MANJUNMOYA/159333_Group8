@@ -25,6 +25,7 @@
                         </div>
 
                         <form id="checkout-form" data-checkout-form>
+                            @Html.AntiForgeryToken()
                             <div class="row g-4">
                                 <div class="col-md-6">
                                     <label class="form-label cart-item__label" for="customerName">Name</label>
@@ -126,7 +127,7 @@
                         </div>
 
                         <button class="button product-card__button w-100 mt-4" type="submit" form="checkout-form" data-place-order disabled>Place Order</button>
-                        <p class="visually-hidden" data-order-status aria-live="polite"></p>
+                        <p class="auth-status mt-3" data-order-status aria-live="polite"></p>
                         <a class="text-link justify-content-center mt-4" asp-controller="Home" asp-action="Menu">
                             Continue Shopping <span aria-hidden="true">→</span>
                         </a>

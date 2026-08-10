@@ -17,23 +17,24 @@
                 <div class="product-card reveal">
                     <div class="product-card__body">
                         <div class="product-card__heading mb-4"><h2>Merchant Registration</h2></div>
-                        <form data-placeholder-auth data-auth-label="Merchant registration">
+                        <form data-merchant-register data-application-url="@Url.Action("MerchantApplication", "Home")">
+                            @Html.AntiForgeryToken()
                             <div class="row g-4">
                                 <div class="col-md-6">
                                     <label class="form-label cart-item__label" for="merchant-register-business">Business Name</label>
-                                    <input class="form-control form-control-lg rounded-0" id="merchant-register-business" type="text" autocomplete="organization" placeholder="Business name" required />
+                                    <input class="form-control form-control-lg rounded-0" id="merchant-register-business" name="businessName" type="text" autocomplete="organization" placeholder="Business name" required />
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label cart-item__label" for="merchant-register-contact">Contact Name</label>
-                                    <input class="form-control form-control-lg rounded-0" id="merchant-register-contact" type="text" autocomplete="name" placeholder="Contact person" required />
+                                    <input class="form-control form-control-lg rounded-0" id="merchant-register-contact" name="contactName" type="text" autocomplete="name" placeholder="Contact person" required />
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label cart-item__label" for="merchant-register-email">Business Email</label>
-                                    <input class="form-control form-control-lg rounded-0" id="merchant-register-email" type="email" autocomplete="email" placeholder="merchant@example.com" required />
+                                    <input class="form-control form-control-lg rounded-0" id="merchant-register-email" name="email" type="email" autocomplete="email" placeholder="merchant@example.com" required />
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label cart-item__label" for="merchant-register-password">Password</label>
-                                    <input class="form-control form-control-lg rounded-0" id="merchant-register-password" type="password" autocomplete="new-password" placeholder="Create a password" required />
+                                    <input class="form-control form-control-lg rounded-0" id="merchant-register-password" name="password" type="password" autocomplete="new-password" placeholder="Create a password" required />
                                 </div>
                             </div>
                             <button class="button product-card__button w-100 mt-4" type="submit">Create Merchant Account</button>
@@ -46,3 +47,7 @@
         </div>
     </div>
 </section>
+
+@section Scripts {
+    <script src="~/js/portal-auth.js" asp-append-version="true"></script>
+}

@@ -1,9 +1,124 @@
+@model CampusCoffeeSystem.Models.MerchantDashboardViewModel
+@using CampusCoffeeSystem.Models
 @{
     ViewData["Title"] = "Merchant Dashboard";
     Layout = "_MerchantDashboardLayout";
+
+    string OrderStatusClass(string status) => status switch
+    {
+        OrderStatuses.Preparing => "preparing",
+        OrderStatuses.Ready => "ready",
+        OrderStatuses.Completed => "completed",
+        OrderStatuses.Cancelled => "cancelled",
+        _ => "pending"
+    };
+
+    string CustomerInitials(string name)
+    {
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length == 0
+            ? "C"
+            : string.Concat(parts.Take(2).Select(part => char.ToUpperInvariant(part[0])));
+    }
+
+    var merchantInitial = string.IsNullOrWhiteSpace(Model.DisplayName)
+        ? "M"
+        : char.ToUpperInvariant(Model.DisplayName[0]).ToString();
+    var activeOrders = Model.Orders
+        .Where(order => order.Status != OrderStatuses.Completed && order.Status != OrderStatuses.Cancelled)
+        .ToList();
+    var lowStockProducts = Model.Products
+        .Where(product => product.StockQuantity <= 8)
+        .OrderBy(product => product.StockQuantity)
+        .ThenBy(product => product.SortOrder)
+        .ToList();
+    var featuredProducts = Model.Products
+        .OrderBy(product => product.StockQuantity)
+        .ThenBy(product => product.SortOrder)
+        .Take(3)
+        .ToList();
+    var maximumStock = Math.Max(1, Model.Products.Select(product => product.StockQuantity).DefaultIfEmpty(1).Max());
+
+    var localToday = DateTime.Today;
+    var chartDates = Enumerable.Range(0, 7).Select(index => localToday.AddDays(index - 6)).ToArray();
+    var chartStartDate = chartDates[0];
+    var chartEndDate = localToday.AddDays(1);
+    var sevenDayOrders = Model.Orders
+        .Where(order =>
+        {
+            var localPlacedAt = order.PlacedAtUtc.ToLocalTime();
+            return localPlacedAt.Date >= chartStartDate && localPlacedAt.Date < chartEndDate;
+        })
+        .ToList();
+    var sevenDayTradingOrders = sevenDayOrders
+        .Where(order => order.Status != OrderStatuses.Cancelled)
+        .ToList();
+    var sevenDayRevenue = sevenDayTradingOrders.Sum(order => order.Total);
+    var averageOrderValue = sevenDayTradingOrders.Count == 0
+        ? 0m
+        : sevenDayRevenue / sevenDayTradingOrders.Count;
+    var dailyRevenue = chartDates
+        .Select(day => Model.Orders
+            .Where(order => order.PlacedAtUtc.ToLocalTime().Date == day && order.Status != OrderStatuses.Cancelled)
+            .Sum(order => order.Total))
+        .ToArray();
+    var chartMaximum = Math.Max(1m, dailyRevenue.DefaultIfEmpty(0m).Max());
+    var chartPointValues = dailyRevenue
+        .Select((value, index) => new
+        {
+            X = 20 + (index * 120),
+            Y = 250d - ((double)(value / chartMaximum) * 220d)
+        })
+        .ToArray();
+    var chartPoints = string.Join(" ", chartPointValues.Select(point =>
+        $"{point.X},{point.Y.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}"));
+    var chartAreaPoints = $"20,250 {chartPoints} 740,250";
+
+    var coffeeProductIds = Model.Products
+        .Where(product => string.Equals(product.Category, "coffee", StringComparison.OrdinalIgnoreCase))
+        .Select(product => product.Id)
+        .ToHashSet();
+    var foodProductIds = Model.Products
+        .Where(product => string.Equals(product.Category, "food", StringComparison.OrdinalIgnoreCase))
+        .Select(product => product.Id)
+        .ToHashSet();
+    var rankedSales = Model.Orders
+        .Where(order => order.Status != OrderStatuses.Cancelled)
+        .SelectMany(order => order.Items)
+        .GroupBy(item => new { item.ProductId, item.ProductName })
+        .Select(group => new
+        {
+            group.Key.ProductId,
+            group.Key.ProductName,
+            Quantity = group.Sum(item => item.Quantity)
+        })
+        .OrderByDescending(item => item.Quantity)
+        .ThenBy(item => item.ProductName)
+        .ToList();
+    var topDrinks = rankedSales.Where(item => coffeeProductIds.Contains(item.ProductId)).Take(5).ToList();
+    var topFood = rankedSales.Where(item => foodProductIds.Contains(item.ProductId)).Take(5).ToList();
+
+    var completedOrderCount = Model.Orders.Count(order => order.Status == OrderStatuses.Completed);
+    var completionRate = Model.Orders.Count == 0
+        ? 0
+        : (int)Math.Round((decimal)completedOrderCount / Model.Orders.Count * 100m);
+    var availabilityRate = Model.Products.Count == 0
+        ? 0
+        : (int)Math.Round((decimal)Model.Products.Count(product => product.IsActive) / Model.Products.Count * 100m);
+    var inventoryHealthRate = Model.Products.Count == 0
+        ? 0
+        : (int)Math.Round((decimal)Model.Products.Count(product => product.StockQuantity > 8) / Model.Products.Count * 100m);
+    var attentionCount = activeOrders.Count + lowStockProducts.Count;
+
+    var calendarMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    var calendarOffset = (7 + (int)calendarMonth.DayOfWeek - (int)DayOfWeek.Monday) % 7;
+    var calendarFirstDay = calendarMonth.AddDays(-calendarOffset);
+    var calendarDays = Enumerable.Range(0, 42).Select(index => calendarFirstDay.AddDays(index)).ToList();
 }
 
 <div class="merchant-dashboard" data-merchant-dashboard>
+    <form class="visually-hidden" data-dashboard-token>@Html.AntiForgeryToken()</form>
+
     <aside class="merchant-sidebar" aria-label="Merchant dashboard navigation">
         <a class="brand merchant-sidebar__brand" asp-area="" asp-controller="Home" asp-action="Portal" aria-label="Campus Coffee Access Portal">
             <span class="brand__mark" aria-hidden="true">
@@ -18,16 +133,20 @@
                 <span class="merchant-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-16v4h6V4h-6Z"/></svg></span><span>Dashboard</span>
             </button>
             <button type="button" data-dashboard-target="orders" aria-controls="merchant-orders">
-                <span class="merchant-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12l2 4v14H4V7l2-4Zm-1 5h14M9 12h6"/></svg></span><span>Orders</span><span class="merchant-nav-count">5</span>
+                <span class="merchant-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12l2 4v14H4V7l2-4Zm-1 5h14M9 12h6"/></svg></span><span>Orders</span><span class="merchant-nav-count">@activeOrders.Count</span>
             </button>
             <button type="button" data-dashboard-target="products" aria-controls="merchant-products">
                 <span class="merchant-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4V7Zm3 0V4h10v3M8 11h8M8 15h5"/></svg></span><span>Products</span>
             </button>
             <button type="button" data-dashboard-target="inventory" aria-controls="merchant-inventory">
-                <span class="merchant-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Zm0 0v10l8 4 8-4V7M12 11v10"/></svg></span><span>Inventory</span><span class="merchant-nav-dot" aria-label="3 low stock items"></span>
+                <span class="merchant-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Zm0 0v10l8 4 8-4V7M12 11v10"/></svg></span><span>Inventory</span>
+                @if (lowStockProducts.Count > 0)
+                {
+                    <span class="merchant-nav-dot" aria-label="@lowStockProducts.Count low stock items"></span>
+                }
             </button>
             <button type="button" data-dashboard-target="catering" aria-controls="merchant-catering">
-                <span class="merchant-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19h16M6 16a6 6 0 0 1 12 0H6Zm6-6V7M9 7h6"/></svg></span><span>Catering Requests</span><span class="merchant-nav-count">2</span>
+                <span class="merchant-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19h16M6 16a6 6 0 0 1 12 0H6Zm6-6V7M9 7h6"/></svg></span><span>Catering Requests</span>
             </button>
             <button type="button" data-dashboard-target="overview" data-scroll-target="sales-analytics" aria-controls="merchant-overview">
                 <span class="merchant-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span><span>Analytics</span>
@@ -41,8 +160,8 @@
         </nav>
 
         <div class="merchant-sidebar__profile">
-            <span class="merchant-avatar merchant-avatar--small" aria-hidden="true">M</span>
-            <div><strong>Campus Coffee</strong><span>merchant@test.com</span></div>
+            <span class="merchant-avatar merchant-avatar--small" aria-hidden="true">@merchantInitial</span>
+            <div><strong>@Model.DisplayName</strong><span>@Model.Email</span></div>
         </div>
     </aside>
 
@@ -50,7 +169,7 @@
         <header class="merchant-header">
             <div class="merchant-header__welcome">
                 <p class="merchant-kicker">Merchant workspace</p>
-                <h1>Welcome back, Merchant</h1>
+                <h1>Welcome back, @Model.DisplayName</h1>
                 <time data-current-date></time>
             </div>
             <div class="merchant-header__tools">
@@ -58,14 +177,15 @@
                     <span class="visually-hidden">Search dashboard</span>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
                     <input type="search" placeholder="Search workspace" data-dashboard-search />
-                    <kbd>⌘ K</kbd>
+                    <kbd>Ctrl K</kbd>
                 </label>
-                <button class="merchant-icon-button" type="button" aria-label="View notifications" data-notification-button>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/></svg><span></span>
+                <button class="merchant-icon-button" type="button" aria-label="View current database notifications" data-notification-button>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/></svg>
+                    @if (attentionCount > 0) { <span></span> }
                 </button>
                 <button class="merchant-profile-button" type="button" data-dashboard-target="settings" aria-label="Open merchant settings">
-                    <span class="merchant-avatar" aria-hidden="true">M</span>
-                    <span><strong>Merchant</strong><small>Campus Coffee</small></span>
+                    <span class="merchant-avatar" aria-hidden="true">@merchantInitial</span>
+                    <span><strong>@Model.DisplayName</strong><small>@Model.Email</small></span>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"/></svg>
                 </button>
             </div>
@@ -76,54 +196,65 @@
         <section class="merchant-panel is-active" id="merchant-overview" data-dashboard-panel="overview" aria-labelledby="overview-title">
             <div class="merchant-section-heading merchant-reveal">
                 <div><p class="merchant-kicker">Business overview</p><h2 id="overview-title">Today at a glance.</h2></div>
-                <p>A calm view of everything moving through Campus Coffee today.</p>
+                <p>Live orders, menu availability and stock from the Campus Coffee database.</p>
             </div>
 
             <div class="merchant-summary-grid">
                 <article class="merchant-summary-card merchant-reveal">
-                    <div class="merchant-summary-card__top"><span>Today’s Orders</span><span class="merchant-trend merchant-trend--up">↗ 12%</span></div>
-                    <strong data-count-up="18">0</strong><small>Across coffee, food and catering</small>
+                    <div class="merchant-summary-card__top"><span>Today’s Orders</span><span class="merchant-trend">SQL Server</span></div>
+                    <strong data-count-up="@Model.TodayOrderCount">@Model.TodayOrderCount</strong><small>Orders placed today</small>
                     <span class="merchant-summary-card__mark">01</span>
                 </article>
                 <article class="merchant-summary-card merchant-reveal">
-                    <div class="merchant-summary-card__top"><span>Pending Orders</span><span class="merchant-trend">5 active</span></div>
-                    <strong data-count-up="5">0</strong><small>Average wait time: 6 minutes</small>
+                    <div class="merchant-summary-card__top"><span>Active Orders</span><span class="merchant-trend">@activeOrders.Count in queue</span></div>
+                    <strong data-count-up="@activeOrders.Count">@activeOrders.Count</strong><small>Not completed or cancelled</small>
                     <span class="merchant-summary-card__mark">02</span>
                 </article>
                 <article class="merchant-summary-card merchant-summary-card--espresso merchant-reveal">
-                    <div class="merchant-summary-card__top"><span>Today’s Revenue</span><span class="merchant-trend merchant-trend--light">↗ 8.4%</span></div>
-                    <strong><span>$</span><span data-count-up="468">0</span></strong><small>Tracking above weekday average</small>
+                    <div class="merchant-summary-card__top"><span>Today’s Revenue</span><span class="merchant-trend merchant-trend--light">Live total</span></div>
+                    <strong>@Model.TodayRevenue.ToString("C")</strong><small>Excluding cancelled orders</small>
                     <span class="merchant-summary-card__mark">03</span>
                 </article>
                 <article class="merchant-summary-card merchant-reveal">
                     <div class="merchant-summary-card__top"><span>Low Stock Items</span><span class="merchant-trend merchant-trend--warn">Needs care</span></div>
-                    <strong data-count-up="3">0</strong><small>Restock before tomorrow morning</small>
+                    <strong data-count-up="@lowStockProducts.Count">@lowStockProducts.Count</strong><small>Eight units or fewer</small>
                     <span class="merchant-summary-card__mark">04</span>
                 </article>
             </div>
 
             <section class="merchant-analytics-card merchant-reveal" id="sales-analytics" aria-labelledby="analytics-title">
                 <div class="merchant-card-heading">
-                    <div><p class="merchant-kicker">Sales analytics</p><h2 id="analytics-title">A strong week brewing.</h2></div>
-                    <div class="merchant-period-switch" aria-label="Chart period"><button class="is-active" type="button">7 days</button><button type="button">30 days</button><button type="button">90 days</button></div>
+                    <div><p class="merchant-kicker">Sales analytics</p><h2 id="analytics-title">The last seven database days.</h2></div>
+                    <div class="merchant-period-switch" aria-label="Chart period">
+                        <button class="is-active" type="button">7 days</button>
+                        <button type="button" disabled title="A wider database query is not part of the current view model.">30 days</button>
+                        <button type="button" disabled title="A wider database query is not part of the current view model.">90 days</button>
+                    </div>
                 </div>
                 <div class="merchant-analytics-layout">
-                    <div class="merchant-chart-wrap" aria-label="Static weekly revenue line chart">
-                        <div class="merchant-chart-scale" aria-hidden="true"><span>$800</span><span>$600</span><span>$400</span><span>$200</span><span>$0</span></div>
+                    <div class="merchant-chart-wrap" aria-label="Revenue recorded in the database over the last seven days">
+                        <div class="merchant-chart-scale" aria-hidden="true"><span>@chartMaximum.ToString("C0")</span><span>@((chartMaximum * .75m).ToString("C0"))</span><span>@((chartMaximum * .5m).ToString("C0"))</span><span>@((chartMaximum * .25m).ToString("C0"))</span><span>$0</span></div>
                         <svg class="merchant-line-chart" viewBox="0 0 760 280" role="img" aria-labelledby="chart-title chart-description">
-                            <title id="chart-title">Weekly revenue</title><desc id="chart-description">Revenue rises from Monday through Sunday with its highest point on Saturday.</desc>
+                            <title id="chart-title">Seven-day revenue</title><desc id="chart-description">Daily non-cancelled order revenue calculated from the current database records.</desc>
                             <defs><linearGradient id="merchant-chart-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#a64b2a" stop-opacity=".24"/><stop offset="1" stop-color="#a64b2a" stop-opacity="0"/></linearGradient></defs>
                             <g class="merchant-chart-grid"><path d="M20 30H740M20 85H740M20 140H740M20 195H740M20 250H740"/></g>
-                            <path class="merchant-chart-area" d="M20 205 C70 195 85 185 130 188 S205 145 240 155 S310 118 350 128 S420 90 460 102 S535 72 570 82 S645 42 680 54 S720 45 740 35 L740 250 L20 250Z"/>
-                            <path class="merchant-chart-line" d="M20 205 C70 195 85 185 130 188 S205 145 240 155 S310 118 350 128 S420 90 460 102 S535 72 570 82 S645 42 680 54 S720 45 740 35"/>
-                            <g class="merchant-chart-points"><circle cx="20" cy="205" r="5"/><circle cx="130" cy="188" r="5"/><circle cx="240" cy="155" r="5"/><circle cx="350" cy="128" r="5"/><circle cx="460" cy="102" r="5"/><circle cx="570" cy="82" r="5"/><circle cx="680" cy="54" r="5"/><circle cx="740" cy="35" r="5"/></g>
+                            <polygon class="merchant-chart-area" points="@chartAreaPoints" />
+                            <polyline class="merchant-chart-line" points="@chartPoints" />
+                            <g class="merchant-chart-points">
+                                @foreach (var point in chartPointValues)
+                                {
+                                    <circle cx="@point.X" cy="@point.Y.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" r="5" />
+                                }
+                            </g>
                         </svg>
-                        <div class="merchant-chart-labels"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+                        <div class="merchant-chart-labels">
+                            @foreach (var day in chartDates) { <span>@day.ToString("ddd d")</span> }
+                        </div>
                     </div>
                     <div class="merchant-analytics-metrics">
-                        <article><span>Revenue</span><strong>$3,248</strong><small>+8.4% this week</small></article>
-                        <article><span>Orders</span><strong>126</strong><small>18 per day average</small></article>
-                        <article><span>Average Order Value</span><strong>$25.78</strong><small>+$1.40 from last week</small></article>
+                        <article><span>Revenue</span><strong>@sevenDayRevenue.ToString("C")</strong><small>Non-cancelled database orders</small></article>
+                        <article><span>Orders</span><strong>@sevenDayOrders.Count</strong><small>Placed during the seven-day window</small></article>
+                        <article><span>Average Order Value</span><strong>@averageOrderValue.ToString("C")</strong><small>Across non-cancelled orders</small></article>
                     </div>
                 </div>
             </section>
@@ -137,10 +268,22 @@
                     <table class="merchant-table merchant-table--airy">
                         <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
                         <tbody>
-                            <tr data-search-item><td><strong>#1001</strong></td><td><span class="merchant-customer"><span>EM</span>Emma</span></td><td>2 Latte</td><td><span class="merchant-badge merchant-badge--preparing">Preparing</span></td><td>09:20</td><td><button class="merchant-row-action" type="button" data-view-order="#1001">View</button></td></tr>
-                            <tr data-search-item><td><strong>#1002</strong></td><td><span class="merchant-customer"><span>JA</span>Jack</span></td><td>Flat White</td><td><span class="merchant-badge merchant-badge--ready">Ready</span></td><td>09:34</td><td><button class="merchant-row-action" type="button" data-view-order="#1002">View</button></td></tr>
-                            <tr data-search-item><td><strong>#1003</strong></td><td><span class="merchant-customer"><span>OL</span>Olivia</span></td><td>Croissant</td><td><span class="merchant-badge merchant-badge--completed">Completed</span></td><td>09:41</td><td><button class="merchant-row-action" type="button" data-view-order="#1003">View</button></td></tr>
-                            <tr data-search-item><td><strong>#1004</strong></td><td><span class="merchant-customer"><span>NO</span>Noah</span></td><td>Cold Brew + Loaf</td><td><span class="merchant-badge merchant-badge--pending">Pending</span></td><td>09:47</td><td><button class="merchant-row-action" type="button" data-view-order="#1004">View</button></td></tr>
+                            @if (Model.Orders.Count == 0)
+                            {
+                                <tr><td colspan="6">No customer orders are currently stored in the database.</td></tr>
+                            }
+                            @foreach (var order in Model.Orders.Take(4))
+                            {
+                                var itemSummary = string.Join(", ", order.Items.Select(item => $"{item.ProductName} ×{item.Quantity}"));
+                                <tr data-search-item>
+                                    <td><strong>@order.OrderNumber</strong></td>
+                                    <td><span class="merchant-customer"><span>@CustomerInitials(order.CustomerName)</span>@order.CustomerName</span></td>
+                                    <td>@itemSummary</td>
+                                    <td><span class="merchant-badge merchant-badge--@OrderStatusClass(order.Status)">@order.Status</span></td>
+                                    <td>@order.PlacedAtUtc.ToLocalTime().ToString("HH:mm")</td>
+                                    <td><button class="merchant-row-action" type="button" data-view-order="@order.Id">View</button></td>
+                                </tr>
+                            }
                         </tbody>
                     </table>
                 </div>
@@ -151,38 +294,97 @@
                     <div><p class="merchant-kicker">Inventory overview</p><h2 id="inventory-overview-title">Stock, thoughtfully managed.</h2></div>
                     <button class="merchant-text-button" type="button" data-dashboard-link="inventory">Open inventory <span>↗</span></button>
                 </div>
-                <div class="merchant-product-grid">
-                    <article class="merchant-product-card merchant-reveal" data-featured-stock="28">
-                        <div class="merchant-product-card__image"><img src="~/images/menu/Campus Flat White.jpg" alt="Campus Flat White" /></div>
-                        <div class="merchant-product-card__body"><div class="merchant-product-card__heading"><div><span>Coffee</span><h3>Campus Flat White</h3></div><span class="merchant-badge merchant-badge--stock" data-featured-status>Healthy</span></div><div class="merchant-stock-line"><span><strong data-featured-count>28</strong> left</span><span>70%</span></div><div class="merchant-progress"><span style="width:70%"></span></div><div class="merchant-card-actions"><button type="button" data-featured-action="edit">Edit</button><button type="button" data-featured-action="restock">Restock</button><button type="button" data-featured-action="view">View</button></div></div>
-                    </article>
-                    <article class="merchant-product-card merchant-reveal" data-featured-stock="8">
-                        <div class="merchant-product-card__image"><img src="~/images/menu/Vanilla Cold Brew.jpg" alt="Vanilla Cold Brew" /></div>
-                        <div class="merchant-product-card__body"><div class="merchant-product-card__heading"><div><span>Cold coffee</span><h3>Vanilla Cold Brew</h3></div><span class="merchant-badge merchant-badge--low" data-featured-status>Almost Out</span></div><div class="merchant-stock-line"><span><strong data-featured-count>8</strong> left</span><span>20%</span></div><div class="merchant-progress merchant-progress--low"><span style="width:20%"></span></div><div class="merchant-card-actions"><button type="button" data-featured-action="edit">Edit</button><button type="button" data-featured-action="restock">Restock</button><button type="button" data-featured-action="view">View</button></div></div>
-                    </article>
-                    <article class="merchant-product-card merchant-reveal" data-featured-stock="3">
-                        <div class="merchant-product-card__image"><img src="~/images/menu/Roast Vegetable Focaccia.jpg" alt="Roast Vegetable Focaccia" /></div>
-                        <div class="merchant-product-card__body"><div class="merchant-product-card__heading"><div><span>Fresh food</span><h3>Roast Vegetable Focaccia</h3></div><span class="merchant-badge merchant-badge--critical" data-featured-status>Restock Needed</span></div><div class="merchant-stock-line"><span><strong data-featured-count>3</strong> left</span><span>8%</span></div><div class="merchant-progress merchant-progress--critical"><span style="width:8%"></span></div><div class="merchant-card-actions"><button type="button" data-featured-action="edit">Edit</button><button type="button" data-featured-action="restock">Restock</button><button type="button" data-featured-action="view">View</button></div></div>
-                    </article>
-                </div>
+                @if (featuredProducts.Count == 0)
+                {
+                    <div class="merchant-content-card merchant-reveal"><p>No products are currently stored in the database.</p></div>
+                }
+                else
+                {
+                    <div class="merchant-product-grid">
+                        @foreach (var product in featuredProducts)
+                        {
+                            var stockClass = product.StockQuantity == 0 ? "critical" : product.StockQuantity <= 8 ? "low" : "stock";
+                            var stockLabel = product.StockQuantity == 0 ? "Sold Out" : product.StockQuantity <= 8 ? "Almost Out" : "Healthy";
+                            var stockProgress = Math.Min(100, (int)Math.Round((decimal)product.StockQuantity / maximumStock * 100m));
+                            var imagePath = string.IsNullOrWhiteSpace(product.ImagePath) ? "/images/menu/Campus Flat White.jpg" : product.ImagePath;
+                            <article class="merchant-product-card merchant-reveal" data-featured-product data-product-id="@product.Id" data-featured-stock="@product.StockQuantity">
+                                <div class="merchant-product-card__image"><img src="@imagePath" alt="@product.Name" /></div>
+                                <div class="merchant-product-card__body">
+                                    <div class="merchant-product-card__heading"><div><span>@product.DisplayCategory</span><h3>@product.Name</h3></div><span class="merchant-badge merchant-badge--@stockClass" data-featured-status>@stockLabel</span></div>
+                                    <div class="merchant-stock-line"><span><strong data-featured-count>@product.StockQuantity</strong> left</span><span>Database stock</span></div>
+                                    <div class="merchant-progress merchant-progress--@stockClass"><span style="width:@stockProgress%"></span></div>
+                                    <div class="merchant-card-actions">
+                                        <button type="button" data-featured-action="manage">Manage</button>
+                                        <button type="button" data-featured-action="restock">Restock +10</button>
+                                        <button type="button" data-featured-action="view" data-view-url="@Url.Action("ProductDetails", "Home", new { id = product.Id })" @(product.IsActive ? null : "disabled")>View</button>
+                                    </div>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
             </section>
 
             <div class="merchant-split-grid">
                 <section class="merchant-content-card merchant-reveal" aria-labelledby="best-sellers-title">
-                    <div class="merchant-card-heading merchant-card-heading--bordered"><div><p class="merchant-kicker">Today’s best sellers</p><h2 id="best-sellers-title">Campus favourites.</h2></div></div>
+                    <div class="merchant-card-heading merchant-card-heading--bordered"><div><p class="merchant-kicker">Database best sellers</p><h2 id="best-sellers-title">Campus favourites.</h2></div></div>
                     <div class="merchant-ranking-columns">
-                        <div><h3>Top drinks</h3><ol class="merchant-ranking-list"><li><span class="merchant-rank">1</span><span><strong>Latte</strong><small>56 sold</small></span><span class="merchant-rank-bar"><i style="width:100%"></i></span></li><li><span class="merchant-rank">2</span><span><strong>Flat White</strong><small>42 sold</small></span><span class="merchant-rank-bar"><i style="width:75%"></i></span></li><li><span class="merchant-rank">3</span><span><strong>Cold Brew</strong><small>35 sold</small></span><span class="merchant-rank-bar"><i style="width:63%"></i></span></li><li><span class="merchant-rank">4</span><span><strong>Long Black</strong><small>28 sold</small></span><span class="merchant-rank-bar"><i style="width:50%"></i></span></li><li><span class="merchant-rank">5</span><span><strong>Mocha</strong><small>22 sold</small></span><span class="merchant-rank-bar"><i style="width:39%"></i></span></li></ol></div>
-                        <div><h3>Top food</h3><ol class="merchant-ranking-list"><li><span class="merchant-rank">1</span><span><strong>Butter Croissant</strong><small>38 sold</small></span><span class="merchant-rank-bar"><i style="width:100%"></i></span></li><li><span class="merchant-rank">2</span><span><strong>Banana Loaf</strong><small>31 sold</small></span><span class="merchant-rank-bar"><i style="width:82%"></i></span></li><li><span class="merchant-rank">3</span><span><strong>Focaccia</strong><small>25 sold</small></span><span class="merchant-rank-bar"><i style="width:66%"></i></span></li><li><span class="merchant-rank">4</span><span><strong>Garden Salad</strong><small>19 sold</small></span><span class="merchant-rank-bar"><i style="width:50%"></i></span></li><li><span class="merchant-rank">5</span><span><strong>Egg Brioche</strong><small>16 sold</small></span><span class="merchant-rank-bar"><i style="width:42%"></i></span></li></ol></div>
+                        <div>
+                            <h3>Top drinks</h3>
+                            @if (topDrinks.Count == 0)
+                            {
+                                <p>No drink sales are stored yet.</p>
+                            }
+                            else
+                            {
+                                var maximumDrinkSales = topDrinks.Max(item => item.Quantity);
+                                <ol class="merchant-ranking-list">
+                                    @for (var index = 0; index < topDrinks.Count; index++)
+                                    {
+                                        var item = topDrinks[index];
+                                        var width = (int)Math.Round((decimal)item.Quantity / maximumDrinkSales * 100m);
+                                        <li><span class="merchant-rank">@(index + 1)</span><span><strong>@item.ProductName</strong><small>@item.Quantity sold</small></span><span class="merchant-rank-bar"><i style="width:@width%"></i></span></li>
+                                    }
+                                </ol>
+                            }
+                        </div>
+                        <div>
+                            <h3>Top food</h3>
+                            @if (topFood.Count == 0)
+                            {
+                                <p>No food sales are stored yet.</p>
+                            }
+                            else
+                            {
+                                var maximumFoodSales = topFood.Max(item => item.Quantity);
+                                <ol class="merchant-ranking-list">
+                                    @for (var index = 0; index < topFood.Count; index++)
+                                    {
+                                        var item = topFood[index];
+                                        var width = (int)Math.Round((decimal)item.Quantity / maximumFoodSales * 100m);
+                                        <li><span class="merchant-rank">@(index + 1)</span><span><strong>@item.ProductName</strong><small>@item.Quantity sold</small></span><span class="merchant-rank-bar"><i style="width:@width%"></i></span></li>
+                                    }
+                                </ol>
+                            }
+                        </div>
                     </div>
                 </section>
 
                 <section class="merchant-content-card merchant-reveal" id="merchant-notifications" aria-labelledby="notifications-title">
-                    <div class="merchant-card-heading merchant-card-heading--bordered"><div><p class="merchant-kicker">Notifications</p><h2 id="notifications-title">Needs your attention.</h2></div><span class="merchant-unread-count">4 new</span></div>
+                    <div class="merchant-card-heading merchant-card-heading--bordered"><div><p class="merchant-kicker">Notifications</p><h2 id="notifications-title">Needs your attention.</h2></div><span class="merchant-unread-count">@attentionCount current</span></div>
                     <div class="merchant-notification-list">
-                        <article><span class="merchant-notification-icon merchant-notification-icon--warning"><svg viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3Zm0 6v5m0 3v1"/></svg></span><div><strong>Low stock warning</strong><p>Roast Vegetable Focaccia has only 3 portions left.</p><time>8 minutes ago</time></div></article>
-                        <article><span class="merchant-notification-icon merchant-notification-icon--coffee"><svg viewBox="0 0 24 24"><path d="M4 8h13v6a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6V8Zm13 2h2a3 3 0 0 1 0 6h-2M8 4v2m4-2v2"/></svg></span><div><strong>New catering request</strong><p>Faculty Planning Day requested service for 35 guests.</p><time>21 minutes ago</time></div></article>
-                        <article><span class="merchant-notification-icon merchant-notification-icon--success"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg></span><div><strong>Order completed</strong><p>Order #0998 was collected successfully.</p><time>34 minutes ago</time></div></article>
-                        <article><span class="merchant-notification-icon merchant-notification-icon--feedback"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 4V5Zm4 5h8m-8 3h5"/></svg></span><div><strong>Customer feedback received</strong><p>“The flat white was perfect today.”</p><time>1 hour ago</time></div></article>
+                        @if (attentionCount == 0)
+                        {
+                            <p>There are no active order or low-stock notifications in the database.</p>
+                        }
+                        @foreach (var product in lowStockProducts.Take(2))
+                        {
+                            <article><span class="merchant-notification-icon merchant-notification-icon--warning"><svg viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3Zm0 6v5m0 3v1"/></svg></span><div><strong>Low stock warning</strong><p>@product.Name has @product.StockQuantity unit@(product.StockQuantity == 1 ? "" : "s") remaining.</p><time>Current database stock</time></div></article>
+                        }
+                        @foreach (var order in activeOrders.Take(2))
+                        {
+                            <article><span class="merchant-notification-icon merchant-notification-icon--coffee"><svg viewBox="0 0 24 24"><path d="M4 8h13v6a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6V8Zm13 2h2a3 3 0 0 1 0 6h-2M8 4v2m4-2v2"/></svg></span><div><strong>@order.OrderNumber is @order.Status.ToLowerInvariant()</strong><p>@order.CustomerName · @order.Items.Sum(item => item.Quantity) item(s) · @order.Total.ToString("C")</p><time>@order.PlacedAtUtc.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</time></div></article>
+                        }
                     </div>
                 </section>
             </div>
@@ -190,75 +392,118 @@
             <section class="merchant-dashboard-section" aria-labelledby="quick-actions-title">
                 <div class="merchant-section-heading merchant-reveal"><div><p class="merchant-kicker">Quick actions</p><h2 id="quick-actions-title">Move the day forward.</h2></div></div>
                 <div class="merchant-quick-actions">
-                    <button type="button" data-dashboard-link="products"><span>+</span><strong>Add Product</strong></button>
+                    <button type="button" data-dashboard-link="products" data-trigger-add-product><span>+</span><strong>Add Product</strong></button>
                     <button type="button" data-dashboard-link="inventory"><span>↗</span><strong>Receive Stock</strong></button>
-                    <button type="button" data-dashboard-link="catering"><span>✓</span><strong>Accept Catering</strong></button>
-                    <button type="button" data-dashboard-target="overview" data-scroll-target="sales-analytics"><span>⌁</span><strong>View Reports</strong></button>
-                    <button type="button" data-generate-report><span>↓</span><strong>Generate Daily Report</strong></button>
+                    <button type="button" data-dashboard-link="orders"><span>✓</span><strong>Process Orders</strong></button>
+                    <button type="button" data-dashboard-target="overview" data-scroll-target="sales-analytics"><span>⌁</span><strong>View Analytics</strong></button>
+                    <button type="button" data-refresh-dashboard><span>↻</span><strong>Refresh Database View</strong></button>
                 </div>
             </section>
 
             <div class="merchant-split-grid merchant-split-grid--lower">
                 <section class="merchant-content-card merchant-reveal" aria-labelledby="calendar-title">
-                    <div class="merchant-card-heading merchant-card-heading--bordered"><div><p class="merchant-kicker">Calendar</p><h2 id="calendar-title">August 2026</h2></div><div class="merchant-calendar-controls"><button type="button" aria-label="Previous month">←</button><button type="button" aria-label="Next month">→</button></div></div>
-                    <div class="merchant-calendar"><div class="merchant-calendar__weekdays"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div><div class="merchant-calendar__days"><span class="is-muted">27</span><span class="is-muted">28</span><span class="is-muted">29</span><span class="is-muted">30</span><span class="is-muted">31</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span class="is-today">8</span><span>9</span><span>10</span><span class="has-booking">11</span><span>12</span><span>13</span><span class="has-booking">14</span><span>15</span><span>16</span><span>17</span><span class="has-booking">18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span><span class="has-booking">25</span><span>26</span><span>27</span><span>28</span><span>29</span><span>30</span></div></div>
-                    <div class="merchant-booking"><span>11:30</span><div><strong>Research Showcase</strong><small>80 guests · Atrium</small></div><span class="merchant-badge merchant-badge--accepted">Confirmed</span></div>
+                    <div class="merchant-card-heading merchant-card-heading--bordered"><div><p class="merchant-kicker">Catering calendar</p><h2 id="calendar-title">@calendarMonth.ToString("MMMM yyyy")</h2></div><div class="merchant-calendar-controls"><button type="button" aria-label="Previous month" disabled>←</button><button type="button" aria-label="Next month" disabled>→</button></div></div>
+                    <div class="merchant-calendar"><div class="merchant-calendar__weekdays"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div><div class="merchant-calendar__days">
+                        @foreach (var day in calendarDays)
+                        {
+                            var dayClass = day.Month != calendarMonth.Month ? "is-muted" : day.Date == DateTime.Today ? "is-today" : string.Empty;
+                            <span class="@dayClass">@day.Day</span>
+                        }
+                    </div></div>
+                    <div class="merchant-booking"><span>—</span><div><strong>No catering bookings</strong><small>A catering request table has not been added to the database yet.</small></div><span class="merchant-badge merchant-badge--pending">Empty</span></div>
                 </section>
 
                 <section class="merchant-content-card merchant-reveal" aria-labelledby="performance-title">
-                    <div class="merchant-card-heading merchant-card-heading--bordered"><div><p class="merchant-kicker">Performance</p><h2 id="performance-title">The details matter.</h2></div></div>
+                    <div class="merchant-card-heading merchant-card-heading--bordered"><div><p class="merchant-kicker">Performance</p><h2 id="performance-title">Database health at a glance.</h2></div></div>
                     <div class="merchant-performance-grid">
-                        <article><div class="merchant-ring" style="--progress:97"><span>97<small>%</small></span></div><strong>Customer Satisfaction</strong><small>Based on recent feedback</small></article>
-                        <article><div class="merchant-ring" style="--progress:94"><span>94<small>%</small></span></div><strong>Orders Completed</strong><small>Within target time</small></article>
-                        <article><div class="merchant-ring merchant-ring--sage" style="--progress:82"><span>82<small>%</small></span></div><strong>Inventory Health</strong><small>Three items need care</small></article>
+                        <article><div class="merchant-ring" style="--progress:@completionRate"><span>@completionRate<small>%</small></span></div><strong>Orders Completed</strong><small>@completedOrderCount of @Model.Orders.Count stored orders</small></article>
+                        <article><div class="merchant-ring" style="--progress:@availabilityRate"><span>@availabilityRate<small>%</small></span></div><strong>Menu Availability</strong><small>@Model.Products.Count(product => product.IsActive) of @Model.Products.Count products active</small></article>
+                        <article><div class="merchant-ring merchant-ring--sage" style="--progress:@inventoryHealthRate"><span>@inventoryHealthRate<small>%</small></span></div><strong>Inventory Health</strong><small>@Model.Products.Count(product => product.StockQuantity > 8) products above low-stock level</small></article>
                     </div>
                 </section>
             </div>
         </section>
 
         <section class="merchant-panel" id="merchant-orders" data-dashboard-panel="orders" aria-labelledby="orders-title" hidden>
-            <div class="merchant-section-heading"><div><p class="merchant-kicker">Order studio</p><h2 id="orders-title">Orders in motion.</h2></div><p>Frontend sample queue. Complete or cancel an order to preview the workflow.</p></div>
+            <div class="merchant-section-heading"><div><p class="merchant-kicker">Order studio</p><h2 id="orders-title">Orders in motion.</h2></div><p>Every card below comes from the current database. Status changes are saved immediately.</p></div>
             <div class="merchant-order-grid">
-                <article class="merchant-order-card" data-order-card data-order-number="#1001"><div class="merchant-order-card__heading"><div><span>Emma · 09:20</span><h3>#1001</h3></div><span class="merchant-badge merchant-badge--preparing" data-order-status>Preparing</span></div><ul><li><span>Flat White ×2</span><strong>$11.00</strong></li><li><span>Butter Croissant ×1</span><strong>$5.50</strong></li></ul><div class="merchant-order-card__total"><span>Total</span><strong>$16.50</strong></div><div class="merchant-card-actions"><button type="button" data-order-action="complete">Complete</button><button type="button" data-order-action="cancel">Cancel</button></div></article>
-                <article class="merchant-order-card" data-order-card data-order-number="#1002"><div class="merchant-order-card__heading"><div><span>Jack · 09:34</span><h3>#1002</h3></div><span class="merchant-badge merchant-badge--ready" data-order-status>Ready</span></div><ul><li><span>Iced Oat Latte ×1</span><strong>$6.50</strong></li><li><span>Garden Salad Bowl ×1</span><strong>$12.50</strong></li></ul><div class="merchant-order-card__total"><span>Total</span><strong>$19.00</strong></div><div class="merchant-card-actions"><button type="button" data-order-action="complete">Complete</button><button type="button" data-order-action="cancel">Cancel</button></div></article>
-                <article class="merchant-order-card" data-order-card data-order-number="#1004"><div class="merchant-order-card__heading"><div><span>Noah · 09:47</span><h3>#1004</h3></div><span class="merchant-badge merchant-badge--pending" data-order-status>Pending</span></div><ul><li><span>Long Black ×2</span><strong>$9.00</strong></li><li><span>Banana Walnut Loaf ×2</span><strong>$11.00</strong></li></ul><div class="merchant-order-card__total"><span>Total</span><strong>$20.00</strong></div><div class="merchant-card-actions"><button type="button" data-order-action="complete">Complete</button><button type="button" data-order-action="cancel">Cancel</button></div></article>
+                @if (Model.Orders.Count == 0)
+                {
+                    <div class="merchant-content-card"><p>No customer orders are currently stored in the database.</p></div>
+                }
+                @foreach (var order in Model.Orders)
+                {
+                    <article class="merchant-order-card" id="merchant-order-@order.Id" data-order-card data-order-id="@order.Id" data-order-number="@order.OrderNumber" data-search-item>
+                        <div class="merchant-order-card__heading"><div><span>@order.CustomerName · @order.PlacedAtUtc.ToLocalTime().ToString("dd MMM HH:mm")</span><h3>@order.OrderNumber</h3></div><span class="merchant-badge merchant-badge--@OrderStatusClass(order.Status)" data-order-status>@order.Status</span></div>
+                        <ul>
+                            @foreach (var item in order.Items)
+                            {
+                                <li><span>@item.ProductName × @item.Quantity</span><strong>@((item.UnitPrice * item.Quantity).ToString("C"))</strong></li>
+                            }
+                        </ul>
+                        <div class="merchant-order-card__total"><span>Total</span><strong>@order.Total.ToString("C")</strong></div>
+                        @if (order.Status != OrderStatuses.Completed && order.Status != OrderStatuses.Cancelled)
+                        {
+                            <div class="merchant-card-actions">
+                                @if (order.Status == OrderStatuses.Pending)
+                                {
+                                    <button type="button" data-order-action="Preparing">Start preparing</button>
+                                }
+                                @if (order.Status == OrderStatuses.Preparing)
+                                {
+                                    <button type="button" data-order-action="Ready">Mark ready</button>
+                                }
+                                <button type="button" data-order-action="Completed">Complete</button>
+                                <button type="button" data-order-action="Cancelled">Cancel</button>
+                            </div>
+                        }
+                    </article>
+                }
             </div>
         </section>
 
         <section class="merchant-panel" id="merchant-products" data-dashboard-panel="products" aria-labelledby="products-title" hidden>
-            <div class="merchant-section-heading"><div><p class="merchant-kicker">Menu collection</p><h2 id="products-title">Products, beautifully simple.</h2></div><button class="merchant-primary-button" type="button" data-placeholder-action="Add Product">+ Add Product</button></div>
+            <div class="merchant-section-heading"><div><p class="merchant-kicker">Menu collection</p><h2 id="products-title">Products, beautifully simple.</h2></div><button class="merchant-primary-button" type="button" data-add-product>+ Add Product</button></div>
             <div class="merchant-content-card"><div class="table-responsive"><table class="merchant-table"><thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-                <tr data-product-row data-product-name="Campus Flat White" data-search-item><td><strong>Campus Flat White</strong></td><td>Coffee</td><td>$5.50</td><td><span class="merchant-badge merchant-badge--active" data-product-status>Active</span></td><td><div class="merchant-table__actions"><button type="button" data-product-action="edit">Edit</button><button type="button" data-product-action="disable">Disable</button></div></td></tr>
-                <tr data-product-row data-product-name="Vanilla Cold Brew" data-search-item><td><strong>Vanilla Cold Brew</strong></td><td>Coffee</td><td>$6.50</td><td><span class="merchant-badge merchant-badge--active" data-product-status>Active</span></td><td><div class="merchant-table__actions"><button type="button" data-product-action="edit">Edit</button><button type="button" data-product-action="disable">Disable</button></div></td></tr>
-                <tr data-product-row data-product-name="Butter Croissant" data-search-item><td><strong>Butter Croissant</strong></td><td>Food</td><td>$5.50</td><td><span class="merchant-badge merchant-badge--active" data-product-status>Active</span></td><td><div class="merchant-table__actions"><button type="button" data-product-action="edit">Edit</button><button type="button" data-product-action="disable">Disable</button></div></td></tr>
-                <tr data-product-row data-product-name="Roast Vegetable Focaccia" data-search-item><td><strong>Roast Vegetable Focaccia</strong></td><td>Food</td><td>$11.50</td><td><span class="merchant-badge merchant-badge--disabled" data-product-status>Disabled</span></td><td><div class="merchant-table__actions"><button type="button" data-product-action="edit">Edit</button><button type="button" data-product-action="disable">Enable</button></div></td></tr>
+                @if (Model.Products.Count == 0)
+                {
+                    <tr><td colspan="5">No products are currently stored in the database.</td></tr>
+                }
+                @foreach (var product in Model.Products)
+                {
+                    <tr data-product-row data-product-id="@product.Id" data-product-name="@product.Name" data-search-item><td><strong>@product.Name</strong></td><td>@product.DisplayCategory</td><td>@product.Price.ToString("C")</td><td><span class="merchant-badge merchant-badge--@(product.IsActive ? "active" : "disabled")" data-product-status>@(product.IsActive ? "Active" : "Disabled")</span></td><td><div class="merchant-table__actions"><button type="button" data-product-action="stock">Manage stock</button><button type="button" data-product-action="toggle">@(product.IsActive ? "Disable" : "Enable")</button></div></td></tr>
+                }
             </tbody></table></div></div>
         </section>
 
         <section class="merchant-panel" id="merchant-inventory" data-dashboard-panel="inventory" aria-labelledby="inventory-title" hidden>
-            <div class="merchant-section-heading"><div><p class="merchant-kicker">Stock room</p><h2 id="inventory-title">Inventory with intention.</h2></div><button class="merchant-primary-button" type="button" data-placeholder-action="Receive Stock">Receive Stock</button></div>
+            <div class="merchant-section-heading"><div><p class="merchant-kicker">Stock room</p><h2 id="inventory-title">Inventory with intention.</h2></div><p>Quantities below are read from and written to SQL Server.</p></div>
             <div class="merchant-content-card"><div class="table-responsive"><table class="merchant-table"><thead><tr><th>Product</th><th>Current Stock</th><th>Status</th><th>Action</th></tr></thead><tbody>
-                <tr data-inventory-row data-product-name="Campus Flat White" data-search-item><td><strong>Campus Flat White</strong></td><td><span data-stock-count>28</span></td><td><span class="merchant-badge merchant-badge--stock" data-stock-status>In Stock</span></td><td><div class="merchant-table__actions"><button type="button" data-inventory-action="restock">Restock</button><button type="button" data-inventory-action="edit">Edit</button></div></td></tr>
-                <tr data-inventory-row data-product-name="Vanilla Cold Brew" data-search-item><td><strong>Vanilla Cold Brew</strong></td><td><span data-stock-count>8</span></td><td><span class="merchant-badge merchant-badge--low" data-stock-status>Low Stock</span></td><td><div class="merchant-table__actions"><button type="button" data-inventory-action="restock">Restock</button><button type="button" data-inventory-action="edit">Edit</button></div></td></tr>
-                <tr data-inventory-row data-product-name="Roast Vegetable Focaccia" data-search-item><td><strong>Roast Vegetable Focaccia</strong></td><td><span data-stock-count>3</span></td><td><span class="merchant-badge merchant-badge--critical" data-stock-status>Critical</span></td><td><div class="merchant-table__actions"><button type="button" data-inventory-action="restock">Restock</button><button type="button" data-inventory-action="edit">Edit</button></div></td></tr>
-                <tr data-inventory-row data-product-name="Garden Salad Bowl" data-search-item><td><strong>Garden Salad Bowl</strong></td><td><span data-stock-count>14</span></td><td><span class="merchant-badge merchant-badge--stock" data-stock-status>In Stock</span></td><td><div class="merchant-table__actions"><button type="button" data-inventory-action="restock">Restock</button><button type="button" data-inventory-action="edit">Edit</button></div></td></tr>
+                @if (Model.Products.Count == 0)
+                {
+                    <tr><td colspan="4">No product inventory is currently stored in the database.</td></tr>
+                }
+                @foreach (var product in Model.Products)
+                {
+                    var stockClass = product.StockQuantity == 0 ? "critical" : product.StockQuantity <= 8 ? "low" : "stock";
+                    var stockLabel = product.StockQuantity == 0 ? "Sold out" : product.StockQuantity <= 8 ? "Low stock" : "In stock";
+                    <tr id="merchant-inventory-product-@product.Id" data-inventory-row data-product-id="@product.Id" data-product-name="@product.Name" data-search-item><td><strong>@product.Name</strong></td><td><span data-stock-count>@product.StockQuantity</span></td><td><span class="merchant-badge merchant-badge--@stockClass" data-stock-status>@stockLabel</span></td><td><div class="merchant-table__actions"><button type="button" data-inventory-action="restock">Restock +10</button><button type="button" data-inventory-action="edit">Set quantity</button></div></td></tr>
+                }
             </tbody></table></div></div>
         </section>
 
         <section class="merchant-panel" id="merchant-catering" data-dashboard-panel="catering" aria-labelledby="catering-requests-title" hidden>
             <div class="merchant-section-heading"><div><p class="merchant-kicker">Gatherings</p><h2 id="catering-requests-title">Catering requests.</h2></div><p>Thoughtful service for the next campus occasion.</p></div>
-            <div class="merchant-content-card"><div class="table-responsive"><table class="merchant-table"><thead><tr><th>Event</th><th>Date</th><th>Guests</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-                <tr data-catering-row data-event-name="Faculty Planning Day" data-search-item><td><strong>Faculty Planning Day</strong></td><td>14 August 2026</td><td>35</td><td><span class="merchant-badge merchant-badge--pending" data-catering-status>Pending</span></td><td><div class="merchant-table__actions"><button type="button" data-catering-action="accept">Accept</button><button type="button" data-catering-action="decline">Decline</button></div></td></tr>
-                <tr data-catering-row data-event-name="Student Leadership Workshop" data-search-item><td><strong>Student Leadership Workshop</strong></td><td>18 August 2026</td><td>24</td><td><span class="merchant-badge merchant-badge--pending" data-catering-status>Pending</span></td><td><div class="merchant-table__actions"><button type="button" data-catering-action="accept">Accept</button><button type="button" data-catering-action="decline">Decline</button></div></td></tr>
-                <tr data-catering-row data-event-name="Research Showcase" data-search-item><td><strong>Research Showcase</strong></td><td>25 August 2026</td><td>80</td><td><span class="merchant-badge merchant-badge--accepted" data-catering-status>Accepted</span></td><td><div class="merchant-table__actions"><button type="button" data-catering-action="accept">Accept</button><button type="button" data-catering-action="decline">Decline</button></div></td></tr>
-            </tbody></table></div></div>
+            <div class="merchant-content-card">
+                <div class="table-responsive"><table class="merchant-table"><thead><tr><th>Event</th><th>Date</th><th>Guests</th><th>Status</th><th>Actions</th></tr></thead><tbody><tr><td colspan="5">No catering request table exists in the current database, so there are no requests to display.</td></tr></tbody></table></div>
+            </div>
         </section>
 
         <section class="merchant-panel" id="merchant-settings" data-dashboard-panel="settings" aria-labelledby="settings-title" hidden>
-            <div class="merchant-section-heading"><div><p class="merchant-kicker">Workspace preferences</p><h2 id="settings-title">Settings.</h2></div><p>Static controls prepared for future account integration.</p></div>
+            <div class="merchant-section-heading"><div><p class="merchant-kicker">Workspace preferences</p><h2 id="settings-title">Settings.</h2></div><p>Authenticated account details from ASP.NET Core Identity.</p></div>
             <div class="merchant-settings-grid">
-                <section class="merchant-content-card"><h3>Service preferences</h3><label class="merchant-setting"><span><strong>New order alerts</strong><small>Receive a notification for every new order.</small></span><input type="checkbox" checked /><i></i></label><label class="merchant-setting"><span><strong>Low stock reminders</strong><small>Alert when an item falls below nine units.</small></span><input type="checkbox" checked /><i></i></label><label class="merchant-setting"><span><strong>Daily summary</strong><small>Prepare a report at the end of service.</small></span><input type="checkbox" /><i></i></label></section>
-                <section class="merchant-content-card merchant-settings-profile"><span class="merchant-avatar merchant-avatar--large">M</span><h3>Campus Coffee Merchant</h3><p>merchant@test.com</p><button class="merchant-primary-button" type="button" data-placeholder-action="Edit Profile">Edit profile</button></section>
+                <section class="merchant-content-card"><h3>Service preferences</h3><p>No merchant preference fields are stored in the current database.</p><label class="merchant-setting"><span><strong>New order alerts</strong><small>Unavailable until preferences are persisted.</small></span><input type="checkbox" disabled /><i></i></label><label class="merchant-setting"><span><strong>Low stock reminders</strong><small>Unavailable until preferences are persisted.</small></span><input type="checkbox" disabled /><i></i></label><label class="merchant-setting"><span><strong>Daily summary</strong><small>Unavailable until report storage is implemented.</small></span><input type="checkbox" disabled /><i></i></label></section>
+                <section class="merchant-content-card merchant-settings-profile"><span class="merchant-avatar merchant-avatar--large">@merchantInitial</span><h3>@Model.DisplayName</h3><p>@Model.Email</p><span class="merchant-badge merchant-badge--active">Authenticated merchant</span></section>
             </div>
         </section>
     </main>
