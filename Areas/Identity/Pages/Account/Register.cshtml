@@ -1,0 +1,54 @@
+@page
+@model CampusCoffeeSystem.Areas.Identity.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Create your account";
+}
+
+<section class="auth-page portal-surface" aria-labelledby="register-title">
+    <div class="site-shell auth-page__shell">
+        <header class="auth-page__header reveal">
+            <p class="eyebrow eyebrow--light">Customer access</p>
+            <h1 id="register-title">Create your account</h1>
+            <p>Join Campus Coffee and make ordering on campus easier.</p>
+        </header>
+
+        <div class="auth-page__form-wrap reveal">
+            <div class="product-card auth-card">
+                <div class="product-card__body auth-card__body">
+                    <form id="registerForm" class="auth-form" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                        <div asp-validation-summary="ModelOnly" class="auth-validation-summary" role="alert"></div>
+
+                        <div class="auth-field">
+                            <label class="form-label cart-item__label" asp-for="Input.Email"></label>
+                            <input class="form-control form-control-lg rounded-0" asp-for="Input.Email" autocomplete="email" aria-required="true" placeholder="you@example.com" />
+                            <span class="auth-field__validation" asp-validation-for="Input.Email"></span>
+                        </div>
+
+                        <div class="auth-field">
+                            <label class="form-label cart-item__label" asp-for="Input.Password"></label>
+                            <input class="form-control form-control-lg rounded-0" asp-for="Input.Password" autocomplete="new-password" aria-required="true" placeholder="Create a password" />
+                            <span class="auth-field__validation" asp-validation-for="Input.Password"></span>
+                        </div>
+
+                        <div class="auth-field">
+                            <label class="form-label cart-item__label" asp-for="Input.ConfirmPassword"></label>
+                            <input class="form-control form-control-lg rounded-0" asp-for="Input.ConfirmPassword" autocomplete="new-password" aria-required="true" placeholder="Confirm your password" />
+                            <span class="auth-field__validation" asp-validation-for="Input.ConfirmPassword"></span>
+                        </div>
+
+                        <button id="registerSubmit" class="button product-card__button auth-form__submit w-100" type="submit">Create account</button>
+
+                        <div class="auth-switch">
+                            <span>Already have an account?</span>
+                            <a class="text-link" asp-area="" asp-controller="Home" asp-action="CustomerLogin">Sign in <span aria-hidden="true">→</span></a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
