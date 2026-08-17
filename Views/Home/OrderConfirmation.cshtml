@@ -1,119 +1,64 @@
+@model CampusCoffeeSystem.Models.CustomerOrder?
 @{
     ViewData["Title"] = "Order Confirmation";
 }
 
-<section class="menu-hero">
-    <div class="menu-hero__shade" aria-hidden="true"></div>
-    <div class="site-shell menu-hero__content reveal">
-        <p class="eyebrow">Campus Coffee Order</p>
-        <h1>Order confirmed.</h1>
-        <p class="menu-hero__copy">Thanks for ordering with Campus Coffee. Your order details are below.</p>
+<section class="our-story-hero portal-surface" aria-labelledby="order-confirmation-title">
+    <div class="site-shell reveal">
+        <p class="eyebrow eyebrow--light">Order received</p>
+        <h1 id="order-confirmation-title">Thank you.</h1>
+        <p class="our-story-hero__subtitle">Your order is now stored and ready for the Campus Coffee team.</p>
     </div>
 </section>
 
-<section class="menu-catalog" data-order-confirmation>
+<section class="menu-catalog portal-surface">
     <div class="site-shell">
-        <div data-order-confirmation-content hidden>
-            <div class="row g-4 g-xl-5 align-items-start">
-                <div class="col-xl-7">
-                    <div class="product-card reveal">
+        @if (Model is null)
+        {
+            <div class="menu-empty">
+                <p class="eyebrow">Order not found</p>
+                <h2>We could not find that order.</h2>
+                <a class="button product-card__button mt-4" asp-controller="Home" asp-action="Menu">Return to menu</a>
+            </div>
+        }
+        else
+        {
+            <div class="row g-5">
+                <div class="col-lg-7">
+                    <article class="product-card reveal">
                         <div class="product-card__body">
-                            <div class="product-card__heading">
-                                <div>
-                                    <p class="eyebrow">Order Details</p>
-                                    <h2>Customer Information</h2>
-                                </div>
-                            </div>
-
-                            <div class="menu-note mt-4">
-                                <span>Order Number</span>
-                                <strong data-order-number></strong>
-                            </div>
-                            <div class="menu-note mt-0">
-                                <span>Name</span>
-                                <strong data-order-name></strong>
-                            </div>
-                            <div class="menu-note mt-0">
-                                <span>Email</span>
-                                <strong data-order-email></strong>
-                            </div>
-                            <div class="menu-note mt-0">
-                                <span>Phone Number</span>
-                                <strong data-order-phone></strong>
-                            </div>
-                            <div class="menu-note mt-0">
-                                <span>Pickup or Delivery</span>
-                                <strong data-order-method></strong>
-                            </div>
-                            <div class="menu-note mt-0">
-                                <span>Pickup Time</span>
-                                <strong data-order-pickup-time></strong>
-                            </div>
-                            <div class="menu-note mt-0 align-items-start">
-                                <span>Special Notes</span>
-                                <strong class="text-break" data-order-special-notes></strong>
-                            </div>
+                            <div class="product-card__heading"><h2>Order @Model.OrderNumber</h2><span class="administrator-badge administrator-badge--pending">@Model.Status</span></div>
+                            <div class="menu-note mt-4"><span>Name</span><strong>@Model.CustomerName</strong></div>
+                            <div class="menu-note mt-0"><span>Email</span><strong>@Model.Email</strong></div>
+                            <div class="menu-note mt-0"><span>Phone</span><strong>@Model.Phone</strong></div>
+                            <div class="menu-note mt-0"><span>Method</span><strong>@Model.OrderMethod</strong></div>
+                            <div class="menu-note mt-0"><span>Pickup time</span><strong>@Model.PickupTime</strong></div>
+                            @if (!string.IsNullOrWhiteSpace(Model.SpecialNotes))
+                            {
+                                <div class="menu-note mt-0"><span>Notes</span><strong style="white-space:pre-wrap">@Model.SpecialNotes</strong></div>
+                            }
                         </div>
-                    </div>
+                    </article>
                 </div>
-
-                <div class="col-xl-5">
+                <div class="col-lg-5">
                     <aside class="product-card reveal">
                         <div class="product-card__body">
-                            <div class="product-card__heading">
-                                <div>
-                                    <p class="eyebrow">Your Order</p>
-                                    <h2>Order Summary</h2>
+                            <div class="product-card__heading"><h2>Order summary</h2></div>
+                            @foreach (var item in Model.Items)
+                            {
+                                <div class="menu-note mt-0">
+                                    <span><strong class="d-block">@item.ProductName</strong>@item.Quantity × @item.UnitPrice.ToString("C")</span>
+                                    <strong>@((item.Quantity * item.UnitPrice).ToString("C"))</strong>
                                 </div>
-                            </div>
-
-                            <div data-confirmation-items></div>
-
-                            <template data-confirmation-item-template>
-                                <div class="menu-note mt-0" data-confirmation-item>
-                                    <div>
-                                        <strong class="d-block" data-confirmation-name></strong>
-                                        <span data-confirmation-details></span>
-                                    </div>
-                                    <div class="text-xl-end">
-                                        <span class="cart-item__label d-block">Subtotal</span>
-                                        <strong class="d-block" data-confirmation-item-subtotal></strong>
-                                    </div>
-                                </div>
-                            </template>
-
-                            <div class="pt-4">
-                                <div class="d-flex justify-content-between mb-3">
-                                    <span>Subtotal</span>
-                                    <strong data-confirmation-subtotal></strong>
-                                </div>
-                                <div class="d-flex justify-content-between mb-3">
-                                    <span>Delivery Fee</span>
-                                    <strong data-confirmation-delivery></strong>
-                                </div>
-                                <hr />
-                                <div class="d-flex justify-content-between align-items-center fs-5">
-                                    <strong>Total</strong>
-                                    <strong data-confirmation-total></strong>
-                                </div>
-                            </div>
-
-                            <a class="button product-card__button w-100 mt-4" data-order-continue
-                               asp-area="" asp-controller="Home" asp-action="Menu">Continue Shopping</a>
+                            }
+                            <div class="menu-note mt-4"><span>Subtotal</span><strong>@Model.Subtotal.ToString("C")</strong></div>
+                            <div class="menu-note mt-0"><span>Delivery</span><strong>@Model.DeliveryFee.ToString("C")</strong></div>
+                            <div class="menu-note mt-0"><strong>Total</strong><span class="product-card__price">@Model.Total.ToString("C")</span></div>
+                            <a class="button product-card__button w-100 mt-4" asp-controller="Home" asp-action="Menu">Continue shopping</a>
                         </div>
                     </aside>
                 </div>
             </div>
-        </div>
-
-        <div class="product-card reveal" data-order-confirmation-empty hidden>
-            <div class="product-card__body">
-                <div class="product-card__heading">
-                    <h2>No order found.</h2>
-                </div>
-                <p class="product-card__description">Your order confirmation will appear here after checkout.</p>
-                <a class="button product-card__button align-self-start" asp-area="" asp-controller="Home" asp-action="Menu">Browse the menu</a>
-            </div>
-        </div>
+        }
     </div>
 </section>

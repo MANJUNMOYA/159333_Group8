@@ -1,104 +1,85 @@
+@model CampusCoffeeSystem.Models.Product
 @{
-    ViewData["Title"] = "Campus Flat White";
+    ViewData["Title"] = Model.Name;
+    var stockLabel = Model.StockQuantity == 0 ? "Sold out" : Model.StockQuantity <= 8 ? $"Low stock ({Model.StockQuantity} left)" : "In stock";
 }
 
 <section class="catering" aria-labelledby="product-title" data-product-details
-         data-product-id="campus-flat-white"
-         data-product-name="Campus Flat White"
-         data-product-price="4.80"
-         data-product-image="@Url.Content("~/images/menu/Campus Flat White.jpg")"
-         data-product-category="Coffee">
-    <div class="catering__image"
-         style="background-image: url('@Url.Content("~/images/menu/Campus Flat White.jpg")');"
-         role="img"
-         aria-label="Campus Flat White with leaf art in a ceramic cup"></div>
-
+         data-product-id="@Model.Id"
+         data-product-name="@Model.Name"
+         data-product-price="@Model.Price"
+         data-product-image="@Model.ImagePath"
+         data-product-category="@Model.DisplayCategory">
+    <div class="catering__image" style="background-image: url('@Model.ImagePath');" role="img" aria-label="@Model.Name"></div>
     <div class="catering__panel reveal">
-        <a class="text-link text-link--light mb-5" asp-area="" asp-controller="Home" asp-action="Menu">
-            <span aria-hidden="true">←</span> Back to menu
-        </a>
-
-        <p class="eyebrow eyebrow--light">Coffee · House favourite</p>
-        <h2 id="product-title">Campus Flat White</h2>
-        <p>Double espresso finished with smooth, velvety steamed milk. Carefully made for an easy start, a study break, or the space between lectures.</p>
-
+        <a class="text-link text-link--light mb-5" asp-controller="Home" asp-action="Menu"><span aria-hidden="true">←</span> Back to menu</a>
+        <p class="eyebrow eyebrow--light">@Model.DisplayCategory</p>
+        <h2 id="product-title">@Model.Name</h2>
+        <p>@Model.Description</p>
         <ul class="catering__features">
-            <li><span>Price</span><strong>$4.80</strong></li>
+            <li><span>Price</span><strong>@Model.Price.ToString("C")</strong></li>
             <li class="flex-wrap">
                 <span>Dietary</span>
-                <span class="border border-light px-2 py-1">Vegetarian</span>
-                <span class="border border-light px-2 py-1">Contains milk</span>
+                @if (!string.IsNullOrWhiteSpace(Model.DietaryLabel)) { <span class="border border-light px-2 py-1">@Model.DietaryLabel</span> }
+                @if (!string.IsNullOrWhiteSpace(Model.AllergenLabel)) { <span class="border border-light px-2 py-1">@Model.AllergenLabel</span> }
             </li>
-            <li><span>Status</span>In stock</li>
+            <li><span>Status</span>@stockLabel</li>
         </ul>
 
-        <div class="d-flex w-100 flex-column flex-sm-row align-items-sm-end gap-3">
-            <fieldset class="m-0 border-0 p-0">
-                <legend class="eyebrow eyebrow--light mb-2">Quantity</legend>
-                <div class="d-flex align-items-stretch">
-                    <button class="button button--outline-light px-3" type="button" data-quantity-decrease aria-label="Decrease quantity" disabled>−</button>
-                    <output class="d-inline-flex align-items-center justify-content-center border-top border-bottom border-light px-4 py-3 fw-bold" data-quantity-value aria-live="polite">1</output>
-                    <button class="button button--outline-light px-3" type="button" data-quantity-increase aria-label="Increase quantity">+</button>
-                </div>
-            </fieldset>
-
-            <button class="button button--cream flex-grow-1" type="button" data-product-add>Add to cart</button>
-        </div>
-
+        @if (Model.StockQuantity > 0)
+        {
+            <div class="d-flex w-100 flex-column flex-sm-row align-items-sm-end gap-3">
+                <fieldset class="m-0 border-0 p-0">
+                    <legend class="eyebrow eyebrow--light mb-2">Quantity</legend>
+                    <div class="d-flex align-items-stretch">
+                        <button class="button button--outline-light px-3" type="button" data-quantity-decrease aria-label="Decrease quantity" disabled>−</button>
+                        <output class="d-inline-flex align-items-center justify-content-center border-top border-bottom border-light px-4 py-3 fw-bold" data-quantity-value aria-live="polite">1</output>
+                        <button class="button button--outline-light px-3" type="button" data-quantity-increase aria-label="Increase quantity">+</button>
+                    </div>
+                </fieldset>
+                <button class="button button--cream flex-grow-1" type="button" data-product-add>Add to cart</button>
+            </div>
+        }
         <p class="visually-hidden" data-product-status aria-live="polite"></p>
     </div>
 </section>
 
-@section Scripts {
-    <script>
-        (() => {
-            const product = document.querySelector('[data-product-details]');
-            if (!product) return;
+@if (Model.StockQuantity > 0)
+{
+    @section Scripts {
+        <script>
+            (() => {
+                const product = document.querySelector('[data-product-details]');
+                const decreaseButton = product.querySelector('[data-quantity-decrease]');
+                const increaseButton = product.querySelector('[data-quantity-increase]');
+                const quantityValue = product.querySelector('[data-quantity-value]');
+                const addButton = product.querySelector('[data-product-add]');
+                const status = product.querySelector('[data-product-status]');
+                const maximumQuantity = Math.min(10, @Model.StockQuantity);
+                let quantity = 1;
 
-            const decreaseButton = product.querySelector('[data-quantity-decrease]');
-            const increaseButton = product.querySelector('[data-quantity-increase]');
-            const quantityValue = product.querySelector('[data-quantity-value]');
-            const addButton = product.querySelector('[data-product-add]');
-            const status = product.querySelector('[data-product-status]');
-            const maximumQuantity = 10;
-            let quantity = 1;
-            let resetTimer;
-
-            const updateQuantity = () => {
-                quantityValue.textContent = quantity;
-                decreaseButton.disabled = quantity === 1;
-                increaseButton.disabled = quantity === maximumQuantity;
-            };
-
-            decreaseButton.addEventListener('click', () => {
-                quantity = Math.max(1, quantity - 1);
-                updateQuantity();
-            });
-
-            increaseButton.addEventListener('click', () => {
-                quantity = Math.min(maximumQuantity, quantity + 1);
-                updateQuantity();
-            });
-
-            addButton.addEventListener('click', () => {
-                window.campusCart.addItem({
-                    id: product.dataset.productId,
-                    name: product.dataset.productName,
-                    price: Number(product.dataset.productPrice),
-                    quantity,
-                    image: product.dataset.productImage,
-                    description: product.querySelector('#product-title + p').textContent.trim(),
-                    category: product.dataset.productCategory
+                const updateQuantity = () => {
+                    quantityValue.textContent = quantity;
+                    decreaseButton.disabled = quantity === 1;
+                    increaseButton.disabled = quantity === maximumQuantity;
+                };
+                decreaseButton.addEventListener('click', () => { quantity = Math.max(1, quantity - 1); updateQuantity(); });
+                increaseButton.addEventListener('click', () => { quantity = Math.min(maximumQuantity, quantity + 1); updateQuantity(); });
+                addButton.addEventListener('click', () => {
+                    window.campusCart.addItem({
+                        id: product.dataset.productId,
+                        name: product.dataset.productName,
+                        price: Number(product.dataset.productPrice),
+                        quantity,
+                        image: product.dataset.productImage,
+                        description: product.querySelector('#product-title + p').textContent.trim(),
+                        category: product.dataset.productCategory
+                    });
+                    addButton.textContent = 'Added';
+                    status.textContent = `${quantity} × ${product.dataset.productName} added to cart.`;
+                    window.setTimeout(() => { addButton.textContent = 'Add to cart'; }, 1200);
                 });
-
-                window.clearTimeout(resetTimer);
-                addButton.textContent = 'Added';
-                status.textContent = `${quantity} × Campus Flat White added to cart.`;
-
-                resetTimer = window.setTimeout(() => {
-                    addButton.textContent = 'Add to cart';
-                }, 1800);
-            });
-        })();
-    </script>
+            })();
+        </script>
+    }
 }

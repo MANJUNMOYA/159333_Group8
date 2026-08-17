@@ -6,18 +6,37 @@
 
     const status = dashboard.querySelector("[data-administrator-status]");
     const search = dashboard.querySelector("[data-administrator-search]");
+    const token = dashboard.querySelector("input[name='__RequestVerificationToken']")?.value ?? "";
     const sidebarLinks = Array.from(dashboard.querySelectorAll(".administrator-sidebar [data-admin-nav]"));
     const sections = Array.from(dashboard.querySelectorAll("[data-admin-section]"));
     let noticeTimer;
 
-    const showNotice = (message) => {
+    const showNotice = (message, isError = false) => {
         if (!status) return;
         window.clearTimeout(noticeTimer);
         status.textContent = message;
         status.hidden = false;
+        status.classList.toggle("is-error", isError);
         noticeTimer = window.setTimeout(() => {
             status.hidden = true;
-        }, 3200);
+        }, 4200);
+    };
+
+    const post = async (url, payload) => {
+        const response = await fetch(url, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+                "Content-Type": "application/json",
+                RequestVerificationToken: token
+            },
+            body: payload === undefined ? null : JSON.stringify(payload)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(result.message || "The database update could not be saved.");
+        }
+        return result;
     };
 
     const setActiveNavigation = (name) => {
@@ -52,10 +71,6 @@
 
     dashboard.querySelector("[data-activity-button]")?.addEventListener("click", () => {
         document.getElementById("admin-activity")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-
-    dashboard.querySelector("[data-administrator-logout]")?.addEventListener("click", () => {
-        localStorage.removeItem("campusCoffeePortalSession");
     });
 
     if ("IntersectionObserver" in window) {
@@ -93,21 +108,9 @@
         requestAnimationFrame(frame);
     };
     dashboard.querySelectorAll("[data-admin-count]").forEach(animateCount);
-    dashboard.querySelectorAll("[data-admin-decimal-count]").forEach((element) => {
-        const target = Number(element.dataset.adminDecimalCount);
-        if (!Number.isFinite(target)) return;
-        const duration = 950;
-        const startedAt = performance.now();
-        const frame = (now) => {
-            const progress = Math.min((now - startedAt) / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            element.textContent = (target * eased).toFixed(1);
-            if (progress < 1) requestAnimationFrame(frame);
-        };
-        requestAnimationFrame(frame);
-    });
 
-    const filterItems = () => {
+    const filterPlatformItems = () => {
+        if (!search) return;
         const query = search.value.trim().toLocaleLowerCase();
         let matches = 0;
         dashboard.querySelectorAll("[data-admin-search-item]").forEach((item) => {
@@ -115,9 +118,9 @@
             item.classList.toggle("is-filtered-out", !match);
             if (match && query) matches += 1;
         });
-        if (query) showNotice(`${matches} result${matches === 1 ? "" : "s"} found for “${search.value.trim()}”.`);
+        if (query) showNotice(`${matches} database result${matches === 1 ? "" : "s"} found for “${search.value.trim()}”.`);
     };
-    search?.addEventListener("input", filterItems);
+    search?.addEventListener("input", filterPlatformItems);
 
     const userSearch = dashboard.querySelector("[data-user-search]");
     const userRoleFilter = dashboard.querySelector("[data-user-role-filter]");
@@ -140,132 +143,82 @@
         }
     });
 
-    dashboard.querySelectorAll(".administrator-segment button").forEach((button) => {
-        button.addEventListener("click", () => {
-            button.parentElement.querySelectorAll("button").forEach((item) => item.classList.remove("is-active"));
-            button.classList.add("is-active");
-            showNotice(`${button.textContent.trim()} chart selected. Static sample data is displayed.`);
-        });
-    });
-
-    dashboard.querySelectorAll("[data-user-action]").forEach((button) => {
-        button.addEventListener("click", () => {
-            const action = button.dataset.userAction;
-            const name = button.dataset.userName;
-            if (action === "Approve") {
-                const row = button.closest("tr");
-                const badge = row?.querySelector(".administrator-badge");
-                if (badge) {
-                    badge.textContent = "Active";
-                    badge.className = "administrator-badge administrator-badge--active";
-                }
-                button.textContent = "View";
-                button.dataset.userAction = "View";
-                showNotice(`${name} has been approved in this frontend demo.`);
-                return;
-            }
-            showNotice(`${action} ${name}: account details are placeholder content.`);
-        });
-    });
-
     dashboard.querySelectorAll("[data-merchant-action]").forEach((button) => {
-        button.addEventListener("click", () => {
+        button.addEventListener("click", async () => {
             const card = button.closest("[data-merchant-application]");
-            const name = card?.dataset.merchantName || "Merchant";
-            const action = button.dataset.merchantAction;
-            const badge = card?.querySelector("[data-merchant-status]");
+            if (!card) return;
+            const requestedStatus = button.dataset.merchantAction;
+            if (requestedStatus === "Rejected" && !window.confirm(`Reject ${card.dataset.merchantName}'s application?`)) return;
 
-            if (action === "view") {
-                showNotice(`${name} application opened in preview mode.`);
-                return;
+            const actionButtons = Array.from(card.querySelectorAll("[data-merchant-action]"));
+            actionButtons.forEach((item) => { item.disabled = true; });
+            try {
+                const result = await post(`/api/platform/merchant-applications/${card.dataset.applicationId}/status`, { status: requestedStatus });
+                const badge = card.querySelector("[data-merchant-status]");
+                if (badge) {
+                    badge.textContent = result.status;
+                    badge.className = `administrator-badge administrator-badge--${result.status === "Approved" ? "active" : "inactive"}`;
+                }
+                showNotice(result.message);
+                window.setTimeout(() => window.location.reload(), 900);
+            } catch (error) {
+                actionButtons.forEach((item) => { item.disabled = false; });
+                showNotice(error.message, true);
             }
-
-            if (badge) {
-                const approved = action === "approve";
-                badge.textContent = approved ? "Approved" : "Declined";
-                badge.className = `administrator-badge administrator-badge--${approved ? "active" : "inactive"}`;
-            }
-            card?.querySelectorAll("[data-merchant-action]").forEach((actionButton) => {
-                actionButton.disabled = true;
-            });
-            showNotice(`${name} has been ${action === "approve" ? "approved" : "declined"} in this frontend demo.`);
         });
     });
 
-    dashboard.querySelectorAll("[data-product-action]").forEach((button) => {
-        button.addEventListener("click", () => {
-            const card = button.closest("[data-product-card]");
-            const name = card?.dataset.productName || "Product";
-            const action = button.dataset.productAction;
-            const badge = card?.querySelector("[data-product-status]");
-            const state = action === "approve"
-                ? { label: "Approved", modifier: "active", message: "approved" }
-                : action === "hide"
-                    ? { label: "Hidden", modifier: "inactive", message: "hidden" }
-                    : { label: "Removed", modifier: "inactive", message: "removed" };
-            if (badge) {
-                badge.textContent = state.label;
-                badge.className = `administrator-badge administrator-badge--${state.modifier}`;
+    dashboard.querySelectorAll("[data-product-toggle]").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const card = button.closest("[data-product-row]");
+            if (!card) return;
+            button.disabled = true;
+            try {
+                const result = await post(`/api/platform/products/${card.dataset.productId}/availability`);
+                const badge = card.querySelector("[data-product-status]");
+                if (badge) {
+                    badge.textContent = result.isActive ? "Active" : "Disabled";
+                    badge.className = `administrator-badge administrator-badge--${result.isActive ? "active" : "inactive"}`;
+                }
+                button.textContent = result.isActive ? "Disable" : "Enable";
+                showNotice(result.message);
+            } catch (error) {
+                showNotice(error.message, true);
+            } finally {
+                button.disabled = false;
             }
-            card?.classList.toggle("is-moderated", action === "delete");
-            showNotice(`${name} has been ${state.message} in this frontend demo.`);
         });
     });
 
     dashboard.querySelectorAll("[data-order-archive]").forEach((button) => {
-        button.addEventListener("click", () => {
+        button.addEventListener("click", async () => {
             const row = button.closest("[data-order-row]");
-            const orderId = row?.dataset.orderId || "Order";
-            const badge = row?.querySelector("[data-order-status]");
-            if (badge) {
-                badge.textContent = "Archived";
-                badge.className = "administrator-badge administrator-badge--inactive";
-            }
-            row?.classList.add("is-archived");
+            if (!row || !window.confirm("Archive this order record?")) return;
             button.disabled = true;
-            button.textContent = "Archived";
-            showNotice(`${orderId} has been archived in this frontend demo.`);
-        });
-    });
-
-    dashboard.querySelectorAll("[data-feedback-action]").forEach((button) => {
-        button.addEventListener("click", () => {
-            const card = button.closest("[data-feedback-card]");
-            const author = card?.dataset.feedbackAuthor || "Customer";
-            const action = button.dataset.feedbackAction;
-            const badge = card?.querySelector("[data-feedback-status]");
-            const state = action === "keep"
-                ? { label: "Visible", modifier: "active", message: "kept visible" }
-                : action === "hide"
-                    ? { label: "Hidden", modifier: "inactive", message: "hidden" }
-                    : action === "delete"
-                        ? { label: "Deleted", modifier: "inactive", message: "deleted" }
-                        : { label: "Reviewed", modifier: "ready", message: "marked as reviewed" };
-            if (badge) {
-                badge.textContent = state.label;
-                badge.className = `administrator-badge administrator-badge--${state.modifier}`;
+            try {
+                const result = await post(`/api/platform/orders/${row.dataset.orderId}/archive`);
+                const badge = row.querySelector("[data-order-status]");
+                if (badge) {
+                    badge.textContent = "Archived";
+                    badge.className = "administrator-badge administrator-badge--inactive";
+                }
+                row.classList.add("is-archived");
+                button.textContent = "Archived";
+                showNotice(result.message);
+            } catch (error) {
+                button.disabled = false;
+                showNotice(error.message, true);
             }
-            showNotice(`${author}’s feedback has been ${state.message}.`);
         });
     });
 
-    dashboard.querySelectorAll("[data-placeholder-action]").forEach((button) => {
-        button.addEventListener("click", () => {
-            showNotice(`${button.dataset.placeholderAction} is ready for future backend integration.`);
-        });
-    });
-
-    dashboard.querySelector("[data-export-report]")?.addEventListener("click", () => {
-        showNotice("Report prepared with static sample data. Export will be connected later.");
-    });
-
-    dashboard.querySelector("[data-admin-action='backup']")?.addEventListener("click", () => {
-        showNotice("Database backup completed for this static frontend preview.");
-    });
-
-    dashboard.querySelectorAll("[data-setting-name]").forEach((input) => {
-        input.addEventListener("change", () => {
-            showNotice(`${input.dataset.settingName} ${input.checked ? "enabled" : "disabled"} for this preview.`);
-        });
+    dashboard.querySelector("[data-administrator-logout]")?.addEventListener("click", async (event) => {
+        event.preventDefault();
+        try {
+            const result = await post("/api/auth/logout");
+            window.location.assign(result.redirectUrl);
+        } catch (error) {
+            showNotice(error.message, true);
+        }
     });
 }());

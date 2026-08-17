@@ -1,6 +1,7 @@
 using CampusCoffeeSystem.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using CampusCoffeeSystem.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,10 +12,30 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 
-//ÓÃ»§×¢²áºó£¬ĞèÒªµã¿ªÓÊÏäÊÕµ½µÄÑéÖ¤Á´½Ó¼¤»îÕËºÅ£¬ÕËºÅ²ÅÔÊĞíµÇÂ¼ ±¾µØ¿ª·¢Ã»ÓĞÅäÖÃÓÊ¼ş·¢ËÍ·şÎñ£¬ÊÕ²»µ½ÑéÖ¤ÓÊ¼ş£¬Ã»·¨ÊÖ¶¯¼¤»îÕËºÅ Ìí¼ÓRequireConfirmedAccount = false
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
+//ç”¨æˆ·æ³¨å†Œåï¼Œéœ€è¦ç‚¹å¼€é‚®ç®±æ”¶åˆ°çš„éªŒè¯é“¾æ¥æ¿€æ´»è´¦å·ï¼Œè´¦å·æ‰å…è®¸ç™»å½• æœ¬åœ°å¼€å‘æ²¡æœ‰é…ç½®é‚®ä»¶å‘é€æœåŠ¡ï¼Œæ”¶ä¸åˆ°éªŒè¯é‚®ä»¶ï¼Œæ²¡æ³•æ‰‹åŠ¨æ¿€æ´»è´¦å· æ·»åŠ RequireConfirmedAccount = false
+builder.Services.AddDefaultIdentity<IdentityUser>(options =>
+    {
+        options.SignIn.RequireConfirmedAccount = false;
+        options.Password.RequiredLength = 6;
+        options.Password.RequireDigit = false;
+        options.Password.RequireLowercase = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireNonAlphanumeric = false;
+    })
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(PlatformRoles.Customer, policy => policy.RequireRole(PlatformRoles.Customer));
+    options.AddPolicy(PlatformRoles.Merchant, policy => policy.RequireRole(PlatformRoles.Merchant));
+    options.AddPolicy(PlatformRoles.Administrator, policy => policy.RequireRole(PlatformRoles.Administrator));
+});
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Home/Portal";
+    options.AccessDeniedPath = "/Home/Portal";
+});
 
 var app = builder.Build();
 
@@ -35,11 +56,17 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
+
+using (var scope = app.Services.CreateScope())
+{
+    await ApplicationSeed.InitialiseAsync(scope.ServiceProvider, app.Configuration);
+}
 
 app.Run();

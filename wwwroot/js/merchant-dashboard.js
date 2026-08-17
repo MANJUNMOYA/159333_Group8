@@ -5,15 +5,40 @@
   const panels = [...dashboard.querySelectorAll('[data-dashboard-panel]')];
   const navigationButtons = [...dashboard.querySelectorAll('.merchant-sidebar__nav [data-dashboard-target]')];
   const notice = dashboard.querySelector('[data-dashboard-status]');
+  const token = dashboard.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
   let noticeTimer;
 
-  const showNotice = (message) => {
+  const showNotice = (message, isError = false) => {
+    if (!notice) return;
     window.clearTimeout(noticeTimer);
     notice.textContent = message;
     notice.hidden = false;
+    notice.classList.toggle('is-error', isError);
     noticeTimer = window.setTimeout(() => {
       notice.hidden = true;
-    }, 3200);
+    }, 4200);
+  };
+
+  const post = async (url, payload) => {
+    const response = await fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        RequestVerificationToken: token
+      },
+      body: payload === undefined ? null : JSON.stringify(payload)
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.message || 'The update could not be saved.');
+    return result;
+  };
+
+  const statusClass = (status) => {
+    const normalized = String(status).toLowerCase();
+    return ['pending', 'preparing', 'ready', 'completed', 'cancelled'].includes(normalized)
+      ? normalized
+      : 'pending';
   };
 
   const setActiveNavigation = (panelName, trigger) => {
@@ -104,17 +129,9 @@
   };
   dashboard.querySelectorAll('[data-count-up]').forEach(animateCount);
 
-  dashboard.querySelectorAll('.merchant-period-switch button').forEach((button) => {
-    button.addEventListener('click', () => {
-      button.parentElement.querySelectorAll('button').forEach((option) => option.classList.remove('is-active'));
-      button.classList.add('is-active');
-      showNotice(`Analytics updated to the ${button.textContent.trim()} placeholder view.`);
-    });
-  });
-
   const search = dashboard.querySelector('[data-dashboard-search]');
   const filterWorkspace = () => {
-    const query = search.value.trim().toLowerCase();
+    const query = search?.value.trim().toLowerCase() ?? '';
     const activePanel = dashboard.querySelector('[data-dashboard-panel]:not([hidden])');
     activePanel?.querySelectorAll('[data-search-item]').forEach((item) => {
       item.classList.toggle('is-filtered-out', query.length > 0 && !item.textContent.toLowerCase().includes(query));
@@ -130,139 +147,201 @@
 
   dashboard.querySelector('[data-notification-button]')?.addEventListener('click', () => {
     showPanel('overview');
-    window.setTimeout(() => document.getElementById('merchant-notifications')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
+    window.setTimeout(() => {
+      document.getElementById('merchant-notifications')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 120);
   });
 
   dashboard.querySelectorAll('[data-view-order]').forEach((button) => {
-    button.addEventListener('click', () => showNotice(`${button.dataset.viewOrder} details are ready for future order integration.`));
+    button.addEventListener('click', () => {
+      showPanel('orders');
+      window.setTimeout(() => {
+        const card = document.getElementById(`merchant-order-${button.dataset.viewOrder}`);
+        card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card?.focus({ preventScroll: true });
+      }, 120);
+    });
   });
 
   dashboard.querySelectorAll('[data-order-action]').forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const card = button.closest('[data-order-card]');
-      const status = card.querySelector('[data-order-status]');
-      const isComplete = button.dataset.orderAction === 'complete';
-      status.textContent = isComplete ? 'Completed' : 'Cancelled';
-      status.className = `merchant-badge merchant-badge--${isComplete ? 'completed' : 'cancelled'}`;
-      card.querySelectorAll('[data-order-action]').forEach((action) => { action.disabled = true; });
-      showNotice(`Order ${card.dataset.orderNumber} marked as ${status.textContent.toLowerCase()}.`);
+      const actions = [...card.querySelectorAll('[data-order-action]')];
+      actions.forEach((action) => { action.disabled = true; });
+      try {
+        const result = await post(`/api/platform/orders/${card.dataset.orderId}/status`, {
+          status: button.dataset.orderAction
+        });
+        const badge = card.querySelector('[data-order-status]');
+        badge.textContent = result.status;
+        badge.className = `merchant-badge merchant-badge--${statusClass(result.status)}`;
+        showNotice(result.message);
+        window.setTimeout(() => window.location.reload(), 650);
+      } catch (error) {
+        actions.forEach((action) => { action.disabled = false; });
+        showNotice(error.message, true);
+      }
     });
   });
 
-  dashboard.querySelectorAll('[data-product-action]').forEach((button) => {
+  dashboard.querySelectorAll('[data-product-action="stock"]').forEach((button) => {
     button.addEventListener('click', () => {
       const row = button.closest('[data-product-row]');
-      if (button.dataset.productAction === 'edit') {
-        showNotice(`${row.dataset.productName} is ready for future editing functionality.`);
-        return;
-      }
-
-      const status = row.querySelector('[data-product-status]');
-      const isDisabled = status.textContent.trim() === 'Disabled';
-      status.textContent = isDisabled ? 'Active' : 'Disabled';
-      status.className = `merchant-badge merchant-badge--${isDisabled ? 'active' : 'disabled'}`;
-      button.textContent = isDisabled ? 'Disable' : 'Enable';
-      showNotice(`${row.dataset.productName} is now ${status.textContent.toLowerCase()}.`);
+      showPanel('inventory');
+      window.setTimeout(() => {
+        document.getElementById(`merchant-inventory-product-${row.dataset.productId}`)?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }, 120);
     });
   });
 
-  const updateStockStatus = (row, stock) => {
-    const status = row.querySelector('[data-stock-status]');
-    let label = 'In Stock';
-    let statusClass = 'stock';
-    if (stock <= 3) {
-      label = 'Critical';
-      statusClass = 'critical';
-    } else if (stock <= 8) {
-      label = 'Low Stock';
-      statusClass = 'low';
+  dashboard.querySelectorAll('[data-product-action="toggle"]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const row = button.closest('[data-product-row]');
+      button.disabled = true;
+      try {
+        const result = await post(`/api/platform/products/${row.dataset.productId}/availability`);
+        const status = row.querySelector('[data-product-status]');
+        status.textContent = result.isActive ? 'Active' : 'Disabled';
+        status.className = `merchant-badge merchant-badge--${result.isActive ? 'active' : 'disabled'}`;
+        button.textContent = result.isActive ? 'Disable' : 'Enable';
+        showNotice(result.message);
+        window.setTimeout(() => window.location.reload(), 650);
+      } catch (error) {
+        button.disabled = false;
+        showNotice(error.message, true);
+      }
+    });
+  });
+
+  const saveStock = async (row, stockQuantity) => {
+    const buttons = [...row.querySelectorAll('[data-inventory-action]')];
+    buttons.forEach((button) => { button.disabled = true; });
+    try {
+      const result = await post(`/api/platform/products/${row.dataset.productId}/stock`, { stockQuantity });
+      row.querySelector('[data-stock-count]').textContent = result.stockQuantity;
+      const status = row.querySelector('[data-stock-status]');
+      status.textContent = result.stockQuantity === 0 ? 'Sold out' : result.stockQuantity <= 8 ? 'Low stock' : 'In stock';
+      status.className = `merchant-badge merchant-badge--${result.stockQuantity === 0 ? 'critical' : result.stockQuantity <= 8 ? 'low' : 'stock'}`;
+      showNotice(result.message);
+      window.setTimeout(() => window.location.reload(), 650);
+    } catch (error) {
+      buttons.forEach((button) => { button.disabled = false; });
+      showNotice(error.message, true);
     }
-    status.textContent = label;
-    status.className = `merchant-badge merchant-badge--${statusClass}`;
   };
 
   dashboard.querySelectorAll('[data-inventory-action]').forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const row = button.closest('[data-inventory-row]');
-      const count = row.querySelector('[data-stock-count]');
-      const currentStock = Number.parseInt(count.textContent, 10);
+      const currentStock = Number.parseInt(row.querySelector('[data-stock-count]').textContent, 10);
       let nextStock = currentStock;
 
       if (button.dataset.inventoryAction === 'restock') {
         nextStock += 10;
       } else {
-        const enteredStock = window.prompt(`Update stock for ${row.dataset.productName}:`, String(currentStock));
+        const enteredStock = window.prompt(`Set the database stock for ${row.dataset.productName}:`, String(currentStock));
         if (enteredStock === null) return;
-        const parsedStock = Number.parseInt(enteredStock, 10);
-        if (!Number.isInteger(parsedStock) || parsedStock < 0) {
-          showNotice('Please enter a valid stock quantity of zero or more.');
+        nextStock = Number.parseInt(enteredStock, 10);
+        if (!Number.isInteger(nextStock) || nextStock < 0) {
+          showNotice('Enter a stock quantity of zero or more.', true);
           return;
         }
-        nextStock = parsedStock;
       }
 
-      count.textContent = String(nextStock);
-      updateStockStatus(row, nextStock);
-      showNotice(`${row.dataset.productName} stock updated to ${nextStock}.`);
+      await saveStock(row, nextStock);
     });
   });
 
   dashboard.querySelectorAll('[data-featured-action]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const card = button.closest('[data-featured-stock]');
-      const productName = card.querySelector('h3').textContent.trim();
+    button.addEventListener('click', async () => {
+      const card = button.closest('[data-featured-product]');
       const action = button.dataset.featuredAction;
-      if (action !== 'restock') {
-        showNotice(`${productName} ${action} is ready for future product integration.`);
+
+      if (action === 'manage') {
+        showPanel('inventory');
+        window.setTimeout(() => {
+          document.getElementById(`merchant-inventory-product-${card.dataset.productId}`)?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }, 120);
         return;
       }
 
-      const nextStock = Number.parseInt(card.dataset.featuredStock, 10) + 10;
-      card.dataset.featuredStock = String(nextStock);
-      card.querySelector('[data-featured-count]').textContent = String(nextStock);
-      const progress = Math.min(Math.round((nextStock / 40) * 100), 100);
-      card.querySelector('.merchant-progress span').style.width = `${progress}%`;
-      card.querySelector('.merchant-stock-line > span:last-child').textContent = `${progress}%`;
-      const status = card.querySelector('[data-featured-status]');
-      status.textContent = nextStock <= 4 ? 'Restock Needed' : nextStock <= 10 ? 'Almost Out' : 'Healthy';
-      status.className = `merchant-badge merchant-badge--${nextStock <= 4 ? 'critical' : nextStock <= 10 ? 'low' : 'stock'}`;
-      showNotice(`${productName} restocked to ${nextStock}.`);
+      if (action === 'view') {
+        if (button.dataset.viewUrl) window.location.assign(button.dataset.viewUrl);
+        return;
+      }
+
+      if (action === 'restock') {
+        button.disabled = true;
+        const nextStock = Number.parseInt(card.dataset.featuredStock, 10) + 10;
+        try {
+          const result = await post(`/api/platform/products/${card.dataset.productId}/stock`, {
+            stockQuantity: nextStock
+          });
+          showNotice(result.message);
+          window.setTimeout(() => window.location.reload(), 650);
+        } catch (error) {
+          button.disabled = false;
+          showNotice(error.message, true);
+        }
+      }
     });
   });
 
-  dashboard.querySelectorAll('[data-catering-action]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const row = button.closest('[data-catering-row]');
-      const status = row.querySelector('[data-catering-status]');
-      const isAccepted = button.dataset.cateringAction === 'accept';
-      status.textContent = isAccepted ? 'Accepted' : 'Declined';
-      status.className = `merchant-badge merchant-badge--${isAccepted ? 'accepted' : 'declined'}`;
-      row.querySelectorAll('[data-catering-action]').forEach((action) => { action.disabled = true; });
-      showNotice(`${row.dataset.eventName} has been ${status.textContent.toLowerCase()}.`);
-    });
-  });
+  const addProductButton = dashboard.querySelector('[data-add-product]');
+  addProductButton?.addEventListener('click', async () => {
+    const name = window.prompt('Product name:');
+    if (!name?.trim()) return;
+    const category = window.prompt('Category (coffee or food):', 'coffee')?.trim().toLowerCase();
+    const price = Number(window.prompt('Price:', '5.00'));
+    const stockQuantity = Number.parseInt(window.prompt('Starting stock:', '10'), 10);
+    const description = window.prompt('Description:', '') ?? '';
 
-  dashboard.querySelectorAll('[data-placeholder-action]').forEach((button) => {
-    button.addEventListener('click', () => showNotice(`${button.dataset.placeholderAction} is ready for future backend integration.`));
-  });
+    if (!['coffee', 'food'].includes(category) || !Number.isFinite(price) || price <= 0 || !Number.isInteger(stockQuantity) || stockQuantity < 0) {
+      showNotice('Enter a valid category, price and stock quantity.', true);
+      return;
+    }
 
-  dashboard.querySelector('[data-generate-report]')?.addEventListener('click', () => {
-    showNotice('Daily report generated using static sample data.');
-  });
-
-  dashboard.querySelectorAll('.merchant-calendar-controls button').forEach((button) => {
-    button.addEventListener('click', () => showNotice('Calendar navigation is ready for future booking data.'));
-  });
-
-  dashboard.querySelectorAll('.merchant-setting input').forEach((input) => {
-    input.addEventListener('change', () => showNotice('Preference updated for this frontend preview.'));
-  });
-
-  dashboard.querySelector('[data-merchant-logout]')?.addEventListener('click', () => {
+    addProductButton.disabled = true;
     try {
-      window.sessionStorage.removeItem('campusCoffeePortalSession');
-    } catch {
-      // Logout navigation still works if browser storage is unavailable.
+      const displayCategory = category.charAt(0).toUpperCase() + category.slice(1);
+      const result = await post('/api/platform/products', {
+        name: name.trim(),
+        category,
+        displayCategory,
+        price,
+        stockQuantity,
+        description: description.trim(),
+        imagePath: '/images/menu/Campus Flat White.jpg'
+      });
+      showNotice(result.message);
+      window.setTimeout(() => window.location.reload(), 650);
+    } catch (error) {
+      addProductButton.disabled = false;
+      showNotice(error.message, true);
+    }
+  });
+
+  dashboard.querySelector('[data-trigger-add-product]')?.addEventListener('click', () => {
+    window.setTimeout(() => addProductButton?.click(), 120);
+  });
+
+  dashboard.querySelector('[data-refresh-dashboard]')?.addEventListener('click', () => {
+    window.location.reload();
+  });
+
+  dashboard.querySelector('[data-merchant-logout]')?.addEventListener('click', async (event) => {
+    event.preventDefault();
+    try {
+      const result = await post('/api/auth/logout');
+      window.location.assign(result.redirectUrl);
+    } catch (error) {
+      showNotice(error.message, true);
     }
   });
 })();

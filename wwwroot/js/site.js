@@ -3,24 +3,18 @@
   const hero = document.querySelector('[data-hero]');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const cartStorageKey = 'campusCoffeeCart';
-  const orderStorageKey = 'campusCoffeeLastOrder';
   let memoryCart = [];
-
-  const createProductId = (name) => name
-    .toLowerCase()
-    .replace(/&/g, 'and')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
 
   const normaliseCartItem = (item) => {
     if (!item || typeof item !== 'object') return null;
 
     const name = String(item.name || '').trim();
     const price = Number(item.price);
-    if (!name || !Number.isFinite(price) || price < 0) return null;
+    const id = String(item.id || '');
+    if (!name || !Number.isFinite(price) || price < 0 || !/^\d+$/.test(id)) return null;
 
     return {
-      id: String(item.id || createProductId(name)),
+      id,
       name,
       price,
       quantity: Math.max(1, Math.floor(Number(item.quantity) || 1)),
@@ -317,7 +311,7 @@
         const image = card.querySelector('.product-card__image img');
 
         window.campusCart.addItem({
-          id: createProductId(card.dataset.name),
+          id: card.dataset.productId,
           name: productName,
           price,
           quantity: 1,
@@ -352,7 +346,6 @@
     const deliveryValue = shoppingCart.querySelector('[data-cart-delivery]');
     const totalValue = shoppingCart.querySelector('[data-cart-total]');
     const cartStatus = shoppingCart.querySelector('[data-cart-status]');
-    const deliveryFee = 3.5;
     const formatCurrency = (value) => `$${value.toFixed(2)}`;
 
     const renderCart = () => {
@@ -383,10 +376,9 @@
         itemsContainer.append(itemFragment);
       });
 
-      itemsContainer.hidden = false;
+      itemsContainer.hidden = items.length === 0;
 
       const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      const currentDeliveryFee = items.length ? deliveryFee : 0;
       const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
       emptyState.hidden = items.length !== 0;
@@ -394,8 +386,8 @@
         ? 'Your cart is empty.'
         : `${itemCount} ${itemCount === 1 ? 'item' : 'items'} ready.`;
       subtotalValue.textContent = formatCurrency(subtotal);
-      deliveryValue.textContent = formatCurrency(currentDeliveryFee);
-      totalValue.textContent = formatCurrency(subtotal + currentDeliveryFee);
+      deliveryValue.textContent = items.length === 0 ? formatCurrency(0) : 'Calculated at checkout';
+      totalValue.textContent = formatCurrency(subtotal);
     };
 
     itemsContainer.addEventListener('click', (event) => {
@@ -458,7 +450,8 @@
       });
 
       const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      const currentDeliveryFee = items.length ? deliveryFee : 0;
+      const selectedMethod = orderMethodInputs.find((input) => input.checked)?.value;
+      const currentDeliveryFee = items.length && selectedMethod === 'Delivery' ? deliveryFee : 0;
 
       itemsContainer.hidden = items.length === 0;
       emptyState.hidden = items.length !== 0;
@@ -475,10 +468,13 @@
     };
 
     orderMethodInputs.forEach((input) => {
-      input.addEventListener('change', updateOrderMethodStyles);
+      input.addEventListener('change', () => {
+        updateOrderMethodStyles();
+        renderCheckout();
+      });
     });
 
-    checkoutForm.addEventListener('submit', (event) => {
+    checkoutForm.addEventListener('submit', async (event) => {
       event.preventDefault();
 
       const items = window.campusCart.getItems();
@@ -488,32 +484,33 @@
       }
 
       const formData = new FormData(checkoutForm);
-      const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      const currentDeliveryFee = deliveryFee;
-      const order = {
-        orderNumber: `CC-${Date.now().toString(36).toUpperCase()}`,
-        customer: {
-          name: String(formData.get('name') ?? ''),
-          email: String(formData.get('email') ?? ''),
-          phone: String(formData.get('phone') ?? ''),
-          orderMethod: String(formData.get('orderMethod') ?? ''),
-          pickupTime: String(formData.get('pickupTime') ?? ''),
-          specialNotes: String(formData.get('specialNotes') ?? '')
-        },
-        items,
-        totals: {
-          subtotal,
-          deliveryFee: currentDeliveryFee,
-          total: subtotal + currentDeliveryFee
-        },
-        placedAt: new Date().toISOString()
-      };
-
+      placeOrderButton.disabled = true;
+      orderStatus.textContent = 'Placing your order…';
       try {
-        window.localStorage.setItem(orderStorageKey, JSON.stringify(order));
-        window.location.assign(checkout.dataset.orderConfirmationUrl);
-      } catch {
-        orderStatus.textContent = 'Your order could not be saved in this browser. Please try again.';
+        const response = await fetch('/api/orders', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            RequestVerificationToken: checkoutForm.querySelector('input[name="__RequestVerificationToken"]')?.value ?? ''
+          },
+          body: JSON.stringify({
+            name: String(formData.get('name') ?? ''),
+            email: String(formData.get('email') ?? ''),
+            phone: String(formData.get('phone') ?? ''),
+            orderMethod: String(formData.get('orderMethod') ?? ''),
+            pickupTime: String(formData.get('pickupTime') ?? ''),
+            specialNotes: String(formData.get('specialNotes') ?? ''),
+            items: items.map((item) => ({ productId: Number(item.id), quantity: item.quantity }))
+          })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.message || 'Your order could not be placed.');
+        window.campusCart.clear();
+        window.location.assign(result.redirectUrl);
+      } catch (error) {
+        orderStatus.textContent = error.message;
+        placeOrderButton.disabled = false;
       }
     });
 
@@ -526,76 +523,6 @@
     window.addEventListener('pageshow', renderCheckout);
     updateOrderMethodStyles();
     renderCheckout();
-  }
-
-  const orderConfirmation = document.querySelector('[data-order-confirmation]');
-  if (orderConfirmation) {
-    const confirmationContent = orderConfirmation.querySelector('[data-order-confirmation-content]');
-    const missingOrder = orderConfirmation.querySelector('[data-order-confirmation-empty]');
-    const itemsContainer = orderConfirmation.querySelector('[data-confirmation-items]');
-    const itemTemplate = orderConfirmation.querySelector('[data-confirmation-item-template]');
-    const continueShopping = orderConfirmation.querySelector('[data-order-continue]');
-    const formatCurrency = (value) => `$${value.toFixed(2)}`;
-    let order = null;
-
-    try {
-      const savedOrder = window.localStorage.getItem(orderStorageKey);
-      const parsedOrder = savedOrder ? JSON.parse(savedOrder) : null;
-      if (parsedOrder?.customer && Array.isArray(parsedOrder.items) && parsedOrder.totals) {
-        order = parsedOrder;
-      }
-    } catch {
-      order = null;
-    }
-
-    if (!order) {
-      missingOrder.hidden = false;
-    } else {
-      const customer = order.customer;
-      const items = order.items.map(normaliseCartItem).filter(Boolean);
-
-      orderConfirmation.querySelector('[data-order-number]').textContent = String(order.orderNumber || '');
-      orderConfirmation.querySelector('[data-order-name]').textContent = String(customer.name ?? '');
-      orderConfirmation.querySelector('[data-order-email]').textContent = String(customer.email ?? '');
-      orderConfirmation.querySelector('[data-order-phone]').textContent = String(customer.phone ?? '');
-      orderConfirmation.querySelector('[data-order-method]').textContent = String(customer.orderMethod ?? '');
-      orderConfirmation.querySelector('[data-order-pickup-time]').textContent = String(customer.pickupTime ?? '');
-
-      const specialNotes = orderConfirmation.querySelector('[data-order-special-notes]');
-      specialNotes.textContent = String(customer.specialNotes ?? '');
-      specialNotes.style.whiteSpace = 'pre-wrap';
-
-      items.forEach((item, index) => {
-        const itemFragment = itemTemplate.content.cloneNode(true);
-        const summaryItem = itemFragment.querySelector('[data-confirmation-item]');
-
-        summaryItem.classList.toggle('mt-4', index === 0);
-        summaryItem.classList.toggle('mt-0', index !== 0);
-        itemFragment.querySelector('[data-confirmation-name]').textContent = item.name;
-        itemFragment.querySelector('[data-confirmation-details]').textContent =
-          `Quantity: ${item.quantity} · Unit price: ${formatCurrency(item.price)}`;
-        itemFragment.querySelector('[data-confirmation-item-subtotal]').textContent =
-          formatCurrency(item.price * item.quantity);
-
-        itemsContainer.append(itemFragment);
-      });
-
-      orderConfirmation.querySelector('[data-confirmation-subtotal]').textContent =
-        formatCurrency(Number(order.totals.subtotal));
-      orderConfirmation.querySelector('[data-confirmation-delivery]').textContent =
-        formatCurrency(Number(order.totals.deliveryFee));
-      orderConfirmation.querySelector('[data-confirmation-total]').textContent =
-        formatCurrency(Number(order.totals.total));
-      confirmationContent.hidden = false;
-
-      continueShopping.addEventListener('click', (event) => {
-        event.preventDefault();
-        window.campusCart.clear();
-        window.localStorage.removeItem(cartStorageKey);
-        window.localStorage.removeItem(orderStorageKey);
-        window.location.assign(continueShopping.href);
-      });
-    }
   }
 
 })();
