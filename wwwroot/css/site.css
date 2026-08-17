@@ -150,6 +150,9 @@ button { font: inherit; }
 .site-footer__grid > div:not(:first-child) { display: flex; flex-direction: column; align-items: flex-start; gap: 11px; font-size: .88rem; }
 .site-footer__grid a { border-bottom: 1px solid transparent; }
 .site-footer__grid a:hover { color: white; border-color: currentColor; }
+.site-footer__account-form { margin: 0; }
+.site-footer__account-form button { padding: 0; color: inherit; background: transparent; border: 0; border-bottom: 1px solid transparent; transition: color .2s ease, border-color .2s ease; }
+.site-footer__account-form button:hover { color: white; border-color: currentColor; }
 .site-footer__bottom { padding-top: 22px; display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,.16); font-size: .7rem; letter-spacing: .06em; }
 
 .reveal { opacity: 0; transform: translateY(24px); transition: opacity .75s ease, transform .75s ease; }

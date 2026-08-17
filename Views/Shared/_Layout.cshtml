@@ -63,9 +63,18 @@
             </div>
             <div>
                 <p class="site-footer__label">Your account</p>
-                <a asp-area="Identity" asp-page="/Account/Login">Sign in</a>
-                <a asp-area="Identity" asp-page="/Account/Register">Create account</a>
-                <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-area="Identity" asp-page="/Account/Manage/Index">Manage account</a>
+                    <form class="site-footer__account-form" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                        <button type="submit">Sign out</button>
+                    </form>
+                }
+                else
+                {
+                    <a asp-area="" asp-controller="Home" asp-action="CustomerLogin">Sign in</a>
+                    <a asp-area="Identity" asp-page="/Account/Register">Create account</a>
+                }
             </div>
             <div>
                 <p class="site-footer__label">Opening hours</p>

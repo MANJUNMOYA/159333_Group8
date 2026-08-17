@@ -4,6 +4,11 @@
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const cartStorageKey = 'campusCoffeeCart';
   const orderStorageKey = 'campusCoffeeLastOrder';
+  const nzdNumberFormatter = new Intl.NumberFormat('en-NZ', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+  const formatCurrency = (value) => `NZ$${nzdNumberFormatter.format(Number(value) || 0)}`;
   let memoryCart = [];
 
   const createProductId = (name) => name
@@ -353,7 +358,6 @@
     const totalValue = shoppingCart.querySelector('[data-cart-total]');
     const cartStatus = shoppingCart.querySelector('[data-cart-status]');
     const deliveryFee = 3.5;
-    const formatCurrency = (value) => `$${value.toFixed(2)}`;
 
     const renderCart = () => {
       const items = window.campusCart.getItems();
@@ -436,7 +440,6 @@
     const orderStatus = checkout.querySelector('[data-order-status]');
     const orderMethodInputs = [...checkoutForm.querySelectorAll('input[name="orderMethod"]')];
     const deliveryFee = 3.5;
-    const formatCurrency = (value) => `$${value.toFixed(2)}`;
 
     const renderCheckout = () => {
       const items = window.campusCart.getItems();
@@ -535,7 +538,6 @@
     const itemsContainer = orderConfirmation.querySelector('[data-confirmation-items]');
     const itemTemplate = orderConfirmation.querySelector('[data-confirmation-item-template]');
     const continueShopping = orderConfirmation.querySelector('[data-order-continue]');
-    const formatCurrency = (value) => `$${value.toFixed(2)}`;
     let order = null;
 
     try {

@@ -86,9 +86,14 @@
   }
 
   const animateCount = (element) => {
-    const target = Number.parseInt(element.dataset.countUp, 10);
+    const target = Number.parseFloat(element.dataset.countUp);
+    const decimals = Math.max(0, Number.parseInt(element.dataset.countUpDecimals || '0', 10));
+    const formatValue = (value) => value.toLocaleString('en-NZ', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    });
     if (!Number.isFinite(target) || reducedMotion) {
-      element.textContent = String(target);
+      element.textContent = formatValue(target);
       return;
     }
 
@@ -97,7 +102,7 @@
     const tick = (currentTime) => {
       const progress = Math.min((currentTime - startTime) / duration, 1);
       const easedProgress = 1 - Math.pow(1 - progress, 3);
-      element.textContent = String(Math.round(target * easedProgress));
+      element.textContent = formatValue(target * easedProgress);
       if (progress < 1) window.requestAnimationFrame(tick);
     };
     window.requestAnimationFrame(tick);
