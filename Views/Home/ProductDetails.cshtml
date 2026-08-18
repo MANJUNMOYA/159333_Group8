@@ -17,7 +17,7 @@
         <h2 id="product-title">@Model.Name</h2>
         <p>@Model.Description</p>
         <ul class="catering__features">
-            <li><span>Price</span><strong>@Model.Price.ToString("C")</strong></li>
+            <li><span>Price</span><strong>@CurrencyFormatter.NzDollars(Model.Price)</strong></li>
             <li class="flex-wrap">
                 <span>Dietary</span>
                 @if (!string.IsNullOrWhiteSpace(Model.DietaryLabel)) { <span class="border border-light px-2 py-1">@Model.DietaryLabel</span> }

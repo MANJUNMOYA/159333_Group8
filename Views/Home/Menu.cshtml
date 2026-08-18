@@ -80,7 +80,7 @@
                             <div class="product-card__body">
                                 <div class="product-card__heading">
                                     <h3>@product.Name</h3>
-                                    <span class="product-card__price">@product.Price.ToString("C")</span>
+                                    <span class="product-card__price">@CurrencyFormatter.NzDollars(product.Price)</span>
                                 </div>
                                 <p class="product-card__description">@product.Description</p>
                                 <div class="product-card__badges" aria-label="Dietary and allergy information">

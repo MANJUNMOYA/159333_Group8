@@ -3,7 +3,12 @@
   const hero = document.querySelector('[data-hero]');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const cartStorageKey = 'campusCoffeeCart';
+  const formatCurrency = (value) => `NZ$${Number(value).toFixed(2)}`;
   let memoryCart = [];
+
+  document.querySelectorAll('[data-placeholder-social]').forEach((link) => {
+    link.addEventListener('click', (event) => event.preventDefault());
+  });
 
   const normaliseCartItem = (item) => {
     if (!item || typeof item !== 'object') return null;
@@ -346,8 +351,6 @@
     const deliveryValue = shoppingCart.querySelector('[data-cart-delivery]');
     const totalValue = shoppingCart.querySelector('[data-cart-total]');
     const cartStatus = shoppingCart.querySelector('[data-cart-status]');
-    const formatCurrency = (value) => `$${value.toFixed(2)}`;
-
     const renderCart = () => {
       const items = window.campusCart.getItems();
       itemsContainer.replaceChildren();
@@ -428,8 +431,6 @@
     const orderStatus = checkout.querySelector('[data-order-status]');
     const orderMethodInputs = [...checkoutForm.querySelectorAll('input[name="orderMethod"]')];
     const deliveryFee = 3.5;
-    const formatCurrency = (value) => `$${value.toFixed(2)}`;
-
     const renderCheckout = () => {
       const items = window.campusCart.getItems();
       itemsContainer.replaceChildren();
