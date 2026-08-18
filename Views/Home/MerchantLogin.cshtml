@@ -8,7 +8,7 @@
             <div class="col-lg-8 col-xl-6">
                 <div class="product-card auth-card reveal">
                     <div class="product-card__body">
-                        <div class="product-card__heading mb-4"><h3>Sign in as a merchant</h3></div>
+                        <div class="product-card__heading auth-card__heading mb-4"><h3>Sign in as a merchant</h3></div>
                         <form data-auth-login data-role="merchant" data-redirect-url="@Url.Action("MerchantDashboard", "Home")">
                             @Html.AntiForgeryToken()
                             <div class="mb-4">
@@ -20,7 +20,7 @@
                                 <input class="form-control form-control-lg rounded-0" id="merchant-login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required />
                             </div>
                             <button class="button product-card__button w-100" type="submit">Sign In</button>
-                            <p class="mt-4 mb-0 text-center">Don't have an account? <a class="text-link" asp-area="" asp-controller="Home" asp-action="MerchantRegister">Register</a></p>
+                            <p class="auth-card__registration mt-4 mb-0 text-center">Don't have an account? <a class="text-link" asp-area="" asp-controller="Home" asp-action="MerchantRegister">Register</a></p>
                             <p class="auth-status mt-4" data-auth-status aria-live="polite" hidden></p>
                         </form>
                     </div>

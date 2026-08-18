@@ -47,13 +47,13 @@
                             @foreach (var item in Model.Items)
                             {
                                 <div class="menu-note mt-0">
-                                    <span><strong class="d-block">@item.ProductName</strong>@item.Quantity × @item.UnitPrice.ToString("C")</span>
-                                    <strong>@((item.Quantity * item.UnitPrice).ToString("C"))</strong>
+                                    <span><strong class="d-block">@item.ProductName</strong>@item.Quantity × @CurrencyFormatter.NzDollars(item.UnitPrice)</span>
+                                    <strong>@CurrencyFormatter.NzDollars(item.Quantity * item.UnitPrice)</strong>
                                 </div>
                             }
-                            <div class="menu-note mt-4"><span>Subtotal</span><strong>@Model.Subtotal.ToString("C")</strong></div>
-                            <div class="menu-note mt-0"><span>Delivery</span><strong>@Model.DeliveryFee.ToString("C")</strong></div>
-                            <div class="menu-note mt-0"><strong>Total</strong><span class="product-card__price">@Model.Total.ToString("C")</span></div>
+                            <div class="menu-note mt-4"><span>Subtotal</span><strong>@CurrencyFormatter.NzDollars(Model.Subtotal)</strong></div>
+                            <div class="menu-note mt-0"><span>Delivery</span><strong>@CurrencyFormatter.NzDollars(Model.DeliveryFee)</strong></div>
+                            <div class="menu-note mt-0"><strong>Total</strong><span class="product-card__price">@CurrencyFormatter.NzDollars(Model.Total)</span></div>
                             <a class="button product-card__button w-100 mt-4" asp-controller="Home" asp-action="Menu">Continue shopping</a>
                         </div>
                     </aside>

@@ -61,15 +61,23 @@
                 <a asp-area="" asp-controller="Home" asp-action="Catering">Catering</a>
                 <a asp-area="" asp-controller="Home" asp-action="OurStory">Our story</a>
             </div>
-            <div>
-                <p class="site-footer__label">Your account</p>
-                <a asp-area="Identity" asp-page="/Account/Login">Sign in</a>
-                <a asp-area="Identity" asp-page="/Account/Register">Create account</a>
-                <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <div class="site-footer__contact">
+                <p class="site-footer__label">Contact</p>
+                <p>Phone: 09 XXX XXXX</p>
+                <p>Email: campuscoffee@example.com</p>
+                <nav class="site-footer__socials" aria-label="Social media">
+                    <a href="#" aria-label="Facebook" data-placeholder-social>
+                        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M16 8.05A8 8 0 1 0 6.75 16v-5.63H4.72V8.05h2.03V6.27c0-2.01 1.2-3.13 3.02-3.13.88 0 1.8.16 1.8.16v1.98h-1.02c-1 0-1.31.62-1.31 1.26v1.51h2.23l-.36 2.32H9.24V16A8 8 0 0 0 16 8.05Z"/></svg>
+                    </a>
+                    <a href="#" aria-label="Instagram" data-placeholder-social>
+                        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C5.83 0 5.56.01 4.71.05 3.86.09 3.28.22 2.77.42a3.92 3.92 0 0 0-1.42.92A3.92 3.92 0 0 0 .42 2.77c-.2.51-.33 1.09-.37 1.94C.01 5.56 0 5.83 0 8s.01 2.44.05 3.29c.04.85.17 1.43.37 1.94.21.53.48.99.92 1.42.44.44.9.71 1.43.92.51.2 1.09.33 1.94.37.85.04 1.12.05 3.29.05s2.44-.01 3.29-.05c.85-.04 1.43-.17 1.94-.37a3.92 3.92 0 0 0 1.42-.92c.44-.44.71-.9.92-1.42.2-.51.33-1.09.37-1.94.04-.85.05-1.12.05-3.29s-.01-2.44-.05-3.29c-.04-.85-.17-1.43-.37-1.94a3.92 3.92 0 0 0-.92-1.42 3.92 3.92 0 0 0-1.42-.92c-.51-.2-1.09-.33-1.94-.37C10.44.01 10.17 0 8 0Zm0 1.44c2.13 0 2.38.01 3.23.05.78.03 1.2.16 1.48.27.37.14.64.32.92.6.28.28.46.55.6.92.11.28.24.7.27 1.48.04.85.05 1.1.05 3.23s-.01 2.38-.05 3.23c-.03.78-.16 1.2-.27 1.48-.14.37-.32.64-.6.92-.28.28-.55.46-.92.6-.28.11-.7.24-1.48.27-.85.04-1.1.05-3.23.05s-2.38-.01-3.23-.05c-.78-.03-1.2-.16-1.48-.27a2.48 2.48 0 0 1-.92-.6 2.48 2.48 0 0 1-.6-.92c-.11-.28-.24-.7-.27-1.48-.04-.85-.05-1.1-.05-3.23s.01-2.38.05-3.23c.03-.78.16-1.2.27-1.48.14-.37.32-.64.6-.92.28-.28.55-.46.92-.6.28-.11.7-.24 1.48-.27.85-.04 1.1-.05 3.23-.05Zm0 2.45A4.11 4.11 0 1 0 8 12.1 4.11 4.11 0 0 0 8 3.89Zm0 6.78A2.67 2.67 0 1 1 8 5.33a2.67 2.67 0 0 1 0 5.34Zm5.23-6.94a.96.96 0 1 1-1.92 0 .96.96 0 0 1 1.92 0Z"/></svg>
+                    </a>
+                </nav>
             </div>
             <div>
                 <p class="site-footer__label">Opening hours</p>
-                <p>Open weekdays during semester.<br />Hours may vary during breaks.</p>
+                <p>Mon &ndash; Fri: 8:00 AM &ndash; 5:00 PM</p>
+                <p>Sat &ndash; Sun: 9:00 AM &ndash; 4:00 PM</p>
             </div>
         </div>
         <div class="site-shell site-footer__bottom">

@@ -212,7 +212,7 @@
                 </article>
                 <article class="merchant-summary-card merchant-summary-card--espresso merchant-reveal">
                     <div class="merchant-summary-card__top"><span>Today’s Revenue</span><span class="merchant-trend merchant-trend--light">Live total</span></div>
-                    <strong>@Model.TodayRevenue.ToString("C")</strong><small>Excluding cancelled orders</small>
+                    <strong>@CurrencyFormatter.NzDollars(Model.TodayRevenue)</strong><small>Excluding cancelled orders</small>
                     <span class="merchant-summary-card__mark">03</span>
                 </article>
                 <article class="merchant-summary-card merchant-reveal">
@@ -233,7 +233,7 @@
                 </div>
                 <div class="merchant-analytics-layout">
                     <div class="merchant-chart-wrap" aria-label="Revenue recorded in the database over the last seven days">
-                        <div class="merchant-chart-scale" aria-hidden="true"><span>@chartMaximum.ToString("C0")</span><span>@((chartMaximum * .75m).ToString("C0"))</span><span>@((chartMaximum * .5m).ToString("C0"))</span><span>@((chartMaximum * .25m).ToString("C0"))</span><span>$0</span></div>
+                        <div class="merchant-chart-scale" aria-hidden="true"><span>@CurrencyFormatter.NzDollars(chartMaximum)</span><span>@CurrencyFormatter.NzDollars(chartMaximum * .75m)</span><span>@CurrencyFormatter.NzDollars(chartMaximum * .5m)</span><span>@CurrencyFormatter.NzDollars(chartMaximum * .25m)</span><span>NZ$0.00</span></div>
                         <svg class="merchant-line-chart" viewBox="0 0 760 280" role="img" aria-labelledby="chart-title chart-description">
                             <title id="chart-title">Seven-day revenue</title><desc id="chart-description">Daily non-cancelled order revenue calculated from the current database records.</desc>
                             <defs><linearGradient id="merchant-chart-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#a64b2a" stop-opacity=".24"/><stop offset="1" stop-color="#a64b2a" stop-opacity="0"/></linearGradient></defs>
@@ -252,9 +252,9 @@
                         </div>
                     </div>
                     <div class="merchant-analytics-metrics">
-                        <article><span>Revenue</span><strong>@sevenDayRevenue.ToString("C")</strong><small>Non-cancelled database orders</small></article>
+                        <article><span>Revenue</span><strong>@CurrencyFormatter.NzDollars(sevenDayRevenue)</strong><small>Non-cancelled database orders</small></article>
                         <article><span>Orders</span><strong>@sevenDayOrders.Count</strong><small>Placed during the seven-day window</small></article>
-                        <article><span>Average Order Value</span><strong>@averageOrderValue.ToString("C")</strong><small>Across non-cancelled orders</small></article>
+                        <article><span>Average Order Value</span><strong>@CurrencyFormatter.NzDollars(averageOrderValue)</strong><small>Across non-cancelled orders</small></article>
                     </div>
                 </div>
             </section>
@@ -383,7 +383,7 @@
                         }
                         @foreach (var order in activeOrders.Take(2))
                         {
-                            <article><span class="merchant-notification-icon merchant-notification-icon--coffee"><svg viewBox="0 0 24 24"><path d="M4 8h13v6a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6V8Zm13 2h2a3 3 0 0 1 0 6h-2M8 4v2m4-2v2"/></svg></span><div><strong>@order.OrderNumber is @order.Status.ToLowerInvariant()</strong><p>@order.CustomerName · @order.Items.Sum(item => item.Quantity) item(s) · @order.Total.ToString("C")</p><time>@order.PlacedAtUtc.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</time></div></article>
+                            <article><span class="merchant-notification-icon merchant-notification-icon--coffee"><svg viewBox="0 0 24 24"><path d="M4 8h13v6a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6V8Zm13 2h2a3 3 0 0 1 0 6h-2M8 4v2m4-2v2"/></svg></span><div><strong>@order.OrderNumber is @order.Status.ToLowerInvariant()</strong><p>@order.CustomerName · @order.Items.Sum(item => item.Quantity) item(s) · @CurrencyFormatter.NzDollars(order.Total)</p><time>@order.PlacedAtUtc.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</time></div></article>
                         }
                     </div>
                 </section>
@@ -438,10 +438,10 @@
                         <ul>
                             @foreach (var item in order.Items)
                             {
-                                <li><span>@item.ProductName × @item.Quantity</span><strong>@((item.UnitPrice * item.Quantity).ToString("C"))</strong></li>
+                                <li><span>@item.ProductName × @item.Quantity</span><strong>@CurrencyFormatter.NzDollars(item.UnitPrice * item.Quantity)</strong></li>
                             }
                         </ul>
-                        <div class="merchant-order-card__total"><span>Total</span><strong>@order.Total.ToString("C")</strong></div>
+                        <div class="merchant-order-card__total"><span>Total</span><strong>@CurrencyFormatter.NzDollars(order.Total)</strong></div>
                         @if (order.Status != OrderStatuses.Completed && order.Status != OrderStatuses.Cancelled)
                         {
                             <div class="merchant-card-actions">
@@ -471,7 +471,7 @@
                 }
                 @foreach (var product in Model.Products)
                 {
-                    <tr data-product-row data-product-id="@product.Id" data-product-name="@product.Name" data-search-item><td><strong>@product.Name</strong></td><td>@product.DisplayCategory</td><td>@product.Price.ToString("C")</td><td><span class="merchant-badge merchant-badge--@(product.IsActive ? "active" : "disabled")" data-product-status>@(product.IsActive ? "Active" : "Disabled")</span></td><td><div class="merchant-table__actions"><button type="button" data-product-action="stock">Manage stock</button><button type="button" data-product-action="toggle">@(product.IsActive ? "Disable" : "Enable")</button></div></td></tr>
+                    <tr data-product-row data-product-id="@product.Id" data-product-name="@product.Name" data-search-item><td><strong>@product.Name</strong></td><td>@product.DisplayCategory</td><td>@CurrencyFormatter.NzDollars(product.Price)</td><td><span class="merchant-badge merchant-badge--@(product.IsActive ? "active" : "disabled")" data-product-status>@(product.IsActive ? "Active" : "Disabled")</span></td><td><div class="merchant-table__actions"><button type="button" data-product-action="stock">Manage stock</button><button type="button" data-product-action="toggle">@(product.IsActive ? "Disable" : "Enable")</button></div></td></tr>
                 }
             </tbody></table></div></div>
         </section>

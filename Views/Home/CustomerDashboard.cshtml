@@ -43,7 +43,7 @@
                         <article class="product-card portal-card h-100 reveal">
                             <div class="product-card__body">
                                 <span class="value-card__number">@order.OrderNumber</span>
-                                <div class="product-card__heading mt-5"><h3>@order.Status</h3><span class="product-card__price">@order.Total.ToString("C")</span></div>
+                                <div class="product-card__heading mt-5"><h3>@order.Status</h3><span class="product-card__price">@CurrencyFormatter.NzDollars(order.Total)</span></div>
                                 <p class="product-card__description">@order.PlacedAtUtc.ToLocalTime().ToString("dd MMM yyyy · HH:mm")</p>
                                 <p class="product-card__description">@string.Join(", ", order.Items.Select(item => $"{item.ProductName} × {item.Quantity}"))</p>
                                 <a class="button product-card__button mt-auto" asp-action="OrderConfirmation" asp-route-orderNumber="@order.OrderNumber">View Details</a>

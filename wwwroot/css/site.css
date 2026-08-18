@@ -148,8 +148,13 @@ button { font: inherit; }
 .site-footer__brand p, .site-footer p { margin: 0; }
 .site-footer__label { margin-bottom: 20px !important; color: white; font-size: .67rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
 .site-footer__grid > div:not(:first-child) { display: flex; flex-direction: column; align-items: flex-start; gap: 11px; font-size: .88rem; }
+.site-footer__contact p { overflow-wrap: anywhere; }
 .site-footer__grid a { border-bottom: 1px solid transparent; }
 .site-footer__grid a:hover { color: white; border-color: currentColor; }
+.site-footer__socials { margin-top: 8px; display: flex; gap: 12px; }
+.site-footer__socials a { width: 32px; height: 32px; display: grid; place-items: center; color: rgba(255, 255, 255, .76); border: 1px solid rgba(255, 255, 255, .28); border-radius: 50%; transition: color .2s ease, border-color .2s ease; }
+.site-footer__socials a:hover, .site-footer__socials a:focus-visible { color: white; border-color: rgba(255, 255, 255, .76); }
+.site-footer__socials svg { width: 15px; height: 15px; fill: currentColor; }
 .site-footer__bottom { padding-top: 22px; display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,.16); font-size: .7rem; letter-spacing: .06em; }
 
 .reveal { opacity: 0; transform: translateY(24px); transition: opacity .75s ease, transform .75s ease; }
@@ -230,6 +235,7 @@ button { font: inherit; }
 .portal-surface { animation: portal-page-enter .55s ease-out both; }
 .portal-card, .auth-card { border-radius: 18px; box-shadow: 0 12px 32px rgba(29, 27, 23, .07); }
 .portal-card:hover { box-shadow: 0 24px 54px rgba(29, 27, 23, .14); transform: translateY(-8px); }
+.auth-card__heading, .auth-card__registration, .auth-card__registration .text-link, .auth-card__registration .text-link:hover { color: #000; }
 .auth-status { margin-bottom: 0; padding: 16px 18px; color: var(--coffee); background: rgba(120, 130, 104, .12); border: 1px solid rgba(120, 130, 104, .42); line-height: 1.65; white-space: pre-line; }
 .auth-status.is-error { color: var(--rust); background: rgba(166, 75, 42, .07); border-color: rgba(166, 75, 42, .35); }
 @keyframes portal-page-enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -281,8 +287,8 @@ button { font: inherit; }
   .menu-group__heading { grid-template-columns: 1fr; gap: 20px; }
   .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .menu-closing__inner { grid-template-columns: 1fr; gap: 30px; }
-  .site-footer__grid { grid-template-columns: 1.7fr 1fr 1fr; }
-  .site-footer__grid > div:last-child { grid-column: 2 / 4; }
+  .site-footer__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .site-footer__brand { grid-column: 1 / -1; }
 }
 
 @media (max-width: 767.98px) {
