@@ -1,5 +1,8 @@
 using CampusCoffeeSystem.Data;
+using CampusCoffeeSystem.Services;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,12 +14,28 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 
-//ÓÃ»§×¢²áºó£¬ĞèÒªµã¿ªÓÊÏäÊÕµ½µÄÑéÖ¤Á´½Ó¼¤»îÕËºÅ£¬ÕËºÅ²ÅÔÊĞíµÇÂ¼ ±¾µØ¿ª·¢Ã»ÓĞÅäÖÃÓÊ¼ş·¢ËÍ·şÎñ£¬ÊÕ²»µ½ÑéÖ¤ÓÊ¼ş£¬Ã»·¨ÊÖ¶¯¼¤»îÕËºÅ Ìí¼ÓRequireConfirmedAccount = false
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
+//ç”¨æˆ·æ³¨å†Œåï¼Œéœ€è¦ç‚¹å¼€é‚®ç®±æ”¶åˆ°çš„éªŒè¯é“¾æ¥æ¿€æ´»è´¦å·ï¼Œè´¦å·æ‰å…è®¸ç™»å½• æœ¬åœ°å¼€å‘æ²¡æœ‰é…ç½®é‚®ä»¶å‘é€æœåŠ¡ï¼Œæ”¶ä¸åˆ°éªŒè¯é‚®ä»¶ï¼Œæ²¡æ³•æ‰‹åŠ¨æ¿€æ´»è´¦å· æ·»åŠ RequireConfirmedAccount = false
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.SectionName));
+builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
+
+if (builder.Configuration.GetValue<bool>("PersistDataProtectionKeys"))
+{
+    builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo("/app/data-protection-keys"))
+        .SetApplicationName("CampusCoffeeSystem");
+}
+
+builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
-
+builder.Services.AddHttpClient<IAiService, AiService>();
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.EnsureCreated();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -30,7 +49,10 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+if (!app.Configuration.GetValue<bool>("DisableHttpsRedirection"))
+{
+    app.UseHttpsRedirection();
+}
 app.UseStaticFiles();
 
 app.UseRouting();

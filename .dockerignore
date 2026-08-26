@@ -1,0 +1,7 @@
+.git
+.vs
+bin
+obj
+.env
+Dockerfile*
+compose*.yaml

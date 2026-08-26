@@ -1,0 +1,38 @@
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: campus-coffee-db
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    mem_limit: 3g
+
+  web:
+    build: .
+    container_name: campus-coffee-web
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      DisableHttpsRedirection: "true"
+      PersistDataProtectionKeys: "true"
+      ConnectionStrings__DefaultConnection: "Server=db;Database=CampusCoffeeSystem;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+      Smtp__Host: ${SMTP_HOST}
+      Smtp__Port: ${SMTP_PORT}
+      Smtp__EnableSsl: ${SMTP_ENABLE_SSL}
+      Smtp__Username: ${SMTP_USERNAME}
+      Smtp__Password: ${SMTP_PASSWORD}
+      Smtp__FromEmail: ${SMTP_FROM_EMAIL}
+      Smtp__FromName: ${SMTP_FROM_NAME}
+    depends_on:
+      - db
+    volumes:
+      - data-protection-keys:/app/data-protection-keys
+
+volumes:
+  sqlserver-data:
+  data-protection-keys:
