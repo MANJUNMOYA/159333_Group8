@@ -1,0 +1,54 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Welcome back";
+}
+
+<section class="auth-page portal-surface" aria-labelledby="login-title">
+    <div class="site-shell auth-page__shell">
+        <header class="auth-page__header reveal">
+            <p class="eyebrow eyebrow--light">Customer access</p>
+            <h1 id="login-title">Welcome back</h1>
+            <p>Sign in to manage your campus coffee orders.</p>
+        </header>
+
+        <div class="auth-page__form-wrap reveal">
+            <div class="product-card auth-card">
+                <div class="product-card__body auth-card__body">
+                    <form class="auth-form" method="post" asp-route-returnUrl="@Model.ReturnUrl">
+                        <div asp-validation-summary="ModelOnly" class="auth-validation-summary" role="alert"></div>
+
+                        <div class="auth-field">
+                            <label class="form-label cart-item__label" asp-for="Input.Email"></label>
+                            <input class="form-control form-control-lg rounded-0" asp-for="Input.Email" autocomplete="email" aria-required="true" placeholder="you@example.com" />
+                            <span class="auth-field__validation" asp-validation-for="Input.Email"></span>
+                        </div>
+
+                        <div class="auth-field">
+                            <label class="form-label cart-item__label" asp-for="Input.Password"></label>
+                            <input class="form-control form-control-lg rounded-0" asp-for="Input.Password" autocomplete="current-password" aria-required="true" placeholder="Your password" />
+                            <span class="auth-field__validation" asp-validation-for="Input.Password"></span>
+                        </div>
+
+                        <label class="auth-check" asp-for="Input.RememberMe">
+                            <input class="form-check-input" asp-for="Input.RememberMe" />
+                            <span>Remember me on this device</span>
+                        </label>
+
+                        <button class="button product-card__button auth-form__submit w-100" type="submit">Sign in</button>
+
+                        <div class="auth-switch">
+                            <a class="text-link" asp-page="./ForgotPassword">Forgot your password?</a>
+                            <span>New here?</span>
+                            <a class="text-link" asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Create account <span aria-hidden="true">→</span></a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

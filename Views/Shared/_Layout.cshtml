@@ -1,3 +1,6 @@
+@{
+    var isIdentityArea = string.Equals(ViewContext.RouteData.Values["area"]?.ToString(), "Identity", StringComparison.OrdinalIgnoreCase);
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,7 +12,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/CampusCoffeeSystem.styles.css" asp-append-version="true" />
 </head>
-<body>
+<body class="@(isIdentityArea ? "identity-area" : "")">
     <a class="skip-link" href="#main-content">Skip to content</a>
     <div class="announcement-bar">
         <p>Fresh coffee, honest food, right here on campus.</p>

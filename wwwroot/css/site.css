@@ -232,6 +232,26 @@ button { font: inherit; }
 .portal-card:hover { box-shadow: 0 24px 54px rgba(29, 27, 23, .14); transform: translateY(-8px); }
 .auth-status { margin-bottom: 0; padding: 16px 18px; color: var(--coffee); background: rgba(120, 130, 104, .12); border: 1px solid rgba(120, 130, 104, .42); line-height: 1.65; white-space: pre-line; }
 .auth-status.is-error { color: var(--rust); background: rgba(166, 75, 42, .07); border-color: rgba(166, 75, 42, .35); }
+.auth-check { display: flex; align-items: center; gap: 10px; color: rgba(29, 27, 23, .72); font-size: .88rem; cursor: pointer; }
+.auth-check .form-check-input { width: 1.05rem; height: 1.05rem; margin: 0; border-color: rgba(29, 27, 23, .4); border-radius: 0; }
+.auth-check .form-check-input:checked { background-color: var(--coffee); border-color: var(--coffee); }
+.auth-message { display: grid; gap: 25px; text-align: center; }
+.auth-message > p { max-width: 500px; margin: 0 auto; color: rgba(29, 27, 23, .72); line-height: 1.75; }
+.auth-message .button { justify-self: center; }
+
+/* Style Identity pages that are still supplied by ASP.NET, such as password recovery. */
+.identity-area main:not(:has(.auth-page)) { min-height: 72vh; padding: 180px max(24px, calc((100vw - 760px) / 2)) 100px; color: var(--ink); background: linear-gradient(to bottom, var(--espresso) 0, var(--espresso) 330px, var(--cream) 330px, var(--cream) 100%); }
+.identity-area main:not(:has(.auth-page)) > h1,
+.identity-area main:not(:has(.auth-page)) > h2 { margin: 0 0 34px; color: white; font-family: var(--serif); font-size: clamp(3rem, 7vw, 5.5rem); font-weight: 400; letter-spacing: -.05em; line-height: .9; text-align: center; }
+.identity-area main:not(:has(.auth-page)) .row { margin: 0; justify-content: center; }
+.identity-area main:not(:has(.auth-page)) [class*="col-md-"] { width: min(100%, 650px); padding: 0; }
+.identity-area main:not(:has(.auth-page)) section,
+.identity-area main:not(:has(.auth-page)) form { padding: clamp(28px, 5vw, 48px); background: var(--paper); border: 1px solid rgba(29, 27, 23, .14); box-shadow: 0 24px 70px rgba(18, 11, 9, .22); }
+.identity-area main:not(:has(.auth-page)) form { padding: 0; background: transparent; border: 0; box-shadow: none; }
+.identity-area main:not(:has(.auth-page)) .form-floating { margin-bottom: 18px; }
+.identity-area main:not(:has(.auth-page)) .form-control { min-height: 56px; border-radius: 0; border-color: rgba(29, 27, 23, .24); box-shadow: none; }
+.identity-area main:not(:has(.auth-page)) .btn-primary { width: 100%; min-height: 52px; color: white; background: var(--espresso); border: 0; border-radius: 0; font-size: .75rem; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
+.identity-area main:not(:has(.auth-page)) a:not(.btn) { color: var(--coffee); }
 @keyframes portal-page-enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 .menu-pagination { margin-top: 72px; padding-top: 28px; display: flex; align-items: center; justify-content: center; gap: 24px; border-top: 1px solid var(--line); }
