@@ -16,7 +16,7 @@
             <div class="product-card auth-card">
                 <div class="product-card__body auth-card__body auth-message">
                     <p class="auth-status @(Model.Succeeded ? "" : "is-error")">@Model.StatusMessage</p>
-                    <a class="button product-card__button" asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">Sign in</a>
+                    <a class="button product-card__button" asp-area="" asp-controller="Home" asp-action="CustomerLogin">Sign in</a>
                 </div>
             </div>
         </div>
