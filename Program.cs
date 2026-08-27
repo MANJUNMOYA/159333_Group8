@@ -28,13 +28,22 @@ if (builder.Configuration.GetValue<bool>("PersistDataProtectionKeys"))
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
-builder.Services.AddHttpClient<IAiService, AiService>();
+builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection(GeminiOptions.SectionName));
+builder.Services.AddScoped<AiContextService>();
+builder.Services.AddScoped<AiDataSchemaInitializer>();
+builder.Services.AddHttpClient<IAiService, AiService>(client =>
+{
+    client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     db.Database.EnsureCreated();
+    var aiDataSchema = scope.ServiceProvider.GetRequiredService<AiDataSchemaInitializer>();
+    await aiDataSchema.EnsureCreatedAsync();
 }
 
 // Configure the HTTP request pipeline.
@@ -57,6 +66,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

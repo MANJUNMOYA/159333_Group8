@@ -3,13 +3,12 @@
     public class ChatRequestDto
     {
         public string UserMessage { get; set; } = string.Empty;
-        public List<Dictionary<string, string>> ConversationHistory { get; set; } = new();
     }
 
-    public class RecommendRequestDto
+    public class ActivityRequestDto
     {
-        public List<string> OrderHistory { get; set; } = new();
-        public List<Dictionary<string, object>> CurrentMenu { get; set; } = new();
+        public string ProductName { get; set; } = string.Empty;
+        public string ActivityType { get; set; } = string.Empty;
     }
 
     public class ChatResponseDto

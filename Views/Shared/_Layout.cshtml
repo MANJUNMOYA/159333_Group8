@@ -1,5 +1,8 @@
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 @{
     var isIdentityArea = string.Equals(ViewContext.RouteData.Values["area"]?.ToString(), "Identity", StringComparison.OrdinalIgnoreCase);
+    var aiRequestToken = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+    var isAiUserSignedIn = User.Identity?.IsAuthenticated == true;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -11,8 +14,9 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/CampusCoffeeSystem.styles.css" asp-append-version="true" />
+    <meta name="request-verification-token" content="@aiRequestToken" />
 </head>
-<body class="@(isIdentityArea ? "identity-area" : "")">
+<body class="@(isIdentityArea ? "identity-area" : "")" data-ai-authenticated="@isAiUserSignedIn.ToString().ToLowerInvariant()">
     <a class="skip-link" href="#main-content">Skip to content</a>
     <div class="announcement-bar">
         <p>Fresh coffee, honest food, right here on campus.</p>
@@ -80,9 +84,40 @@
             <span>Made for the campus community.</span>
         </div>
     </footer>
+    @if (isAiUserSignedIn)
+    {
+        <aside class="coffee-agency" data-coffee-agency aria-label="Coffee agency assistant">
+            <button class="coffee-agency__launcher" type="button" data-ai-toggle aria-expanded="false" aria-controls="coffee-agency-panel">
+                <span aria-hidden="true">✦</span>
+                <span>Contract your coffee agency</span>
+            </button>
+            <section class="coffee-agency__panel" id="coffee-agency-panel" data-ai-panel hidden aria-label="Coffee agency chat">
+                <header class="coffee-agency__header">
+                    <div>
+                        <p>Campus Coffee</p>
+                        <h2>Your coffee agency</h2>
+                    </div>
+                    <button type="button" class="coffee-agency__close" data-ai-close aria-label="Close chat">×</button>
+                </header>
+                <div class="coffee-agency__messages" data-ai-messages aria-live="polite">
+                    <p class="coffee-agency__intro">Hello. I can help you discover menu favourites, explain the ordering flow, or find a good match for your day.</p>
+                </div>
+                <form class="coffee-agency__form" data-ai-chat-form>
+                    <label class="visually-hidden" for="coffee-agency-message">Ask your coffee agency</label>
+                    <textarea id="coffee-agency-message" data-ai-message maxlength="800" placeholder="Ask about coffee, food or ordering" required></textarea>
+                    <button class="button product-card__button" type="submit" data-ai-send>Send</button>
+                </form>
+            </section>
+        </aside>
+    }
+    else
+    {
+        <a class="coffee-agency__launcher coffee-agency__launcher--guest" asp-area="" asp-controller="Home" asp-action="Portal">Contract your coffee agency</a>
+    }
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/coffee-agency.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

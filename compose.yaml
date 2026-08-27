@@ -28,6 +28,8 @@ services:
       Smtp__Password: ${SMTP_PASSWORD}
       Smtp__FromEmail: ${SMTP_FROM_EMAIL}
       Smtp__FromName: ${SMTP_FROM_NAME}
+      Gemini__ApiKey: ${GEMINI_API_KEY}
+      Gemini__Model: ${GEMINI_MODEL:-gemini-3.5-flash}
     depends_on:
       - db
     volumes:

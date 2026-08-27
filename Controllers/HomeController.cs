@@ -74,6 +74,7 @@ namespace CampusCoffeeSystem.Controllers
             return View();
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize]
         public IActionResult CustomerDashboard()
         {
             return View();

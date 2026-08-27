@@ -22,6 +22,19 @@
             <div class="col">
                 <article class="product-card portal-card h-100 reveal"><div class="product-card__body"><span class="value-card__number">03</span><div class="product-card__heading mt-5"><h3>Shopping Cart</h3></div><p class="product-card__description">Review products saved in your frontend shopping cart.</p><a class="button product-card__button mt-auto" asp-area="" asp-controller="Home" asp-action="ShoppingCart">Shopping Cart</a></div></article>
             </div>
+            <div class="col">
+                <article class="product-card portal-card h-100 reveal">
+                    <div class="product-card__body">
+                        <span class="value-card__number">04</span>
+                        <div class="product-card__heading mt-5"><h3>Your coffee agency</h3></div>
+                        <p class="product-card__description">See recommendations shaped by your own menu activity, or ask for help with the menu and ordering.</p>
+                        <div class="d-flex flex-wrap gap-2 mt-auto">
+                            <a class="button product-card__button" asp-area="" asp-controller="Home" asp-action="Menu" asp-fragment="coffee-agency-recommendations">View recommendations</a>
+                            <button class="button product-card__button" type="button" data-ai-open-chat>Start a chat</button>
+                        </div>
+                    </div>
+                </article>
+            </div>
         </div>
     </div>
 </section>

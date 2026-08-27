@@ -239,6 +239,31 @@ button { font: inherit; }
 .auth-message > p { max-width: 500px; margin: 0 auto; color: rgba(29, 27, 23, .72); line-height: 1.75; }
 .auth-message .button { justify-self: center; }
 
+.coffee-recommendations { margin: clamp(52px, 7vw, 92px) 0 0; padding: clamp(30px, 5vw, 54px); display: grid; grid-template-columns: .85fr 1.15fr; gap: clamp(30px, 6vw, 92px); color: white; background: var(--coffee); }
+.coffee-recommendations .eyebrow { margin-bottom: 16px; color: #f1d4bd; }
+.coffee-recommendations h2 { margin: 0; font-family: var(--serif); font-size: clamp(2.65rem, 5.1vw, 5.1rem); font-weight: 400; letter-spacing: -.05em; line-height: .9; }
+.coffee-recommendations__answer { align-self: center; padding-left: clamp(0px, 5vw, 52px); border-left: 1px solid rgba(255,255,255,.28); }
+.coffee-recommendations__answer p { margin: 0 0 16px; color: rgba(255,255,255,.82); line-height: 1.75; white-space: pre-line; }
+.coffee-recommendations__answer p:last-child { margin-bottom: 0; }
+
+.coffee-agency { position: fixed; z-index: 100; right: 24px; bottom: 24px; display: flex; flex-direction: column; align-items: flex-end; gap: 13px; }
+.coffee-agency__launcher { max-width: min(315px, calc(100vw - 48px)); min-height: 52px; padding: 13px 19px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; color: white; background: var(--espresso); border: 1px solid rgba(255,255,255,.35); box-shadow: 0 14px 32px rgba(22, 12, 8, .26); font-size: .68rem; font-weight: 700; letter-spacing: .11em; line-height: 1.25; text-transform: uppercase; }
+.coffee-agency__launcher:hover { color: var(--espresso); background: var(--cream); transform: translateY(-2px); }
+.coffee-agency__launcher--guest { position: fixed; z-index: 100; right: 24px; bottom: 24px; }
+.coffee-agency__panel { width: min(390px, calc(100vw - 32px)); overflow: hidden; color: var(--ink); background: var(--paper); border: 1px solid rgba(29,27,23,.18); box-shadow: 0 24px 70px rgba(18,11,9,.28); }
+.coffee-agency__header { padding: 20px 22px; display: flex; align-items: start; justify-content: space-between; gap: 18px; color: white; background: var(--espresso); }
+.coffee-agency__header p { margin: 0 0 6px; color: #f1d4bd; font-size: .6rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.coffee-agency__header h2 { margin: 0; font-family: var(--serif); font-size: 1.75rem; font-weight: 400; }
+.coffee-agency__close { width: 32px; height: 32px; padding: 0; color: white; background: transparent; border: 1px solid rgba(255,255,255,.45); border-radius: 50%; font-size: 1.35rem; line-height: 1; }
+.coffee-agency__messages { max-height: min(48vh, 390px); min-height: 215px; padding: 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+.coffee-agency__intro, .coffee-agency__message { max-width: 88%; margin: 0; padding: 12px 14px; line-height: 1.55; white-space: pre-line; }
+.coffee-agency__intro, .coffee-agency__message--assistant { align-self: flex-start; background: var(--cream); }
+.coffee-agency__message--user { align-self: flex-end; color: white; background: var(--coffee); }
+.coffee-agency__form { padding: 16px; display: grid; grid-template-columns: 1fr auto; gap: 10px; border-top: 1px solid var(--line); }
+.coffee-agency__form textarea { min-height: 48px; padding: 12px; resize: vertical; color: var(--ink); background: white; border: 1px solid rgba(29,27,23,.28); border-radius: 0; font: inherit; line-height: 1.4; }
+.coffee-agency__form textarea:focus { outline: 0; border-color: var(--coffee); box-shadow: 0 0 0 3px rgba(92,57,43,.12); }
+.coffee-agency__form .button { min-height: 48px; padding-inline: 15px; }
+
 /* Style Identity pages that are still supplied by ASP.NET, such as password recovery. */
 .identity-area main:not(:has(.auth-page)) { min-height: 72vh; padding: 180px max(24px, calc((100vw - 760px) / 2)) 100px; color: var(--ink); background: linear-gradient(to bottom, var(--espresso) 0, var(--espresso) 330px, var(--cream) 330px, var(--cream) 100%); }
 .identity-area main:not(:has(.auth-page)) > h1,
@@ -301,6 +326,8 @@ button { font: inherit; }
   .menu-group__heading { grid-template-columns: 1fr; gap: 20px; }
   .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .menu-closing__inner { grid-template-columns: 1fr; gap: 30px; }
+  .coffee-recommendations { grid-template-columns: 1fr; gap: 26px; }
+  .coffee-recommendations__answer { padding: 25px 0 0; border-top: 1px solid rgba(255,255,255,.28); border-left: 0; }
   .site-footer__grid { grid-template-columns: 1.7fr 1fr 1fr; }
   .site-footer__grid > div:last-child { grid-column: 2 / 4; }
 }
@@ -322,6 +349,9 @@ button { font: inherit; }
   .menu-hero__content { padding-top: 150px; padding-bottom: 72px; }
   .menu-hero h1 { font-size: clamp(3.8rem, 17vw, 5.4rem); }
   .menu-tools { padding: 24px 20px; gap: 24px; }
+  .coffee-agency { right: 14px; bottom: 14px; }
+  .coffee-agency__launcher--guest { right: 14px; bottom: 14px; }
+  .coffee-agency__form { grid-template-columns: 1fr; }
   .menu-filters__buttons { display: grid; grid-template-columns: repeat(3, 1fr); }
   .menu-filter { min-width: 0; padding-inline: 10px; }
   .menu-group { margin-top: 75px; }

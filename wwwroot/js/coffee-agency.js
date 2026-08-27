@@ -1,0 +1,138 @@
+(() => {
+  const isAuthenticated = document.body.dataset.aiAuthenticated === 'true';
+  if (!isAuthenticated) return;
+
+  const token = document.querySelector('meta[name="request-verification-token"]')?.content;
+  const request = async (url, options = {}) => {
+    const response = await fetch(url, {
+      credentials: 'same-origin',
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        ...(token ? { RequestVerificationToken: token } : {})
+      }
+    });
+
+    const contentType = response.headers.get('content-type') || '';
+    const body = contentType.includes('application/json') ? await response.json() : null;
+    if (!response.ok || body?.success === false) {
+      throw new Error(body?.message || 'The coffee agency is unavailable right now.');
+    }
+    return body;
+  };
+
+  const trackActivity = async (productName, activityType) => {
+    if (!productName) return;
+    try {
+      await request('/api/ai/activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productName, activityType })
+      });
+    } catch {
+      // Activity tracking is optional and should never interrupt browsing or ordering.
+    }
+  };
+
+  const panel = document.querySelector('[data-ai-panel]');
+  const launcher = document.querySelector('[data-ai-toggle]');
+  const messages = document.querySelector('[data-ai-messages]');
+  const chatForm = document.querySelector('[data-ai-chat-form]');
+  const messageInput = document.querySelector('[data-ai-message]');
+  const sendButton = document.querySelector('[data-ai-send]');
+
+  const setChatOpen = (open) => {
+    if (!panel || !launcher) return;
+    panel.hidden = !open;
+    launcher.setAttribute('aria-expanded', String(open));
+    if (open) messageInput?.focus();
+  };
+
+  const addMessage = (text, role) => {
+    if (!messages) return;
+    const bubble = document.createElement('p');
+    bubble.className = `coffee-agency__message coffee-agency__message--${role}`;
+    bubble.textContent = text;
+    messages.append(bubble);
+    messages.scrollTop = messages.scrollHeight;
+  };
+
+  launcher?.addEventListener('click', () => setChatOpen(panel?.hidden));
+  document.querySelector('[data-ai-close]')?.addEventListener('click', () => setChatOpen(false));
+  document.querySelectorAll('[data-ai-open-chat]').forEach((button) => {
+    button.addEventListener('click', () => setChatOpen(true));
+  });
+
+  chatForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const message = messageInput?.value.trim() || '';
+    if (!message) return;
+
+    addMessage(message, 'user');
+    messageInput.value = '';
+    sendButton.disabled = true;
+    sendButton.textContent = 'Thinking…';
+    try {
+      const result = await request('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userMessage: message })
+      });
+      addMessage(result.message, 'assistant');
+    } catch (error) {
+      addMessage(error.message, 'assistant');
+    } finally {
+      sendButton.disabled = false;
+      sendButton.textContent = 'Send';
+      messageInput?.focus();
+    }
+  });
+
+  const recommendations = document.querySelector('[data-ai-recommendations]');
+  const recommendationAnswer = document.querySelector('[data-ai-recommendations-answer]');
+  if (recommendations && recommendationAnswer) {
+    request('/api/ai/recommendations')
+      .then((result) => {
+        recommendationAnswer.replaceChildren();
+        result.message.split(/\n{2,}/).filter(Boolean).forEach((paragraph) => {
+          const element = document.createElement('p');
+          element.textContent = paragraph.replace(/\*\*/g, '');
+          recommendationAnswer.append(element);
+        });
+      })
+      .catch((error) => {
+        recommendationAnswer.textContent = error.message;
+      });
+  }
+
+  const viewedProducts = new Set();
+  const menuCards = document.querySelectorAll('[data-menu-card]');
+  if ('IntersectionObserver' in window && menuCards.length) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const productName = entry.target.dataset.name;
+        if (productName && !viewedProducts.has(productName)) {
+          viewedProducts.add(productName);
+          trackActivity(productName, 'view');
+        }
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.65 });
+    menuCards.forEach((card) => observer.observe(card));
+  }
+
+  const confirmation = document.querySelector('[data-order-confirmation]');
+  if (confirmation) {
+    try {
+      const order = JSON.parse(window.localStorage.getItem('campusCoffeeLastOrder') || 'null');
+      const trackedOrderKey = `campusCoffeeAiTrackedOrder:${order?.orderNumber || ''}`;
+      if (order?.orderNumber && Array.isArray(order.items) && !window.sessionStorage.getItem(trackedOrderKey)) {
+        window.sessionStorage.setItem(trackedOrderKey, 'true');
+        order.items.forEach((item) => trackActivity(String(item.name || ''), 'purchase'));
+      }
+    } catch {
+      // A malformed browser-only order should not affect the confirmation page.
+    }
+  }
+})();

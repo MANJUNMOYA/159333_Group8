@@ -9,5 +9,8 @@ namespace CampusCoffeeSystem.Data
             : base(options)
         {
         }
+
+        public DbSet<CampusCoffeeSystem.Models.UserActivity> UserActivities => Set<CampusCoffeeSystem.Models.UserActivity>();
+        public DbSet<CampusCoffeeSystem.Models.AiChatMessage> AiChatMessages => Set<CampusCoffeeSystem.Models.AiChatMessage>();
     }
 }
