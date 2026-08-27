@@ -9,7 +9,6 @@
         <p class="our-story-hero__subtitle">A simpler way to enjoy Campus Coffee.</p>
     </div>
 </section>
-
 <section class="menu-catalog portal-surface">
     <div class="site-shell">
         <div class="row justify-content-center">
@@ -17,7 +16,7 @@
                 <div class="product-card auth-card reveal">
                     <div class="product-card__body">
                         <div class="product-card__heading mb-4"><h2>Customer Registration</h2></div>
-                        <form data-customer-register data-login-url="@Url.Action("CustomerLogin", "Home")">
+                        <form asp-controller="PortalAuth" asp-action="Register" method="post">
                             <div class="row g-4">
                                 <div class="col-md-6">
                                     <label class="form-label cart-item__label" for="customer-register-first-name">First Name</label>
@@ -46,7 +45,10 @@
                             </div>
                             <button class="button product-card__button w-100 mt-4" type="submit">Create Account</button>
                             <p class="mt-4 mb-0 text-center">Already registered? <a class="text-link" asp-area="" asp-controller="Home" asp-action="CustomerLogin">Sign In</a></p>
-                            <p class="auth-status mt-4" data-auth-status aria-live="polite" hidden></p>
+                            @if (TempData["RegistrationError"] is string error)
+                            {
+                                <p class="auth-status is-error mt-4" role="alert">@error</p>
+                            }
                         </form>
                     </div>
                 </div>
@@ -55,6 +57,3 @@
     </div>
 </section>
 
-@section Scripts {
-    <script src="~/js/portal-auth.js" asp-append-version="true"></script>
-}
