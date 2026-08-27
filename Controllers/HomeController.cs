@@ -40,12 +40,12 @@ namespace CampusCoffeeSystem.Controllers
 
         public IActionResult CustomerLogin()
         {
-            return View();
+            return RedirectToPage("/Account/Login", new { area = "Identity" });
         }
 
         public IActionResult CustomerRegister()
         {
-            return View();
+            return RedirectToPage("/Account/Register", new { area = "Identity" });
         }
 
         public IActionResult MerchantLogin()
