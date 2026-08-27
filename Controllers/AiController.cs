@@ -60,7 +60,7 @@ namespace CampusCoffeeSystem.Controllers
                 var context = await _contextService.BuildAsync(userId, cancellationToken);
                 var request = new List<AiConversationTurn>
                 {
-                    new("user", "Recommend exactly three menu items for this customer. Give each item a short heading and one practical reason. Keep the answer under 130 words.")
+                    new("user", "Recommend exactly three distinct available menu items for this customer. Start each recommendation with the exact full public menu item name in square brackets, followed by one short reason. Do not recommend sold-out items. Keep the answer under 130 words.")
                 };
                 var reply = await _aiService.GenerateAsync(context.SystemInstruction, request, cancellationToken);
                 return Ok(new ChatResponseDto { Success = true, Message = reply });

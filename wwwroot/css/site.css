@@ -245,6 +245,15 @@ button { font: inherit; }
 .coffee-recommendations__answer { align-self: center; padding-left: clamp(0px, 5vw, 52px); border-left: 1px solid rgba(255,255,255,.28); }
 .coffee-recommendations__answer p { margin: 0 0 16px; color: rgba(255,255,255,.82); line-height: 1.75; white-space: pre-line; }
 .coffee-recommendations__answer p:last-child { margin-bottom: 0; }
+.coffee-recommendation-grid { grid-column: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-self: stretch; padding-left: clamp(0px, 5vw, 52px); border-left: 1px solid rgba(255,255,255,.28); }
+.coffee-recommendation-card { min-width: 0; display: flex; flex-direction: column; color: var(--ink); background: var(--paper); border: 1px solid rgba(255,255,255,.18); }
+.coffee-recommendation-card__image { width: 100%; aspect-ratio: 1.42; object-fit: cover; }
+.coffee-recommendation-card__content { min-height: 100%; padding: 17px; display: flex; flex: 1; flex-direction: column; }
+.coffee-recommendation-card__category { margin: 0 0 9px; color: var(--rust); font-size: .61rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.coffee-recommendation-card h3 { margin: 0; font-family: var(--serif); font-size: clamp(1.42rem, 2vw, 2rem); font-weight: 400; letter-spacing: -.04em; line-height: .96; }
+.coffee-recommendation-card__price { margin: 12px 0 0; color: var(--rust); font-size: 1.05rem; }
+.coffee-recommendation-card__description { margin: 12px 0 18px; color: rgba(29,27,23,.72); font-size: .87rem; line-height: 1.55; }
+.coffee-recommendation-card__button { width: 100%; margin-top: auto; padding: 11px 12px; font-size: .62rem; }
 
 .coffee-agency { position: fixed; z-index: 100; right: 24px; bottom: 24px; display: flex; flex-direction: column; align-items: flex-end; gap: 13px; }
 .coffee-agency__launcher { max-width: min(315px, calc(100vw - 48px)); min-height: 52px; padding: 13px 19px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; color: white; background: var(--espresso); border: 1px solid rgba(255,255,255,.35); box-shadow: 0 14px 32px rgba(22, 12, 8, .26); font-size: .68rem; font-weight: 700; letter-spacing: .11em; line-height: 1.25; text-transform: uppercase; }
@@ -328,6 +337,7 @@ button { font: inherit; }
   .menu-closing__inner { grid-template-columns: 1fr; gap: 30px; }
   .coffee-recommendations { grid-template-columns: 1fr; gap: 26px; }
   .coffee-recommendations__answer { padding: 25px 0 0; border-top: 1px solid rgba(255,255,255,.28); border-left: 0; }
+  .coffee-recommendation-grid { grid-column: auto; padding: 25px 0 0; border-top: 1px solid rgba(255,255,255,.28); border-left: 0; }
   .site-footer__grid { grid-template-columns: 1.7fr 1fr 1fr; }
   .site-footer__grid > div:last-child { grid-column: 2 / 4; }
 }
@@ -352,6 +362,7 @@ button { font: inherit; }
   .coffee-agency { right: 14px; bottom: 14px; }
   .coffee-agency__launcher--guest { right: 14px; bottom: 14px; }
   .coffee-agency__form { grid-template-columns: 1fr; }
+  .coffee-recommendation-grid { grid-template-columns: 1fr; }
   .menu-filters__buttons { display: grid; grid-template-columns: repeat(3, 1fr); }
   .menu-filter { min-width: 0; padding-inline: 10px; }
   .menu-group { margin-top: 75px; }

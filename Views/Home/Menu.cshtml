@@ -50,8 +50,16 @@
                 <h2 id="coffee-agency-recommendations-title">Picked for your day.</h2>
             </div>
             <div class="coffee-recommendations__answer" data-ai-recommendations-answer>
-                <p>Sign in to receive menu recommendations based on your own browsing and purchase activity.</p>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <p>Preparing three personalised selections for your cart.</p>
+                }
+                else
+                {
+                    <p>Sign in to receive menu recommendations based on your own browsing and purchase activity.</p>
+                }
             </div>
+            <div class="coffee-recommendation-grid" data-ai-recommendation-grid hidden aria-live="polite"></div>
         </section>
 
         <div class="menu-empty" data-menu-empty hidden>
