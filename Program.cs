@@ -29,13 +29,13 @@ if (builder.Configuration.GetValue<bool>("PersistDataProtectionKeys"))
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
-builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection(GeminiOptions.SectionName));
+builder.Services.Configure<OllamaOptions>(builder.Configuration.GetSection(OllamaOptions.SectionName));
 builder.Services.AddScoped<AiContextService>();
 builder.Services.AddScoped<AiDataSchemaInitializer>();
 builder.Services.AddHttpClient<IAiService, AiService>(client =>
 {
-    client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
-    client.Timeout = TimeSpan.FromSeconds(30);
+    client.BaseAddress = new Uri("http://ollama:11434/");
+    client.Timeout = TimeSpan.FromSeconds(120);
 });
 var app = builder.Build();
 
