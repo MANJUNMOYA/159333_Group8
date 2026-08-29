@@ -58,10 +58,13 @@ services:
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:0.5b-instruct}
     depends_on:
       - ollama
-    entrypoint: ["/bin/sh", "-c"]
-    command: |
-      until ollama list >/dev/null 2>&1; do sleep 2; done
-      ollama pull "$${OLLAMA_MODEL}"
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        while ! ollama list >/dev/null 2>&1; do
+          sleep 2
+        done
+        ollama pull "$${OLLAMA_MODEL}"
 
 volumes:
   sqlserver-data:
