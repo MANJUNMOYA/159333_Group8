@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36705.20 d17.14
+VisualStudioVersion = 17.14.36705.20
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CampusCoffeeSystem", "CampusCoffeeSystem.csproj", "{28915491-58BE-4979-A92D-D47B221053A6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CampusCoffeeSystem.Tests", "CampusCoffeeSystem.Tests\CampusCoffeeSystem.Tests.csproj", "{028152B4-9FBB-4BB0-9508-EB48B257FFA5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{28915491-58BE-4979-A92D-D47B221053A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{28915491-58BE-4979-A92D-D47B221053A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{28915491-58BE-4979-A92D-D47B221053A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{028152B4-9FBB-4BB0-9508-EB48B257FFA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{028152B4-9FBB-4BB0-9508-EB48B257FFA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{028152B4-9FBB-4BB0-9508-EB48B257FFA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{028152B4-9FBB-4BB0-9508-EB48B257FFA5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

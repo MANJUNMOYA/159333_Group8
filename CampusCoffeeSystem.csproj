@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+	<DefaultItemExcludes>$(DefaultItemExcludes);CampusCoffeeSystem.Tests\**</DefaultItemExcludes>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-CampusCoffeeSystem-36210fb8-97a3-4ed7-9dad-28b896a7921c</UserSecretsId>
