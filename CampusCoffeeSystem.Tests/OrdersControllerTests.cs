@@ -21,13 +21,33 @@ namespace CampusCoffeeSystem.Tests
             return new ApplicationDbContext(options);
         }
 
+        // Create a controller with a fake user and URL helper.
+        private OrdersController CreateController(ApplicationDbContext context)
+        {
+            var httpContext = new DefaultHttpContext();
+
+            httpContext.User = new ClaimsPrincipal(
+                new ClaimsIdentity()
+            );
+
+            var controller = new OrdersController(context);
+
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = httpContext
+            };
+
+            controller.Url = new TestUrlHelper(controller.ControllerContext);
+
+            return controller;
+        }
+
         [Fact]
         public async Task PlaceOrder_ValidOrder_CreatesOrder()
         {
-            // Arrange: create a temporary database.
+            // Arrange
             using var context = CreateDbContext();
 
-            // Add one product for this test.
             var product = new Product
             {
                 Name = "Test Coffee",
@@ -40,24 +60,8 @@ namespace CampusCoffeeSystem.Tests
             context.Products.Add(product);
             await context.SaveChangesAsync();
 
-            // Create a fake HTTP context for the controller.
-            var httpContext = new DefaultHttpContext();
+            var controller = CreateController(context);
 
-            // Add an empty test user.
-            httpContext.User = new ClaimsPrincipal(new ClaimsIdentity());
-
-            // Create the controller with the test database.
-            var controller = new OrdersController(context);
-
-            controller.ControllerContext = new ControllerContext
-            {
-                HttpContext = httpContext
-            };
-
-            // Add a fake URL helper because PlaceOrder creates a redirect URL.
-            controller.Url = new TestUrlHelper(controller.ControllerContext);
-
-            // Create a valid pickup order.
             var request = new PlaceOrderRequest
             {
                 Name = "Test Customer",
@@ -76,13 +80,12 @@ namespace CampusCoffeeSystem.Tests
                 }
             };
 
-            // Act: place the order.
+            // Act
             var result = await controller.PlaceOrder(request);
 
-            // Assert: the request should be successful.
+            // Assert
             Assert.IsType<OkObjectResult>(result);
 
-            // Check that the order was saved in the database.
             var savedOrder = await context.CustomerOrders
                 .Include(order => order.Items)
                 .SingleAsync();
@@ -93,6 +96,253 @@ namespace CampusCoffeeSystem.Tests
             Assert.Equal(10.00m, savedOrder.Total);
             Assert.Single(savedOrder.Items);
             Assert.Equal(2, savedOrder.Items.First().Quantity);
+        }
+
+        [Fact]
+        public async Task PlaceOrder_ValidOrder_ReducesStock()
+        {
+            // Arrange
+            using var context = CreateDbContext();
+
+            var product = new Product
+            {
+                Name = "Stock Test Coffee",
+                Category = "Coffee",
+                Price = 6.00m,
+                StockQuantity = 10,
+                IsActive = true
+            };
+
+            context.Products.Add(product);
+            await context.SaveChangesAsync();
+
+            var controller = CreateController(context);
+
+            var request = new PlaceOrderRequest
+            {
+                Name = "Test Customer",
+                Email = "stock@example.com",
+                Phone = "0211234567",
+                OrderMethod = "Pickup",
+                PickupTime = "1:00 PM",
+                Items = new List<PlaceOrderItemRequest>
+                {
+                    new PlaceOrderItemRequest
+                    {
+                        ProductId = product.Id,
+                        Quantity = 3
+                    }
+                }
+            };
+
+            // Act
+            var result = await controller.PlaceOrder(request);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+
+            var updatedProduct = await context.Products.FindAsync(product.Id);
+
+            Assert.NotNull(updatedProduct);
+            Assert.Equal(7, updatedProduct.StockQuantity);
+        }
+
+        [Fact]
+        public async Task PlaceOrder_DeliveryOrder_AddsDeliveryFee()
+        {
+            // Arrange
+            using var context = CreateDbContext();
+
+            var product = new Product
+            {
+                Name = "Delivery Test Coffee",
+                Category = "Coffee",
+                Price = 5.00m,
+                StockQuantity = 10,
+                IsActive = true
+            };
+
+            context.Products.Add(product);
+            await context.SaveChangesAsync();
+
+            var controller = CreateController(context);
+
+            var request = new PlaceOrderRequest
+            {
+                Name = "Delivery Customer",
+                Email = "delivery@example.com",
+                Phone = "0211234567",
+                OrderMethod = "Delivery",
+                PickupTime = "2:00 PM",
+                Items = new List<PlaceOrderItemRequest>
+                {
+                    new PlaceOrderItemRequest
+                    {
+                        ProductId = product.Id,
+                        Quantity = 2
+                    }
+                }
+            };
+
+            // Act
+            var result = await controller.PlaceOrder(request);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+
+            var savedOrder = await context.CustomerOrders.SingleAsync();
+
+            Assert.Equal(10.00m, savedOrder.Subtotal);
+            Assert.Equal(3.50m, savedOrder.DeliveryFee);
+            Assert.Equal(13.50m, savedOrder.Total);
+        }
+
+        [Fact]
+        public async Task PlaceOrder_InsufficientStock_ReturnsBadRequest()
+        {
+            // Arrange
+            using var context = CreateDbContext();
+
+            var product = new Product
+            {
+                Name = "Low Stock Coffee",
+                Category = "Coffee",
+                Price = 4.00m,
+                StockQuantity = 2,
+                IsActive = true
+            };
+
+            context.Products.Add(product);
+            await context.SaveChangesAsync();
+
+            var controller = CreateController(context);
+
+            var request = new PlaceOrderRequest
+            {
+                Name = "Test Customer",
+                Email = "lowstock@example.com",
+                Phone = "0211234567",
+                OrderMethod = "Pickup",
+                PickupTime = "3:00 PM",
+                Items = new List<PlaceOrderItemRequest>
+                {
+                    new PlaceOrderItemRequest
+                    {
+                        ProductId = product.Id,
+                        Quantity = 5
+                    }
+                }
+            };
+
+            // Act
+            var result = await controller.PlaceOrder(request);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Empty(context.CustomerOrders);
+        }
+
+        [Fact]
+        public async Task PlaceOrder_InactiveProduct_ReturnsBadRequest()
+        {
+            // Arrange
+            using var context = CreateDbContext();
+
+            var product = new Product
+            {
+                Name = "Inactive Coffee",
+                Category = "Coffee",
+                Price = 5.00m,
+                StockQuantity = 10,
+                IsActive = false
+            };
+
+            context.Products.Add(product);
+            await context.SaveChangesAsync();
+
+            var controller = CreateController(context);
+
+            var request = new PlaceOrderRequest
+            {
+                Name = "Test Customer",
+                Email = "inactive@example.com",
+                Phone = "0211234567",
+                OrderMethod = "Pickup",
+                PickupTime = "4:00 PM",
+                Items = new List<PlaceOrderItemRequest>
+                {
+                    new PlaceOrderItemRequest
+                    {
+                        ProductId = product.Id,
+                        Quantity = 1
+                    }
+                }
+            };
+
+            // Act
+            var result = await controller.PlaceOrder(request);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Empty(context.CustomerOrders);
+        }
+
+        [Fact]
+        public async Task PlaceOrder_DuplicateProductIds_CombinesQuantity()
+        {
+            // Arrange
+            using var context = CreateDbContext();
+
+            var product = new Product
+            {
+                Name = "Duplicate Test Coffee",
+                Category = "Coffee",
+                Price = 5.00m,
+                StockQuantity = 10,
+                IsActive = true
+            };
+
+            context.Products.Add(product);
+            await context.SaveChangesAsync();
+
+            var controller = CreateController(context);
+
+            var request = new PlaceOrderRequest
+            {
+                Name = "Test Customer",
+                Email = "duplicate@example.com",
+                Phone = "0211234567",
+                OrderMethod = "Pickup",
+                PickupTime = "5:00 PM",
+                Items = new List<PlaceOrderItemRequest>
+                {
+                    new PlaceOrderItemRequest
+                    {
+                        ProductId = product.Id,
+                        Quantity = 1
+                    },
+                    new PlaceOrderItemRequest
+                    {
+                        ProductId = product.Id,
+                        Quantity = 2
+                    }
+                }
+            };
+
+            // Act
+            var result = await controller.PlaceOrder(request);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+
+            var savedOrder = await context.CustomerOrders
+                .Include(order => order.Items)
+                .SingleAsync();
+
+            Assert.Single(savedOrder.Items);
+            Assert.Equal(3, savedOrder.Items.First().Quantity);
+            Assert.Equal(15.00m, savedOrder.Subtotal);
+            Assert.Equal(7, product.StockQuantity);
         }
 
         // This fake URL helper is only used for controller testing.
