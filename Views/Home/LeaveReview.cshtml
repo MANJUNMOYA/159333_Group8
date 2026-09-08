@@ -8,7 +8,7 @@
         <a class="text-link text-link--light mb-5" asp-controller="Home" asp-action="OrderHistory"><span aria-hidden="true">←</span> Back to Order History</a>
         <p class="eyebrow eyebrow--light">Completed order @Model.Order.OrderNumber</p>
         <h1 id="leave-review-title">Share your thoughts.</h1>
-        <p class="our-story-hero__subtitle">Purchased @Model.Order.PlacedAtUtc.ToLocalTime().ToString("d MMMM yyyy") · @CurrencyFormatter.NzDollars(Model.Order.Total)</p>
+        <p class="our-story-hero__subtitle">Purchased @Model.Order.PlacedAtUtc.ToLocalTime().ToString("d MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture) · @CurrencyFormatter.NzDollars(Model.Order.Total)</p>
     </div>
 </section>
 

@@ -46,7 +46,7 @@
                         <p>@string.Join(" · ", review.ProductNames)</p>
                         <div class="review-card__stars mt-3" aria-label="@review.Rating out of 5 stars">@ReviewDisplay.Stars(review.Rating)</div>
                         <blockquote>“@review.OverallComment”</blockquote>
-                        <p><time datetime="@review.CreatedAtUtc.ToString("yyyy-MM-dd")">@review.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy")</time></p>
+                        <p><time datetime="@review.CreatedAtUtc.ToString("yyyy-MM-dd")">@review.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy", System.Globalization.CultureInfo.InvariantCulture)</time></p>
                     </article>
                 }
             </div>

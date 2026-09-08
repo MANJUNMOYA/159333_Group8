@@ -67,7 +67,7 @@ public class OrdersController(ApplicationDbContext context) : ControllerBase
         var customerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var order = new CustomerOrder
         {
-            OrderNumber = $"CC-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpperInvariant()}",
+            OrderNumber = $"pending_{Guid.NewGuid():N}",
             CustomerUserId = customerUserId,
             CustomerName = request.Name.Trim(),
             Email = request.Email.Trim().ToLowerInvariant(),
@@ -112,8 +112,13 @@ public class OrdersController(ApplicationDbContext context) : ControllerBase
             }
         }
 
+        await using var transaction = await context.Database.BeginTransactionAsync();
         context.CustomerOrders.Add(order);
         await context.SaveChangesAsync();
+
+        order.OrderNumber = $"cc_{order.Id + 1000}";
+        await context.SaveChangesAsync();
+        await transaction.CommitAsync();
 
         return Ok(new
         {
