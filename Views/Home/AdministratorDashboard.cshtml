@@ -88,7 +88,7 @@
             <button type="button" data-admin-nav="merchants"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="M4 10h16v10H4V10Zm2-6h12l2 6H4l2-6Zm3 16v-6h6v6"/></svg></span><span>Merchants</span><span class="administrator-nav-count">@pendingApplications</span></button>
             <button type="button" data-admin-nav="products"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Zm0 0v10l8 4 8-4V7M12 11v10"/></svg></span><span>Products</span><span class="administrator-nav-count">@Model.Products.Count</span></button>
             <button type="button" data-admin-nav="orders"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14v17l-3-2-4 2-4-2-3 2V4Zm4 5h6m-6 4h6"/></svg></span><span>Orders</span><span class="administrator-nav-count">@Model.Orders.Count</span></button>
-            <button type="button" data-admin-nav="feedback"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 4V5Zm4 5h8m-8 3h5"/></svg></span><span>Feedback</span></button>
+            <button type="button" data-admin-nav="feedback"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 4V5Zm4 5h8m-8 3h5"/></svg></span><span>Feedback</span><span class="administrator-nav-count">@Model.Reviews.Count</span></button>
             <button type="button" data-admin-nav="reports"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="M5 20V10m5 10V4m5 16v-7m5 7H2"/></svg></span><span>Reports</span></button>
             <button type="button" data-admin-nav="permissions"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3 8 8 10 5-2 8-5 8-10V6l-8-3Zm-3 9 2 2 4-5"/></svg></span><span>Permissions</span></button>
             <button type="button" data-admin-nav="settings"><span class="administrator-nav-icon"><svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM19 12l2-1-2-4-2 .5L15 5l-.5-2h-5L9 5 7 7.5 5 7l-2 4 2 1-2 1 2 4 2-.5L9 19l.5 2h5l.5-2 2-2.5 2 .5 2-4-2-1Z"/></svg></span><span>System Settings</span></button>
@@ -259,14 +259,36 @@
                 }
                 @foreach (var order in Model.Orders)
                 {
-                    <tr data-admin-search-item data-order-row data-order-id="@order.Id" class="@(order.IsArchived ? "is-archived" : string.Empty)"><td><strong>@order.OrderNumber</strong></td><td>@order.CustomerName<br /><small>@order.Email</small></td><td>@order.OrderMethod</td><td><span class="administrator-badge administrator-badge--@GetOrderBadge(order)" data-order-status>@(order.IsArchived ? "Archived" : order.Status)</span></td><td>@CurrencyFormatter.NzDollars(order.Total)</td><td>@order.PlacedAtUtc.ToLocalTime().ToString("dd MMM, HH:mm")</td><td>@if (!order.IsArchived) { <button type="button" data-order-archive>Archive</button> }</td></tr>
+                    <tr data-admin-search-item data-order-row data-order-id="@order.Id" class="@(order.IsArchived ? "is-archived" : string.Empty)"><td><strong>@order.OrderNumber</strong></td><td>@order.CustomerName<br /><small>@order.Email</small></td><td>@order.OrderMethod@if (string.Equals(order.OrderMethod, "Delivery", StringComparison.OrdinalIgnoreCase)) { <br /><small>@order.DeliveryAddressLine1@if (!string.IsNullOrWhiteSpace(order.DeliveryAddressLine2)) { <text>, @order.DeliveryAddressLine2</text> }, @order.DeliveryCity @order.DeliveryPostcode</small> }</td><td><span class="administrator-badge administrator-badge--@GetOrderBadge(order)" data-order-status>@(order.IsArchived ? "Archived" : order.Status)</span></td><td>@CurrencyFormatter.NzDollars(order.Total)</td><td>@order.PlacedAtUtc.ToLocalTime().ToString("dd MMM, HH:mm")</td><td>@if (!order.IsArchived) { <button type="button" data-order-archive>Archive</button> }</td></tr>
                 }
             </tbody></table></div></div>
         </section>
 
         <section class="administrator-section" id="admin-feedback" data-admin-section="feedback" aria-labelledby="feedback-title">
-            <div class="administrator-section-heading administrator-reveal"><div><p class="administrator-kicker">Feedback moderation</p><h2 id="feedback-title">Ready for a future data source.</h2></div><p>The frontend section is retained, but this version has no feedback entity or feedback table.</p></div>
-            <div class="administrator-content-card administrator-reveal"><div class="administrator-card-title"><div><p class="administrator-kicker">Database status</p><h2>No feedback records available.</h2></div><span class="administrator-badge administrator-badge--pending">Not connected</span></div><p>No sample reviews or moderation actions are shown because the database cannot currently provide them.</p></div>
+            <div class="administrator-section-heading administrator-reveal"><div><p class="administrator-kicker">Review moderation</p><h2 id="feedback-title">Customer feedback.</h2></div><p>Administrators can verify real customers and orders even when a review is anonymous on public pages.</p></div>
+            <div class="administrator-content-card administrator-reveal"><div class="table-responsive"><table class="administrator-table administrator-review-table"><thead><tr><th>Customer</th><th>Order</th><th>Products</th><th>Review</th><th>Public privacy</th><th>Status</th><th>Action</th></tr></thead><tbody>
+                @if (Model.Reviews.Count == 0)
+                {
+                    <tr><td colspan="7">No customer reviews are stored.</td></tr>
+                }
+                @foreach (var review in Model.Reviews)
+                {
+                    <tr data-admin-search-item data-review-row data-review-id="@review.ReviewId">
+                        <td><strong>@review.CustomerDisplayName</strong><br /><small>@review.User.Email</small></td>
+                        <td><strong>@review.Order.OrderNumber</strong><br /><small>User ID: @review.UserId</small></td>
+                        <td>@string.Join(", ", review.Order.Items.Select(item => item.ProductName).Distinct(StringComparer.OrdinalIgnoreCase))</td>
+                        <td><strong>@ReviewDisplay.Stars(review.OverallRating)</strong><br />@review.OverallComment
+                            @if (review.ProductRatings.Count > 0)
+                            {
+                                <details class="administrator-review-comments"><summary>Product ratings</summary><ul>@foreach (var rating in review.ProductRatings) { <li><strong>@rating.Product.Name:</strong> @ReviewDisplay.Stars(rating.Rating) (@rating.Rating/5)</li> }</ul></details>
+                            }
+                        </td>
+                        <td><strong>Anonymous publicly: @(review.IsAnonymous ? "Yes" : "No")</strong></td>
+                        <td><span class="administrator-badge administrator-badge--@review.Status.ToLowerInvariant()" data-review-status>@review.Status</span></td>
+                        <td><button type="button" data-review-action="@(review.Status == ReviewStatuses.Active ? ReviewStatuses.Hidden : ReviewStatuses.Active)">@(review.Status == ReviewStatuses.Active ? "Hide" : "Publish")</button></td>
+                    </tr>
+                }
+            </tbody></table></div></div>
         </section>
 
         <section class="administrator-section" id="admin-reports" data-admin-section="reports" aria-labelledby="reports-title">

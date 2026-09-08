@@ -430,6 +430,8 @@
     const placeOrderButton = checkout.querySelector('[data-place-order]');
     const orderStatus = checkout.querySelector('[data-order-status]');
     const orderMethodInputs = [...checkoutForm.querySelectorAll('input[name="orderMethod"]')];
+    const deliveryAddress = checkoutForm.querySelector('[data-delivery-address]');
+    const deliveryRequiredFields = [...checkoutForm.querySelectorAll('[data-delivery-required]')];
     const deliveryFee = 3.5;
     const renderCheckout = () => {
       const items = window.campusCart.getItems();
@@ -463,8 +465,14 @@
     };
 
     const updateOrderMethodStyles = () => {
+      const isDelivery = orderMethodInputs.find((input) => input.checked)?.value === 'Delivery';
       orderMethodInputs.forEach((input) => {
         input.closest('.menu-filter').classList.toggle('is-active', input.checked);
+      });
+      deliveryAddress.hidden = !isDelivery;
+      deliveryRequiredFields.forEach((field) => {
+        field.required = isDelivery;
+        field.disabled = !isDelivery;
       });
     };
 
@@ -500,7 +508,11 @@
             email: String(formData.get('email') ?? ''),
             phone: String(formData.get('phone') ?? ''),
             orderMethod: String(formData.get('orderMethod') ?? ''),
-            pickupTime: String(formData.get('pickupTime') ?? ''),
+            addressLine1: String(formData.get('addressLine1') ?? ''),
+            addressLine2: String(formData.get('addressLine2') ?? ''),
+            city: String(formData.get('city') ?? ''),
+            postcode: String(formData.get('postcode') ?? ''),
+            saveDeliveryAddressAsDefault: formData.get('saveDeliveryAddressAsDefault') === 'true',
             specialNotes: String(formData.get('specialNotes') ?? ''),
             items: items.map((item) => ({ productId: Number(item.id), quantity: item.quantity }))
           })

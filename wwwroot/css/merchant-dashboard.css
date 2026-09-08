@@ -505,6 +505,7 @@
 .merchant-order-card li,
 .merchant-order-card__total { padding: 7px 0; display: flex; justify-content: space-between; gap: 15px; }
 .merchant-order-card li { color: rgba(29, 27, 23, .62); }
+.merchant-order-card__delivery { margin: 0 0 16px; color: rgba(29, 27, 23, .7); font-size: .82rem; line-height: 1.55; }
 .merchant-order-card__total { padding-top: 17px; border-top: 1px solid var(--line); font-family: var(--serif); font-size: 1.18rem; }
 
 .merchant-primary-button { min-height: 45px; padding: 11px 18px; color: white; background: var(--coffee); border: 1px solid var(--coffee); border-radius: 11px; font-size: .68rem; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; transition: background .2s ease, transform .2s ease, box-shadow .2s ease; }

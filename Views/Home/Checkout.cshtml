@@ -1,3 +1,4 @@
+@model CampusCoffeeSystem.Models.CheckoutViewModel
 @{
     ViewData["Title"] = "Checkout";
 }
@@ -30,29 +31,19 @@
                                 <div class="col-md-6">
                                     <label class="form-label cart-item__label" for="customerName">Name</label>
                                     <input class="form-control form-control-lg rounded-0" id="customerName" name="name" type="text"
-                                           placeholder="Alex Taylor" autocomplete="name" required />
+                                           value="@Model.Name" placeholder="Alex Taylor" autocomplete="name" required />
                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label cart-item__label" for="customerEmail">Email</label>
                                     <input class="form-control form-control-lg rounded-0" id="customerEmail" name="email" type="email"
-                                           placeholder="alex@example.com" autocomplete="email" required />
+                                           value="@Model.Email" placeholder="alex@example.com" autocomplete="email" required />
                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label cart-item__label" for="customerPhone">Phone Number</label>
                                     <input class="form-control form-control-lg rounded-0" id="customerPhone" name="phone" type="tel"
-                                           placeholder="021 234 5678" autocomplete="tel" required />
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label cart-item__label" for="pickupTime">Pickup Time</label>
-                                    <select class="form-select form-select-lg rounded-0" id="pickupTime" name="pickupTime" required>
-                                        <option selected>Today, 10:30 AM</option>
-                                        <option>Today, 11:00 AM</option>
-                                        <option>Today, 11:30 AM</option>
-                                        <option>Today, 12:00 PM</option>
-                                    </select>
+                                           value="@Model.Phone" placeholder="021 234 5678" autocomplete="tel" required />
                                 </div>
 
                                 <div class="col-12">
@@ -69,6 +60,45 @@
                                             </label>
                                         </div>
                                     </fieldset>
+                                </div>
+
+                                <div class="col-12 checkout-delivery-address" data-delivery-address hidden>
+                                    <div class="product-card__heading mb-4">
+                                        <div>
+                                            <p class="eyebrow">Delivery details</p>
+                                            <h3>Where should we deliver?</h3>
+                                        </div>
+                                    </div>
+                                    <div class="row g-4">
+                                        <div class="col-12">
+                                            <label class="form-label cart-item__label" for="addressLine1">Address Line 1</label>
+                                            <input class="form-control form-control-lg rounded-0" id="addressLine1" name="addressLine1" type="text" value="@Model.AddressLine1" maxlength="200" autocomplete="address-line1" data-delivery-required />
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label cart-item__label" for="addressLine2">Address Line 2 <span>(optional)</span></label>
+                                            <input class="form-control form-control-lg rounded-0" id="addressLine2" name="addressLine2" type="text" value="@Model.AddressLine2" maxlength="200" autocomplete="address-line2" />
+                                        </div>
+                                        <div class="col-md-7">
+                                            <label class="form-label cart-item__label" for="deliveryCity">City</label>
+                                            <input class="form-control form-control-lg rounded-0" id="deliveryCity" name="city" type="text" value="@Model.City" maxlength="100" autocomplete="address-level2" data-delivery-required />
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label cart-item__label" for="deliveryPostcode">Postcode</label>
+                                            <input class="form-control form-control-lg rounded-0" id="deliveryPostcode" name="postcode" type="text" value="@Model.Postcode" maxlength="20" autocomplete="postal-code" pattern="[A-Za-z0-9][A-Za-z0-9 \-]{1,19}" data-delivery-required />
+                                        </div>
+                                    </div>
+
+                                    @if (Model.IsAuthenticatedCustomer && Model.HasSavedDeliveryAddress)
+                                    {
+                                        <label class="checkout-save-address mt-4">
+                                            <input class="form-check-input" type="checkbox" name="saveDeliveryAddressAsDefault" value="true" />
+                                            <span>Save this as my default delivery address</span>
+                                        </label>
+                                    }
+                                    else if (Model.IsAuthenticatedCustomer)
+                                    {
+                                        <p class="checkout-address-note mt-4">Your first delivery address will be saved automatically to your Profile.</p>
+                                    }
                                 </div>
 
                                 <div class="col-12">

@@ -232,6 +232,11 @@
 .administrator-table tr.is-user-filtered { display: none; }
 .administrator-table tr.is-archived { opacity: .52; }
 .administrator-table tr.is-archived td { text-decoration-color: rgba(29,27,23,.3); }
+.administrator-review-table { min-width: 1180px; }
+.administrator-review-table td { max-width: 320px; vertical-align: top; }
+.administrator-review-comments { margin-top: 9px; color: rgba(29,27,23,.68); }
+.administrator-review-comments summary { cursor: pointer; font-size: .68rem; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.administrator-review-comments ul { margin: 8px 0 0; padding-left: 18px; }
 .administrator-product-card.is-moderated { opacity: .66; }
 
 .administrator-notice { position: fixed; z-index: 50; right: 28px; bottom: 28px; max-width: min(410px,calc(100% - 56px)); margin: 0; padding: 15px 19px; color: white; background: rgba(36,23,19,.95); border: 1px solid rgba(255,255,255,.12); border-radius: 13px; box-shadow: 0 18px 45px rgba(36,23,19,.25); backdrop-filter: blur(12px); animation: administrator-notice-enter .3s ease both; }

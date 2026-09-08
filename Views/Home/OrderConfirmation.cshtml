@@ -32,7 +32,20 @@
                             <div class="menu-note mt-0"><span>Email</span><strong>@Model.Email</strong></div>
                             <div class="menu-note mt-0"><span>Phone</span><strong>@Model.Phone</strong></div>
                             <div class="menu-note mt-0"><span>Method</span><strong>@Model.OrderMethod</strong></div>
-                            <div class="menu-note mt-0"><span>Pickup time</span><strong>@Model.PickupTime</strong></div>
+                            @if (string.Equals(Model.OrderMethod, "Delivery", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <div class="menu-note mt-0">
+                                    <span>Delivery address</span>
+                                    <strong>
+                                        @Model.DeliveryAddressLine1<br />
+                                        @if (!string.IsNullOrWhiteSpace(Model.DeliveryAddressLine2))
+                                        {
+                                            @Model.DeliveryAddressLine2<br />
+                                        }
+                                        @Model.DeliveryCity @Model.DeliveryPostcode
+                                    </strong>
+                                </div>
+                            }
                             @if (!string.IsNullOrWhiteSpace(Model.SpecialNotes))
                             {
                                 <div class="menu-note mt-0"><span>Notes</span><strong style="white-space:pre-wrap">@Model.SpecialNotes</strong></div>

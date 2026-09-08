@@ -1,0 +1,145 @@
+@model CampusCoffeeSystem.Models.CustomerProfileViewModel
+@{
+    ViewData["Title"] = "Customer Profile";
+}
+
+<section class="our-story-hero portal-surface profile-hero" aria-labelledby="profile-title">
+    <div class="site-shell profile-hero__content reveal">
+        <div class="profile-avatar profile-avatar--hero">
+            @if (!string.IsNullOrWhiteSpace(Model.ProfileImagePath))
+            {
+                <img src="@Model.ProfileImagePath" alt="Profile photo for @Model.DisplayName" />
+            }
+            else
+            {
+                <svg viewBox="0 0 64 64" role="img" aria-label="Default profile avatar">
+                    <circle cx="32" cy="24" r="12"></circle>
+                    <path d="M12 57c2-13 10-20 20-20s18 7 20 20"></path>
+                </svg>
+            }
+        </div>
+        <div>
+            <p class="eyebrow eyebrow--light">Customer profile</p>
+            <h1 id="profile-title">@Model.DisplayName</h1>
+            <p class="our-story-hero__subtitle">@Model.Email</p>
+            <div class="profile-hero__actions">
+                <a class="button button--cream" href="#edit-profile">Edit Profile</a>
+                <a class="button button--outline-light" asp-area="Identity" asp-page="/Account/Manage/Index">Account Settings</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section--paper profile-page" aria-labelledby="profile-details-title">
+    <div class="site-shell">
+        @if (TempData["ProfileMessage"] is string profileMessage)
+        {
+            <p class="review-notice" role="status">@profileMessage</p>
+        }
+
+        <div class="profile-grid">
+            <article class="profile-summary-card reveal">
+                <p class="eyebrow">Profile details</p>
+                <h2 id="profile-details-title">Your information.</h2>
+                <dl class="profile-details">
+                    <div><dt>Email</dt><dd>@Model.Email</dd></div>
+                    <div><dt>Phone number</dt><dd>@(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "Not provided" : Model.PhoneNumber)</dd></div>
+                    <div>
+                        <dt>Default delivery address</dt>
+                        <dd>
+                            @if (Model.HasDefaultAddress)
+                            {
+                                <address>
+                                    @Model.AddressLine1<br />
+                                    @if (!string.IsNullOrWhiteSpace(Model.AddressLine2))
+                                    {
+                                        @Model.AddressLine2<br />
+                                    }
+                                    @Model.City @Model.Postcode
+                                </address>
+                            }
+                            else
+                            {
+                                <span>Not saved yet</span>
+                            }
+                        </dd>
+                    </div>
+                </dl>
+            </article>
+
+            <article class="profile-edit-card reveal" id="edit-profile">
+                <div class="product-card__heading">
+                    <div>
+                        <p class="eyebrow">Edit profile</p>
+                        <h2>Keep your details current.</h2>
+                    </div>
+                </div>
+
+                <form asp-controller="Home" asp-action="Profile" method="post" enctype="multipart/form-data">
+                    <div class="validation-summary" asp-validation-summary="ModelOnly"></div>
+
+                    <div class="profile-photo-field">
+                        <div class="profile-avatar">
+                            @if (!string.IsNullOrWhiteSpace(Model.ProfileImagePath))
+                            {
+                                <img src="@Model.ProfileImagePath" alt="Current profile photo" />
+                            }
+                            else
+                            {
+                                <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="24" r="12"></circle><path d="M12 57c2-13 10-20 20-20s18 7 20 20"></path></svg>
+                            }
+                        </div>
+                        <div>
+                            <label class="form-label cart-item__label" asp-for="ProfileImage"></label>
+                            <input class="form-control rounded-0" asp-for="ProfileImage" type="file" accept="image/jpeg,image/png,image/webp" />
+                            <small>JPG, PNG or WebP, up to 5 MB.</small>
+                            <span class="field-validation-error" asp-validation-for="ProfileImage"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-12">
+                            <label class="form-label cart-item__label">Email</label>
+                            <input class="form-control form-control-lg rounded-0" value="@Model.Email" type="email" readonly />
+                            <small>Email and password changes are available in Account Settings.</small>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label cart-item__label" asp-for="PhoneNumber"></label>
+                            <input class="form-control form-control-lg rounded-0" asp-for="PhoneNumber" autocomplete="tel" />
+                            <span class="field-validation-error" asp-validation-for="PhoneNumber"></span>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label cart-item__label" asp-for="AddressLine1"></label>
+                            <input class="form-control form-control-lg rounded-0" asp-for="AddressLine1" autocomplete="address-line1" />
+                            <span class="field-validation-error" asp-validation-for="AddressLine1"></span>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label cart-item__label" asp-for="AddressLine2"></label>
+                            <input class="form-control form-control-lg rounded-0" asp-for="AddressLine2" autocomplete="address-line2" />
+                            <span class="field-validation-error" asp-validation-for="AddressLine2"></span>
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label cart-item__label" asp-for="City"></label>
+                            <input class="form-control form-control-lg rounded-0" asp-for="City" autocomplete="address-level2" />
+                            <span class="field-validation-error" asp-validation-for="City"></span>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label cart-item__label" asp-for="Postcode"></label>
+                            <input class="form-control form-control-lg rounded-0" asp-for="Postcode" autocomplete="postal-code" />
+                            <span class="field-validation-error" asp-validation-for="Postcode"></span>
+                        </div>
+                    </div>
+
+                    <div class="profile-edit-card__actions">
+                        <button class="button product-card__button" type="submit">Save Profile</button>
+                        <a class="text-link" asp-area="Identity" asp-page="/Account/Manage/Index">Account Settings <span aria-hidden="true">→</span></a>
+                    </div>
+                </form>
+            </article>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

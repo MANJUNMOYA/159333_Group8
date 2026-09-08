@@ -212,6 +212,30 @@
         });
     });
 
+    dashboard.querySelectorAll("[data-review-action]").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const row = button.closest("[data-review-row]");
+            if (!row) return;
+            const requestedStatus = button.dataset.reviewAction;
+            button.disabled = true;
+            try {
+                const result = await post(`/api/platform/reviews/${row.dataset.reviewId}/status`, { status: requestedStatus });
+                const badge = row.querySelector("[data-review-status]");
+                if (badge) {
+                    badge.textContent = result.status;
+                    badge.className = `administrator-badge administrator-badge--${result.status.toLocaleLowerCase()}`;
+                }
+                button.dataset.reviewAction = result.status === "Active" ? "Hidden" : "Active";
+                button.textContent = result.status === "Active" ? "Hide" : "Publish";
+                showNotice(result.message);
+            } catch (error) {
+                showNotice(error.message, true);
+            } finally {
+                button.disabled = false;
+            }
+        });
+    });
+
     dashboard.querySelector("[data-administrator-logout]")?.addEventListener("click", async (event) => {
         event.preventDefault();
         try {

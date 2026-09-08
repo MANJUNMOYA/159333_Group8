@@ -25,6 +25,7 @@ public class AdministratorDashboardViewModel
     public IReadOnlyList<MerchantApplication> MerchantApplications { get; set; } = [];
     public IReadOnlyList<Product> Products { get; set; } = [];
     public IReadOnlyList<CustomerOrder> Orders { get; set; } = [];
+    public IReadOnlyList<OrderReview> Reviews { get; set; } = [];
 }
 
 public class AdministratorUserViewModel
