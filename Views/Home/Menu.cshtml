@@ -1,4 +1,4 @@
-@model IReadOnlyList<CampusCoffeeSystem.Models.Product>
+@model CampusCoffeeSystem.Models.MenuViewModel
 @{
     ViewData["Title"] = "Menu";
     var categories = new[] { "coffee", "food" };
@@ -41,7 +41,7 @@
                     <button class="menu-filter" type="button" data-menu-filter="food" aria-pressed="false">Food</button>
                 </div>
             </fieldset>
-            <p class="menu-results" data-menu-results aria-live="polite">Showing @Model.Count available items</p>
+            <p class="menu-results" data-menu-results aria-live="polite">Showing @Model.Products.Count available items</p>
         </div>
 
         <div class="menu-empty" data-menu-empty hidden>
@@ -52,7 +52,7 @@
 
         @foreach (var category in categories)
         {
-            var products = Model.Where(product => product.Category == category).ToList();
+            var products = Model.Products.Where(product => product.Category == category).ToList();
             var isCoffee = category == "coffee";
             <section class="menu-group" data-menu-section="@category" aria-labelledby="@category-heading">
                 <div class="menu-group__heading reveal">
@@ -70,6 +70,7 @@
                     {
                         var stockLabel = product.StockQuantity == 0 ? "Sold out" : product.StockQuantity <= 8 ? "Low stock" : "In stock";
                         var stockClass = product.StockQuantity == 0 ? "product-card__stock--unavailable" : product.StockQuantity <= 8 ? "product-card__stock--low" : string.Empty;
+                        var rating = Model.Ratings[product.Id];
                         <article class="product-card reveal" data-menu-card data-product-id="@product.Id" data-category="@product.Category" data-order="@product.SortOrder" data-name="@product.Name">
                             <div class="product-card__image">
                                 <a asp-controller="Home" asp-action="ProductDetails" asp-route-id="@product.Id" aria-label="View @product.Name">
@@ -82,6 +83,17 @@
                                     <h3>@product.Name</h3>
                                     <span class="product-card__price">@CurrencyFormatter.NzDollars(product.Price)</span>
                                 </div>
+                                <p class="product-card__rating" aria-label="@ReviewDisplay.Rating(rating.AverageRating) out of 5 from @rating.ReviewCount reviews">
+                                    <span aria-hidden="true">@ReviewDisplay.Stars(rating.AverageRating)</span>
+                                    @if (rating.ReviewCount > 0)
+                                    {
+                                        <strong>@ReviewDisplay.Rating(rating.AverageRating)</strong><span>(@rating.ReviewCount)</span>
+                                    }
+                                    else
+                                    {
+                                        <span>No reviews yet</span>
+                                    }
+                                </p>
                                 <p class="product-card__description">@product.Description</p>
                                 <div class="product-card__badges" aria-label="Dietary and allergy information">
                                     @if (!string.IsNullOrWhiteSpace(product.DietaryLabel))

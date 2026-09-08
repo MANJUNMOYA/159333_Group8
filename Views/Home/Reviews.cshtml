@@ -1,0 +1,55 @@
+@model CampusCoffeeSystem.Models.ReviewsViewModel
+@{
+    ViewData["Title"] = "Customer Reviews";
+}
+
+<section class="our-story-hero reviews-hero" aria-labelledby="customer-reviews-title">
+    <div class="site-shell reveal">
+        <p class="eyebrow eyebrow--light">Campus community</p>
+        <h1 id="customer-reviews-title">Customer reviews.</h1>
+        <p class="our-story-hero__subtitle">Real feedback from completed Campus Coffee orders.</p>
+    </div>
+</section>
+
+<section class="section section--cream product-reviews" aria-labelledby="all-reviews-title">
+    <div class="site-shell">
+        <div class="section-heading reveal">
+            <div>
+                <p class="eyebrow">Shared experiences</p>
+                <h2 id="all-reviews-title">What campus says.</h2>
+            </div>
+            <div class="review-summary">
+                @if (Model.Rating.ReviewCount > 0)
+                {
+                    <div class="review-summary__stars" aria-label="@ReviewDisplay.Rating(Model.Rating.AverageRating) out of 5 stars">@ReviewDisplay.Stars(Model.Rating.AverageRating)</div>
+                    <strong>@ReviewDisplay.Rating(Model.Rating.AverageRating)</strong>
+                    <span>@Model.Rating.ReviewCount review@(Model.Rating.ReviewCount == 1 ? string.Empty : "s")</span>
+                }
+            </div>
+        </div>
+
+        @if (Model.Reviews.Count == 0)
+        {
+            <div class="menu-empty reveal">
+                <p class="eyebrow">No published feedback</p>
+                <h2>No reviews yet.</h2>
+                <p>Completed-order reviews will appear here once customers share them.</p>
+            </div>
+        }
+        else
+        {
+            <div class="review-list">
+                @foreach (var review in Model.Reviews)
+                {
+                    <article class="review-card reveal">
+                        <p class="review-card__purchase"><strong>@review.DisplayName</strong> purchased:</p>
+                        <p>@string.Join(" · ", review.ProductNames)</p>
+                        <div class="review-card__stars mt-3" aria-label="@review.Rating out of 5 stars">@ReviewDisplay.Stars(review.Rating)</div>
+                        <blockquote>“@review.OverallComment”</blockquote>
+                        <p><time datetime="@review.CreatedAtUtc.ToString("yyyy-MM-dd")">@review.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy")</time></p>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</section>

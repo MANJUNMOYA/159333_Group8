@@ -98,6 +98,34 @@ public class PlatformController(
         return Ok(new { message = $"Order {order.OrderNumber} has been archived." });
     }
 
+    [Authorize(Roles = PlatformRoles.Administrator)]
+    [HttpPost("reviews/{id:int}/status")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateReviewStatus(int id, StatusUpdateRequest request)
+    {
+        var requestedStatus = new[] { ReviewStatuses.Active, ReviewStatuses.Hidden }
+            .FirstOrDefault(status => string.Equals(status, request.Status, StringComparison.OrdinalIgnoreCase));
+        if (requestedStatus is null)
+        {
+            return BadRequest(new { message = "Review status must be Active or Hidden." });
+        }
+
+        var review = await context.OrderReviews.FindAsync(id);
+        if (review is null)
+        {
+            return NotFound(new { message = "Review was not found." });
+        }
+
+        review.Status = requestedStatus;
+        review.UpdatedAtUtc = DateTime.UtcNow;
+        await context.SaveChangesAsync();
+        return Ok(new
+        {
+            status = requestedStatus,
+            message = $"Review {review.ReviewId} is now {requestedStatus.ToLowerInvariant()}."
+        });
+    }
+
     [Authorize(Roles = PlatformRoles.Merchant)]
     [HttpPost("products")]
     [ValidateAntiForgeryToken]

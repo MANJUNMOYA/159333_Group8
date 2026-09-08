@@ -1,0 +1,93 @@
+@model CampusCoffeeSystem.Models.LeaveReviewViewModel
+@{
+    ViewData["Title"] = "Leave a Review";
+}
+
+<section class="our-story-hero portal-surface leave-review-hero" aria-labelledby="leave-review-title">
+    <div class="site-shell reveal">
+        <a class="text-link text-link--light mb-5" asp-controller="Home" asp-action="OrderHistory"><span aria-hidden="true">←</span> Back to Order History</a>
+        <p class="eyebrow eyebrow--light">Completed order @Model.Order.OrderNumber</p>
+        <h1 id="leave-review-title">Share your thoughts.</h1>
+        <p class="our-story-hero__subtitle">Purchased @Model.Order.PlacedAtUtc.ToLocalTime().ToString("d MMMM yyyy") · @CurrencyFormatter.NzDollars(Model.Order.Total)</p>
+    </div>
+</section>
+
+<section class="section section--cream leave-review" aria-labelledby="review-form-title">
+    <div class="site-shell">
+        <div class="section-heading reveal">
+            <div>
+                <p class="eyebrow">Your completed order</p>
+                <h2 id="review-form-title">Tell us how it was.</h2>
+            </div>
+            <p class="section-heading__copy">Share one overall review, then rate each product from your completed order.</p>
+        </div>
+
+        <form class="leave-review__form" asp-controller="Home" asp-action="LeaveReview" asp-route-id="@Model.Order.Id" method="post">
+            <div class="validation-summary" asp-validation-summary="All"></div>
+
+            <article class="review-form-card reveal">
+                <span class="value-card__number">Overall review</span>
+                <fieldset class="review-rating-field mt-4">
+                    <legend>Overall Rating</legend>
+                    <div class="star-rating" aria-label="Overall rating from 1 to 5 stars">
+                        @for (var rating = 5; rating >= 1; rating--)
+                        {
+                            var ratingId = $"overall-rating-{rating}";
+                            <input id="@ratingId" type="radio" name="OverallRating" value="@rating" checked="@(Model.OverallRating == rating ? "checked" : null)" required />
+                            <label for="@ratingId" title="@rating star@(rating == 1 ? string.Empty : "s")"><span aria-hidden="true">★</span><span class="visually-hidden">@rating star@(rating == 1 ? string.Empty : "s")</span></label>
+                        }
+                    </div>
+                </fieldset>
+
+                <label class="review-comment-label" for="overall-comment">Overall Review</label>
+                <textarea id="overall-comment" name="OverallComment" rows="6" maxlength="2000" required placeholder="How was your Campus Coffee order?">@Model.OverallComment</textarea>
+            </article>
+
+            <div class="review-product-heading reveal">
+                <p class="eyebrow">Rate each item</p>
+                <h3>Product ratings.</h3>
+            </div>
+
+            @for (var index = 0; index < Model.Products.Count; index++)
+            {
+                var productReview = Model.Products[index];
+                <article class="review-form-card reveal">
+                    <div class="review-form-card__heading">
+                        <div>
+                            <span class="value-card__number">Item @(index + 1)</span>
+                            <h3>@productReview.ProductName</h3>
+                            <p>Quantity @productReview.Quantity · @CurrencyFormatter.NzDollars(productReview.UnitPrice) each</p>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="ProductRatings[@index].ProductId" value="@productReview.ProductId" />
+                    <fieldset class="review-rating-field">
+                        <legend>Rate @productReview.ProductName</legend>
+                        <div class="star-rating" aria-label="Rating for @productReview.ProductName from 1 to 5 stars">
+                            @for (var rating = 5; rating >= 1; rating--)
+                            {
+                                var ratingId = $"product-{productReview.ProductId}-rating-{rating}";
+                                <input id="@ratingId" type="radio" name="ProductRatings[@index].Rating" value="@rating" checked="@(productReview.Rating == rating ? "checked" : null)" required />
+                                <label for="@ratingId" title="@rating star@(rating == 1 ? string.Empty : "s")"><span aria-hidden="true">★</span><span class="visually-hidden">@rating star@(rating == 1 ? string.Empty : "s")</span></label>
+                            }
+                        </div>
+                    </fieldset>
+                </article>
+            }
+
+            <fieldset class="review-privacy reveal">
+                <legend>Privacy</legend>
+                <label>
+                    <input type="checkbox" name="IsAnonymous" value="true" checked="@(Model.IsAnonymous ? "checked" : null)" />
+                    <span aria-hidden="true"></span>
+                    <span><strong>Post this review anonymously</strong><small>Your public name will appear as Anonymous Customer. Campus Coffee administrators can still verify your account and order.</small></span>
+                </label>
+            </fieldset>
+
+            <div class="leave-review__actions">
+                <a class="text-link" asp-controller="Home" asp-action="OrderHistory"><span aria-hidden="true">←</span> Back to Order History</a>
+                <button class="button product-card__button" type="submit">Submit Review</button>
+            </div>
+        </form>
+    </div>
+</section>

@@ -14,6 +14,22 @@ public class OrdersController(ApplicationDbContext context) : ControllerBase
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> PlaceOrder(PlaceOrderRequest request)
     {
+        var orderMethod = request.OrderMethod.Trim();
+        var isDelivery = string.Equals(orderMethod, "Delivery", StringComparison.OrdinalIgnoreCase);
+        var isPickup = string.Equals(orderMethod, "Pickup", StringComparison.OrdinalIgnoreCase);
+        if (!isDelivery && !isPickup)
+        {
+            return BadRequest(new { message = "Choose Pickup or Delivery." });
+        }
+
+        if (isDelivery &&
+            (string.IsNullOrWhiteSpace(request.AddressLine1) ||
+             string.IsNullOrWhiteSpace(request.City) ||
+             string.IsNullOrWhiteSpace(request.Postcode)))
+        {
+            return BadRequest(new { message = "Address Line 1, city and postcode are required for delivery." });
+        }
+
         var requestedItems = request.Items
             .GroupBy(item => item.ProductId)
             .ToDictionary(group => group.Key, group => group.Sum(item => item.Quantity));
@@ -47,16 +63,20 @@ public class OrdersController(ApplicationDbContext context) : ControllerBase
         }).ToList();
 
         var subtotal = orderItems.Sum(item => item.UnitPrice * item.Quantity);
-        var deliveryFee = string.Equals(request.OrderMethod, "Delivery", StringComparison.OrdinalIgnoreCase) ? 3.50m : 0m;
+        var deliveryFee = isDelivery ? 3.50m : 0m;
+        var customerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var order = new CustomerOrder
         {
             OrderNumber = $"CC-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpperInvariant()}",
-            CustomerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier),
+            CustomerUserId = customerUserId,
             CustomerName = request.Name.Trim(),
             Email = request.Email.Trim().ToLowerInvariant(),
             Phone = request.Phone.Trim(),
-            OrderMethod = request.OrderMethod.Trim(),
-            PickupTime = request.PickupTime.Trim(),
+            OrderMethod = isDelivery ? "Delivery" : "Pickup",
+            DeliveryAddressLine1 = isDelivery ? request.AddressLine1.Trim() : null,
+            DeliveryAddressLine2 = isDelivery ? NullIfWhiteSpace(request.AddressLine2) : null,
+            DeliveryCity = isDelivery ? request.City.Trim() : null,
+            DeliveryPostcode = isDelivery ? request.Postcode.Trim() : null,
             SpecialNotes = request.SpecialNotes.Trim(),
             Subtotal = subtotal,
             DeliveryFee = deliveryFee,
@@ -69,6 +89,29 @@ public class OrdersController(ApplicationDbContext context) : ControllerBase
             products[requestedItem.Key].StockQuantity -= requestedItem.Value;
         }
 
+        if (isDelivery &&
+            !string.IsNullOrWhiteSpace(customerUserId) &&
+            User.IsInRole(PlatformRoles.Customer))
+        {
+            var profile = await context.CustomerProfiles
+                .FirstOrDefaultAsync(item => item.UserId == customerUserId);
+            var shouldSaveAddress = profile?.HasDefaultAddress != true || request.SaveDeliveryAddressAsDefault;
+            if (shouldSaveAddress)
+            {
+                profile ??= new CustomerProfile { UserId = customerUserId };
+                if (context.Entry(profile).State == EntityState.Detached)
+                {
+                    context.CustomerProfiles.Add(profile);
+                }
+
+                profile.AddressLine1 = order.DeliveryAddressLine1;
+                profile.AddressLine2 = order.DeliveryAddressLine2;
+                profile.City = order.DeliveryCity;
+                profile.Postcode = order.DeliveryPostcode;
+                profile.UpdatedAtUtc = DateTime.UtcNow;
+            }
+        }
+
         context.CustomerOrders.Add(order);
         await context.SaveChangesAsync();
 
@@ -78,5 +121,8 @@ public class OrdersController(ApplicationDbContext context) : ControllerBase
             redirectUrl = Url.Action("OrderConfirmation", "Home", new { orderNumber = order.OrderNumber })
         });
     }
+
+    private static string? NullIfWhiteSpace(string value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
 

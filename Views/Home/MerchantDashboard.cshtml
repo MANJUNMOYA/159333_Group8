@@ -441,6 +441,10 @@
                                 <li><span>@item.ProductName × @item.Quantity</span><strong>@CurrencyFormatter.NzDollars(item.UnitPrice * item.Quantity)</strong></li>
                             }
                         </ul>
+                        @if (string.Equals(order.OrderMethod, "Delivery", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <p class="merchant-order-card__delivery"><strong>Delivery:</strong> @order.DeliveryAddressLine1@if (!string.IsNullOrWhiteSpace(order.DeliveryAddressLine2)) { <text>, @order.DeliveryAddressLine2</text> }, @order.DeliveryCity @order.DeliveryPostcode</p>
+                        }
                         <div class="merchant-order-card__total"><span>Total</span><strong>@CurrencyFormatter.NzDollars(order.Total)</strong></div>
                         @if (order.Status != OrderStatuses.Completed && order.Status != OrderStatuses.Cancelled)
                         {

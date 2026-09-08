@@ -28,6 +28,18 @@ public class CustomerOrder
     [MaxLength(80)]
     public string PickupTime { get; set; } = string.Empty;
 
+    [MaxLength(200)]
+    public string? DeliveryAddressLine1 { get; set; }
+
+    [MaxLength(200)]
+    public string? DeliveryAddressLine2 { get; set; }
+
+    [MaxLength(100)]
+    public string? DeliveryCity { get; set; }
+
+    [MaxLength(20)]
+    public string? DeliveryPostcode { get; set; }
+
     [MaxLength(2000)]
     public string SpecialNotes { get; set; } = string.Empty;
 
@@ -47,6 +59,7 @@ public class CustomerOrder
     public bool IsArchived { get; set; }
 
     public List<OrderItem> Items { get; set; } = [];
+    public OrderReview? Review { get; set; }
 }
 
 public class OrderItem

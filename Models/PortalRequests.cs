@@ -85,8 +85,20 @@ public class PlaceOrderRequest
     [Required, MaxLength(30)]
     public string OrderMethod { get; set; } = string.Empty;
 
-    [MaxLength(80)]
-    public string PickupTime { get; set; } = string.Empty;
+    [MaxLength(200)]
+    public string AddressLine1 { get; set; } = string.Empty;
+
+    [MaxLength(200)]
+    public string AddressLine2 { get; set; } = string.Empty;
+
+    [MaxLength(100)]
+    public string City { get; set; } = string.Empty;
+
+    [MaxLength(20)]
+    [RegularExpression(@"^[A-Za-z0-9][A-Za-z0-9 -]{1,19}$", ErrorMessage = "Enter a valid postcode.")]
+    public string Postcode { get; set; } = string.Empty;
+
+    public bool SaveDeliveryAddressAsDefault { get; set; }
 
     [MaxLength(2000)]
     public string SpecialNotes { get; set; } = string.Empty;

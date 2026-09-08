@@ -1,0 +1,88 @@
+@model CampusCoffeeSystem.Models.OrderHistoryViewModel
+@using CampusCoffeeSystem.Models
+@{
+    ViewData["Title"] = "Order History";
+}
+
+<section class="our-story-hero portal-surface order-history-hero" aria-labelledby="order-history-title">
+    <div class="site-shell reveal">
+        <p class="eyebrow eyebrow--light">Customer account</p>
+        <h1 id="order-history-title">Your order history.</h1>
+        <p class="our-story-hero__subtitle">Real orders for @Model.DisplayName, newest first.</p>
+    </div>
+</section>
+
+<section class="section section--paper order-history" aria-labelledby="orders-title">
+    <div class="site-shell">
+        <div class="section-heading reveal">
+            <div>
+                <p class="eyebrow">Past and current orders</p>
+                <h2 id="orders-title">Every coffee run.</h2>
+            </div>
+            <p class="section-heading__copy">Signed in as @Model.Email</p>
+        </div>
+
+        @if (TempData["ReviewMessage"] is string reviewMessage)
+        {
+            <p class="review-notice" role="status">@reviewMessage</p>
+        }
+
+        @if (Model.Orders.Count == 0)
+        {
+            <div class="menu-empty order-history__empty reveal">
+                <p class="eyebrow">Nothing here yet</p>
+                <h2>No order history yet.</h2>
+                <p>Your completed campus coffee runs will appear here.</p>
+                <a class="button product-card__button" asp-controller="Home" asp-action="Menu">Back to Menu</a>
+            </div>
+        }
+        else
+        {
+            <div class="order-history__list">
+                @foreach (var order in Model.Orders)
+                {
+                    var isCompleted = order.Status == OrderStatuses.Completed;
+                    var isReviewed = Model.ReviewedOrderIds.Contains(order.Id);
+                    <article class="order-history-card reveal">
+                        <header class="order-history-card__header">
+                            <div>
+                                <p class="eyebrow">Order ID: @order.OrderNumber</p>
+                                <h3>@order.PlacedAtUtc.ToLocalTime().ToString("d MMMM yyyy")</h3>
+                                <time datetime="@order.PlacedAtUtc.ToString("O")">@order.PlacedAtUtc.ToLocalTime().ToString("h:mm tt")</time>
+                            </div>
+                            <span class="order-status order-status--@order.Status.ToLowerInvariant()">@order.Status</span>
+                        </header>
+
+                        <div class="order-history-card__items" role="list" aria-label="Products in order @order.OrderNumber">
+                            @foreach (var item in order.Items)
+                            {
+                                <div class="order-history-item" role="listitem">
+                                    <div>
+                                        <strong>@item.ProductName</strong>
+                                        <span>Quantity: @item.Quantity</span>
+                                    </div>
+                                    <div>
+                                        <span>Unit price</span>
+                                        <strong>@CurrencyFormatter.NzDollars(item.UnitPrice)</strong>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <footer class="order-history-card__footer">
+                            <div><span>Order total</span><strong>@CurrencyFormatter.NzDollars(order.Total)</strong></div>
+                            @if (isCompleted && isReviewed)
+                            {
+                                <span class="reviewed-badge">Reviewed</span>
+                            }
+                            else if (isCompleted)
+                            {
+                                <a class="button product-card__button" asp-controller="Home" asp-action="LeaveReview" asp-route-id="@order.Id">Leave a Review</a>
+                            }
+                        </footer>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</section>
