@@ -337,7 +337,7 @@ namespace CampusCoffeeSystem.Controllers
         }
 
         [Authorize(Roles = PlatformRoles.Merchant)]
-        public async Task<IActionResult> MerchantDashboard()
+        public async Task<IActionResult> MerchantDashboard(string period = "7days")
         {
             var user = await _userManager.GetUserAsync(User);
             if (user is null)
@@ -346,6 +346,19 @@ namespace CampusCoffeeSystem.Controllers
             }
 
             var localToday = DateTime.Today;
+            var selectedRevenuePeriod = period?.ToLowerInvariant() switch
+            {
+                "30days" => "30days",
+                "1year" => "1year",
+                _ => "7days"
+            };
+            var revenueChartStartLocal = selectedRevenuePeriod switch
+            {
+                "30days" => localToday.AddDays(-29),
+                "1year" => new DateTime(localToday.Year, localToday.Month, 1).AddMonths(-11),
+                _ => localToday.AddDays(-6)
+            };
+            var revenueChartStartUtc = revenueChartStartLocal.ToUniversalTime();
             var orders = await _context.CustomerOrders
                 .AsNoTracking()
                 .Include(order => order.Items)
@@ -359,6 +372,12 @@ namespace CampusCoffeeSystem.Controllers
                 Email = user.Email ?? string.Empty,
                 Products = await _context.Products.AsNoTracking().OrderBy(product => product.SortOrder).ToListAsync(),
                 Orders = orders,
+                RevenuePeriod = selectedRevenuePeriod,
+                RevenueOrders = await _context.CustomerOrders
+                    .AsNoTracking()
+                    .Where(order => !order.IsArchived && order.PlacedAtUtc >= revenueChartStartUtc)
+                    .OrderBy(order => order.PlacedAtUtc)
+                    .ToListAsync(),
                 TodayOrderCount = orders.Count(order => order.PlacedAtUtc.ToLocalTime().Date == localToday),
                 TodayRevenue = orders
                     .Where(order => order.PlacedAtUtc.ToLocalTime().Date == localToday && order.Status != OrderStatuses.Cancelled)
@@ -486,13 +505,13 @@ namespace CampusCoffeeSystem.Controllers
         {
             if (User.Identity?.IsAuthenticated != true || !User.IsInRole(PlatformRoles.Customer))
             {
-                return View(new CheckoutViewModel());
+                return RedirectToAction(nameof(CustomerLogin));
             }
 
             var user = await _userManager.GetUserAsync(User);
             if (user is null)
             {
-                return View(new CheckoutViewModel());
+                return RedirectToAction(nameof(CustomerLogin));
             }
 
             var profile = await _context.CustomerProfiles

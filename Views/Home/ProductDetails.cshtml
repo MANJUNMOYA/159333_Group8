@@ -73,7 +73,7 @@
                 {
                     <article class="review-card reveal">
                         <div class="review-card__stars" aria-label="@review.Rating out of 5 stars">@ReviewDisplay.Stars(review.Rating)</div>
-                        <p><strong>@review.DisplayName</strong> rated this product @review.Rating out of 5<span aria-hidden="true"> · </span><time datetime="@review.CreatedAtUtc.ToString("yyyy-MM-dd")">@review.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy")</time></p>
+                        <p><strong>@review.DisplayName</strong> rated this product @review.Rating out of 5<span aria-hidden="true"> · </span><time datetime="@review.CreatedAtUtc.ToString("yyyy-MM-dd")">@review.CreatedAtUtc.ToLocalTime().ToString("d MMM yyyy", System.Globalization.CultureInfo.InvariantCulture)</time></p>
                     </article>
                 }
             </div>

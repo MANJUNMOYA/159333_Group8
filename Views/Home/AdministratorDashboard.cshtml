@@ -76,10 +76,10 @@
     <form class="visually-hidden" data-administrator-token>@Html.AntiForgeryToken()</form>
 
     <aside class="administrator-sidebar" aria-label="Administrator portal navigation">
-        <a class="brand administrator-sidebar__brand" asp-area="" asp-controller="Home" asp-action="Portal" aria-label="Campus Coffee Access Portal">
+        <div class="brand administrator-sidebar__brand">
             <span class="brand__mark" aria-hidden="true"><svg viewBox="0 0 44 44"><path d="M11 16h19v9a9 9 0 0 1-9 9h-1a9 9 0 0 1-9-9v-9Z"/><path d="M30 19h2a5 5 0 0 1 0 10h-3M16 11c0-2 2-2 2-4M23 11c0-2 2-2 2-4"/></svg></span>
             <span class="brand__text"><strong>CAMPUS</strong><small>ADMINISTRATION</small></span>
-        </a>
+        </div>
 
         <p class="administrator-sidebar__label">Platform control</p>
         <nav class="administrator-sidebar__nav">
@@ -154,7 +154,7 @@
                                 }
                             </span>
                             <div><strong>@activity.Title</strong><p>@activity.Detail</p></div>
-                            <time datetime="@activity.At.ToString("O")">@activity.At.ToLocalTime().ToString("dd MMM, HH:mm")</time>
+                            <time datetime="@activity.At.ToString("O")">@activity.At.ToLocalTime().ToString("dd MMM, HH:mm", System.Globalization.CultureInfo.InvariantCulture)</time>
                         </article>
                     }
                 </div>
@@ -259,7 +259,7 @@
                 }
                 @foreach (var order in Model.Orders)
                 {
-                    <tr data-admin-search-item data-order-row data-order-id="@order.Id" class="@(order.IsArchived ? "is-archived" : string.Empty)"><td><strong>@order.OrderNumber</strong></td><td>@order.CustomerName<br /><small>@order.Email</small></td><td>@order.OrderMethod@if (string.Equals(order.OrderMethod, "Delivery", StringComparison.OrdinalIgnoreCase)) { <br /><small>@order.DeliveryAddressLine1@if (!string.IsNullOrWhiteSpace(order.DeliveryAddressLine2)) { <text>, @order.DeliveryAddressLine2</text> }, @order.DeliveryCity @order.DeliveryPostcode</small> }</td><td><span class="administrator-badge administrator-badge--@GetOrderBadge(order)" data-order-status>@(order.IsArchived ? "Archived" : order.Status)</span></td><td>@CurrencyFormatter.NzDollars(order.Total)</td><td>@order.PlacedAtUtc.ToLocalTime().ToString("dd MMM, HH:mm")</td><td>@if (!order.IsArchived) { <button type="button" data-order-archive>Archive</button> }</td></tr>
+                    <tr data-admin-search-item data-order-row data-order-id="@order.Id" class="@(order.IsArchived ? "is-archived" : string.Empty)"><td><strong>@order.OrderNumber</strong></td><td>@order.CustomerName<br /><small>@order.Email</small></td><td>@order.OrderMethod@if (string.Equals(order.OrderMethod, "Delivery", StringComparison.OrdinalIgnoreCase)) { <br /><small>@order.DeliveryAddressLine1@if (!string.IsNullOrWhiteSpace(order.DeliveryAddressLine2)) { <text>, @order.DeliveryAddressLine2</text> }, @order.DeliveryCity @order.DeliveryPostcode</small> }</td><td><span class="administrator-badge administrator-badge--@GetOrderBadge(order)" data-order-status>@(order.IsArchived ? "Archived" : order.Status)</span></td><td>@CurrencyFormatter.NzDollars(order.Total)</td><td>@order.PlacedAtUtc.ToLocalTime().ToString("dd MMM, HH:mm", System.Globalization.CultureInfo.InvariantCulture)</td><td>@if (!order.IsArchived) { <button type="button" data-order-archive>Archive</button> }</td></tr>
                 }
             </tbody></table></div></div>
         </section>

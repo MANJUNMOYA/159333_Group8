@@ -312,6 +312,7 @@
   padding: 26px;
   display: flex;
   flex-direction: column;
+  container-type: inline-size;
   overflow: hidden;
   transition: box-shadow .3s ease, transform .3s ease;
 }
@@ -320,6 +321,7 @@
 .merchant-summary-card__top { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .merchant-summary-card__top > span:first-child { color: var(--rust); }
 .merchant-summary-card > strong { position: relative; z-index: 1; margin-top: 25px; display: flex; font-family: var(--serif); font-size: clamp(3rem, 4.2vw, 4.8rem); font-weight: 400; letter-spacing: -.055em; line-height: .9; }
+.merchant-summary-card > .merchant-summary-card__value--revenue { font-size: clamp(2.25rem, 3.4vw, 4rem); font-size: clamp(2.25rem, 15cqi, 4rem); white-space: nowrap; }
 .merchant-summary-card > strong > span:first-child { margin-right: 3px; font-size: .65em; }
 .merchant-summary-card > small { position: relative; z-index: 1; margin-top: auto; color: rgba(29, 27, 23, .55); }
 .merchant-summary-card__mark { position: absolute; right: -12px; bottom: -43px; color: rgba(166, 75, 42, .055); font-family: var(--serif); font-size: 8.5rem; line-height: 1; }

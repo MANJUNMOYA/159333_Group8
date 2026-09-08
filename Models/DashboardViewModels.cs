@@ -13,6 +13,8 @@ public class MerchantDashboardViewModel
     public string Email { get; set; } = string.Empty;
     public IReadOnlyList<Product> Products { get; set; } = [];
     public IReadOnlyList<CustomerOrder> Orders { get; set; } = [];
+    public IReadOnlyList<CustomerOrder> RevenueOrders { get; set; } = [];
+    public string RevenuePeriod { get; set; } = "7days";
     public decimal TodayRevenue { get; set; }
     public int TodayOrderCount { get; set; }
 }

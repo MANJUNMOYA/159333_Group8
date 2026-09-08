@@ -1,5 +1,6 @@
 @model CampusCoffeeSystem.Models.MerchantDashboardViewModel
 @using CampusCoffeeSystem.Models
+@using System.Globalization
 @{
     ViewData["Title"] = "Merchant Dashboard";
     Layout = "_MerchantDashboardLayout";
@@ -40,38 +41,72 @@
     var maximumStock = Math.Max(1, Model.Products.Select(product => product.StockQuantity).DefaultIfEmpty(1).Max());
 
     var localToday = DateTime.Today;
-    var chartDates = Enumerable.Range(0, 7).Select(index => localToday.AddDays(index - 6)).ToArray();
-    var chartStartDate = chartDates[0];
-    var chartEndDate = localToday.AddDays(1);
-    var sevenDayOrders = Model.Orders
-        .Where(order =>
+    var chartOrders = Model.RevenueOrders
+        .Select(order => new
         {
-            var localPlacedAt = order.PlacedAtUtc.ToLocalTime();
-            return localPlacedAt.Date >= chartStartDate && localPlacedAt.Date < chartEndDate;
+            Order = order,
+            LocalPlacedAt = order.PlacedAtUtc.ToLocalTime()
         })
         .ToList();
-    var sevenDayTradingOrders = sevenDayOrders
-        .Where(order => order.Status != OrderStatuses.Cancelled)
+
+    var chartIsMonthly = Model.RevenuePeriod == "1year";
+    var chartDates = Model.RevenuePeriod switch
+    {
+        "30days" => Enumerable.Range(0, 30).Select(index => localToday.AddDays(index - 29)).ToArray(),
+        "1year" => Enumerable.Range(0, 12)
+            .Select(index => new DateTime(localToday.Year, localToday.Month, 1).AddMonths(index - 11))
+            .ToArray(),
+        _ => Enumerable.Range(0, 7).Select(index => localToday.AddDays(index - 6)).ToArray()
+    };
+    var chartEndDate = chartIsMonthly ? chartDates[^1].AddMonths(1) : localToday.AddDays(1);
+    var periodOrders = chartOrders
+        .Where(order => order.LocalPlacedAt >= chartDates[0] && order.LocalPlacedAt < chartEndDate)
         .ToList();
-    var sevenDayRevenue = sevenDayTradingOrders.Sum(order => order.Total);
-    var averageOrderValue = sevenDayTradingOrders.Count == 0
-        ? 0m
-        : sevenDayRevenue / sevenDayTradingOrders.Count;
-    var dailyRevenue = chartDates
-        .Select(day => Model.Orders
-            .Where(order => order.PlacedAtUtc.ToLocalTime().Date == day && order.Status != OrderStatuses.Cancelled)
-            .Sum(order => order.Total))
+    var tradingOrders = periodOrders
+        .Where(order => order.Order.Status != OrderStatuses.Cancelled)
+        .ToList();
+    var periodRevenue = tradingOrders.Sum(order => order.Order.Total);
+    var averageOrderValue = tradingOrders.Count == 0 ? 0m : periodRevenue / tradingOrders.Count;
+    var chartRevenue = chartDates
+        .Select(date => chartOrders
+            .Where(order => order.Order.Status != OrderStatuses.Cancelled &&
+                (chartIsMonthly
+                    ? order.LocalPlacedAt >= date && order.LocalPlacedAt < date.AddMonths(1)
+                    : order.LocalPlacedAt.Date == date))
+            .Sum(order => order.Order.Total))
         .ToArray();
-    var chartMaximum = Math.Max(1m, dailyRevenue.DefaultIfEmpty(0m).Max());
-    var chartPointValues = dailyRevenue
+    var chartLabels = Model.RevenuePeriod == "30days"
+        ? Enumerable.Range(0, 7).Select(index => chartDates[(int)Math.Round(index * 29d / 6d)]).ToArray()
+        : chartDates;
+    var chartHeading = Model.RevenuePeriod switch
+    {
+        "30days" => "The last thirty database days.",
+        "1year" => "The last twelve database months.",
+        _ => "The last seven database days."
+    };
+    var chartTitle = Model.RevenuePeriod switch
+    {
+        "30days" => "Thirty-day revenue",
+        "1year" => "Twelve-month revenue",
+        _ => "Seven-day revenue"
+    };
+    var chartWindowName = Model.RevenuePeriod switch
+    {
+        "30days" => "thirty-day",
+        "1year" => "twelve-month",
+        _ => "seven-day"
+    };
+    var chartMaximum = Math.Max(1m, chartRevenue.DefaultIfEmpty(0m).Max());
+    var chartStep = chartRevenue.Length > 1 ? 720d / (chartRevenue.Length - 1) : 0d;
+    var chartPointValues = chartRevenue
         .Select((value, index) => new
         {
-            X = 20 + (index * 120),
+            X = 20d + (index * chartStep),
             Y = 250d - ((double)(value / chartMaximum) * 220d)
         })
         .ToArray();
     var chartPoints = string.Join(" ", chartPointValues.Select(point =>
-        $"{point.X},{point.Y.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}"));
+        $"{point.X.ToString("0.##", CultureInfo.InvariantCulture)},{point.Y.ToString("0.##", CultureInfo.InvariantCulture)}"));
     var chartAreaPoints = $"20,250 {chartPoints} 740,250";
 
     var coffeeProductIds = Model.Products
@@ -120,12 +155,12 @@
     <form class="visually-hidden" data-dashboard-token>@Html.AntiForgeryToken()</form>
 
     <aside class="merchant-sidebar" aria-label="Merchant dashboard navigation">
-        <a class="brand merchant-sidebar__brand" asp-area="" asp-controller="Home" asp-action="Portal" aria-label="Campus Coffee Access Portal">
+        <div class="brand merchant-sidebar__brand">
             <span class="brand__mark" aria-hidden="true">
                 <svg viewBox="0 0 44 44"><path d="M11 16h19v9a9 9 0 0 1-9 9h-1a9 9 0 0 1-9-9v-9Z"/><path d="M30 19h2a5 5 0 0 1 0 10h-3M16 11c0-2 2-2 2-4M23 11c0-2 2-2 2-4"/></svg>
             </span>
             <span class="brand__text"><strong>CAMPUS</strong><small>MERCHANT STUDIO</small></span>
-        </a>
+        </div>
 
         <div class="merchant-sidebar__label">Coffee operations</div>
         <nav class="merchant-sidebar__nav">
@@ -212,7 +247,7 @@
                 </article>
                 <article class="merchant-summary-card merchant-summary-card--espresso merchant-reveal">
                     <div class="merchant-summary-card__top"><span>Today’s Revenue</span><span class="merchant-trend merchant-trend--light">Live total</span></div>
-                    <strong>@CurrencyFormatter.NzDollars(Model.TodayRevenue)</strong><small>Excluding cancelled orders</small>
+                    <strong class="merchant-summary-card__value--revenue">@CurrencyFormatter.NzDollars(Model.TodayRevenue)</strong><small>Excluding cancelled orders</small>
                     <span class="merchant-summary-card__mark">03</span>
                 </article>
                 <article class="merchant-summary-card merchant-reveal">
@@ -224,18 +259,18 @@
 
             <section class="merchant-analytics-card merchant-reveal" id="sales-analytics" aria-labelledby="analytics-title">
                 <div class="merchant-card-heading">
-                    <div><p class="merchant-kicker">Sales analytics</p><h2 id="analytics-title">The last seven database days.</h2></div>
-                    <div class="merchant-period-switch" aria-label="Chart period">
-                        <button class="is-active" type="button">7 days</button>
-                        <button type="button" disabled title="A wider database query is not part of the current view model.">30 days</button>
-                        <button type="button" disabled title="A wider database query is not part of the current view model.">90 days</button>
-                    </div>
+                    <div><p class="merchant-kicker">Sales analytics</p><h2 id="analytics-title">@chartHeading</h2></div>
+                    <form class="merchant-period-switch" method="get" asp-controller="Home" asp-action="MerchantDashboard" asp-fragment="sales-analytics" aria-label="Chart period">
+                        <button class="@(Model.RevenuePeriod == "7days" ? "is-active" : null)" type="submit" name="period" value="7days" aria-pressed="@(Model.RevenuePeriod == "7days" ? "true" : "false")">7 days</button>
+                        <button class="@(Model.RevenuePeriod == "30days" ? "is-active" : null)" type="submit" name="period" value="30days" aria-pressed="@(Model.RevenuePeriod == "30days" ? "true" : "false")">30 days</button>
+                        <button class="@(Model.RevenuePeriod == "1year" ? "is-active" : null)" type="submit" name="period" value="1year" aria-pressed="@(Model.RevenuePeriod == "1year" ? "true" : "false")">1 year</button>
+                    </form>
                 </div>
                 <div class="merchant-analytics-layout">
-                    <div class="merchant-chart-wrap" aria-label="Revenue recorded in the database over the last seven days">
+                    <div class="merchant-chart-wrap" aria-label="Revenue recorded in the database over the selected @chartWindowName window">
                         <div class="merchant-chart-scale" aria-hidden="true"><span>@CurrencyFormatter.NzDollars(chartMaximum)</span><span>@CurrencyFormatter.NzDollars(chartMaximum * .75m)</span><span>@CurrencyFormatter.NzDollars(chartMaximum * .5m)</span><span>@CurrencyFormatter.NzDollars(chartMaximum * .25m)</span><span>NZ$0.00</span></div>
                         <svg class="merchant-line-chart" viewBox="0 0 760 280" role="img" aria-labelledby="chart-title chart-description">
-                            <title id="chart-title">Seven-day revenue</title><desc id="chart-description">Daily non-cancelled order revenue calculated from the current database records.</desc>
+                            <title id="chart-title">@chartTitle</title><desc id="chart-description">@(chartIsMonthly ? "Monthly" : "Daily") non-cancelled order revenue calculated from the current database records.</desc>
                             <defs><linearGradient id="merchant-chart-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#a64b2a" stop-opacity=".24"/><stop offset="1" stop-color="#a64b2a" stop-opacity="0"/></linearGradient></defs>
                             <g class="merchant-chart-grid"><path d="M20 30H740M20 85H740M20 140H740M20 195H740M20 250H740"/></g>
                             <polygon class="merchant-chart-area" points="@chartAreaPoints" />
@@ -243,17 +278,17 @@
                             <g class="merchant-chart-points">
                                 @foreach (var point in chartPointValues)
                                 {
-                                    <circle cx="@point.X" cy="@point.Y.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" r="5" />
+                                    <circle cx="@point.X.ToString("0.##", CultureInfo.InvariantCulture)" cy="@point.Y.ToString("0.##", CultureInfo.InvariantCulture)" r="@(chartPointValues.Length > 12 ? "3.5" : "5")" />
                                 }
                             </g>
                         </svg>
                         <div class="merchant-chart-labels">
-                            @foreach (var day in chartDates) { <span>@day.ToString("ddd d")</span> }
+                            @foreach (var date in chartLabels) { <span>@date.ToString(chartIsMonthly ? "MMM yyyy" : "MMM d", CultureInfo.InvariantCulture)</span> }
                         </div>
                     </div>
                     <div class="merchant-analytics-metrics">
-                        <article><span>Revenue</span><strong>@CurrencyFormatter.NzDollars(sevenDayRevenue)</strong><small>Non-cancelled database orders</small></article>
-                        <article><span>Orders</span><strong>@sevenDayOrders.Count</strong><small>Placed during the seven-day window</small></article>
+                        <article><span>Revenue</span><strong>@CurrencyFormatter.NzDollars(periodRevenue)</strong><small>Non-cancelled database orders</small></article>
+                        <article><span>Orders</span><strong>@periodOrders.Count</strong><small>Placed during the @chartWindowName window</small></article>
                         <article><span>Average Order Value</span><strong>@CurrencyFormatter.NzDollars(averageOrderValue)</strong><small>Across non-cancelled orders</small></article>
                     </div>
                 </div>
@@ -266,11 +301,11 @@
                 </div>
                 <div class="table-responsive">
                     <table class="merchant-table merchant-table--airy">
-                        <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Method</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
                         <tbody>
                             @if (Model.Orders.Count == 0)
                             {
-                                <tr><td colspan="6">No customer orders are currently stored in the database.</td></tr>
+                                <tr><td colspan="7">No customer orders are currently stored in the database.</td></tr>
                             }
                             @foreach (var order in Model.Orders.Take(4))
                             {
@@ -279,6 +314,7 @@
                                     <td><strong>@order.OrderNumber</strong></td>
                                     <td><span class="merchant-customer"><span>@CustomerInitials(order.CustomerName)</span>@order.CustomerName</span></td>
                                     <td>@itemSummary</td>
+                                    <td><strong>@order.OrderMethod</strong></td>
                                     <td><span class="merchant-badge merchant-badge--@OrderStatusClass(order.Status)">@order.Status</span></td>
                                     <td>@order.PlacedAtUtc.ToLocalTime().ToString("HH:mm")</td>
                                     <td><button class="merchant-row-action" type="button" data-view-order="@order.Id">View</button></td>
@@ -383,7 +419,7 @@
                         }
                         @foreach (var order in activeOrders.Take(2))
                         {
-                            <article><span class="merchant-notification-icon merchant-notification-icon--coffee"><svg viewBox="0 0 24 24"><path d="M4 8h13v6a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6V8Zm13 2h2a3 3 0 0 1 0 6h-2M8 4v2m4-2v2"/></svg></span><div><strong>@order.OrderNumber is @order.Status.ToLowerInvariant()</strong><p>@order.CustomerName · @order.Items.Sum(item => item.Quantity) item(s) · @CurrencyFormatter.NzDollars(order.Total)</p><time>@order.PlacedAtUtc.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</time></div></article>
+                            <article><span class="merchant-notification-icon merchant-notification-icon--coffee"><svg viewBox="0 0 24 24"><path d="M4 8h13v6a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6V8Zm13 2h2a3 3 0 0 1 0 6h-2M8 4v2m4-2v2"/></svg></span><div><strong>@order.OrderNumber is @order.Status.ToLowerInvariant()</strong><p>@order.CustomerName · @order.Items.Sum(item => item.Quantity) item(s) · @CurrencyFormatter.NzDollars(order.Total)</p><time>@order.PlacedAtUtc.ToLocalTime().ToString("dd MMM yyyy, HH:mm", CultureInfo.InvariantCulture)</time></div></article>
                         }
                     </div>
                 </section>
@@ -402,7 +438,7 @@
 
             <div class="merchant-split-grid merchant-split-grid--lower">
                 <section class="merchant-content-card merchant-reveal" aria-labelledby="calendar-title">
-                    <div class="merchant-card-heading merchant-card-heading--bordered"><div><p class="merchant-kicker">Catering calendar</p><h2 id="calendar-title">@calendarMonth.ToString("MMMM yyyy")</h2></div><div class="merchant-calendar-controls"><button type="button" aria-label="Previous month" disabled>←</button><button type="button" aria-label="Next month" disabled>→</button></div></div>
+                    <div class="merchant-card-heading merchant-card-heading--bordered"><div><p class="merchant-kicker">Catering calendar</p><h2 id="calendar-title">@calendarMonth.ToString("MMMM yyyy", CultureInfo.InvariantCulture)</h2></div><div class="merchant-calendar-controls"><button type="button" aria-label="Previous month" disabled>←</button><button type="button" aria-label="Next month" disabled>→</button></div></div>
                     <div class="merchant-calendar"><div class="merchant-calendar__weekdays"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div><div class="merchant-calendar__days">
                         @foreach (var day in calendarDays)
                         {
@@ -434,16 +470,17 @@
                 @foreach (var order in Model.Orders)
                 {
                     <article class="merchant-order-card" id="merchant-order-@order.Id" data-order-card data-order-id="@order.Id" data-order-number="@order.OrderNumber" data-search-item>
-                        <div class="merchant-order-card__heading"><div><span>@order.CustomerName · @order.PlacedAtUtc.ToLocalTime().ToString("dd MMM HH:mm")</span><h3>@order.OrderNumber</h3></div><span class="merchant-badge merchant-badge--@OrderStatusClass(order.Status)" data-order-status>@order.Status</span></div>
+                        <div class="merchant-order-card__heading"><div><span>@order.CustomerName · @order.PlacedAtUtc.ToLocalTime().ToString("dd MMM HH:mm", CultureInfo.InvariantCulture)</span><h3>@order.OrderNumber</h3></div><span class="merchant-badge merchant-badge--@OrderStatusClass(order.Status)" data-order-status>@order.Status</span></div>
                         <ul>
                             @foreach (var item in order.Items)
                             {
                                 <li><span>@item.ProductName × @item.Quantity</span><strong>@CurrencyFormatter.NzDollars(item.UnitPrice * item.Quantity)</strong></li>
                             }
                         </ul>
+                        <p class="merchant-order-card__delivery"><strong>Order method:</strong> @order.OrderMethod</p>
                         @if (string.Equals(order.OrderMethod, "Delivery", StringComparison.OrdinalIgnoreCase))
                         {
-                            <p class="merchant-order-card__delivery"><strong>Delivery:</strong> @order.DeliveryAddressLine1@if (!string.IsNullOrWhiteSpace(order.DeliveryAddressLine2)) { <text>, @order.DeliveryAddressLine2</text> }, @order.DeliveryCity @order.DeliveryPostcode</p>
+                            <p class="merchant-order-card__delivery"><strong>Delivery address:</strong> @order.DeliveryAddressLine1@if (!string.IsNullOrWhiteSpace(order.DeliveryAddressLine2)) { <text>, @order.DeliveryAddressLine2</text> }, @order.DeliveryCity @order.DeliveryPostcode</p>
                         }
                         <div class="merchant-order-card__total"><span>Total</span><strong>@CurrencyFormatter.NzDollars(order.Total)</strong></div>
                         @if (order.Status != OrderStatuses.Completed && order.Status != OrderStatuses.Cancelled)

@@ -68,10 +68,14 @@
                 <div class="product-grid">
                     @foreach (var product in products)
                     {
-                        var stockLabel = product.StockQuantity == 0 ? "Sold out" : product.StockQuantity <= 8 ? "Low stock" : "In stock";
+                        var stockLabel = product.StockQuantity == 0
+                            ? "Sold out"
+                            : product.StockQuantity <= 8
+                                ? $"Only {product.StockQuantity} left"
+                                : $"{product.StockQuantity} in stock";
                         var stockClass = product.StockQuantity == 0 ? "product-card__stock--unavailable" : product.StockQuantity <= 8 ? "product-card__stock--low" : string.Empty;
                         var rating = Model.Ratings[product.Id];
-                        <article class="product-card reveal" data-menu-card data-product-id="@product.Id" data-category="@product.Category" data-order="@product.SortOrder" data-name="@product.Name">
+                        <article class="product-card reveal" data-menu-card data-product-id="@product.Id" data-stock-quantity="@product.StockQuantity" data-category="@product.Category" data-order="@product.SortOrder" data-name="@product.Name">
                             <div class="product-card__image">
                                 <a asp-controller="Home" asp-action="ProductDetails" asp-route-id="@product.Id" aria-label="View @product.Name">
                                     <img src="@product.ImagePath" alt="@product.Name" />
@@ -109,7 +113,14 @@
                                     <p class="product-card__stock @stockClass"><span aria-hidden="true"></span>@stockLabel</p>
                                     @if (product.StockQuantity > 0)
                                     {
-                                        <button class="button product-card__button" type="button" data-add-to-cart>Add to cart</button>
+                                        <div class="product-card__cart-controls">
+                                            <div class="product-card__quantity-stepper" data-menu-quantity-control aria-label="Selected quantity for @product.Name" hidden>
+                                                <button type="button" data-menu-decrease aria-label="Decrease @product.Name quantity">&minus;</button>
+                                                <strong data-selected-quantity>0</strong>
+                                                <button type="button" data-menu-increase aria-label="Increase @product.Name quantity">+</button>
+                                            </div>
+                                            <button class="button product-card__button" type="button" data-add-to-cart>Add to cart</button>
+                                        </div>
                                     }
                                     else
                                     {

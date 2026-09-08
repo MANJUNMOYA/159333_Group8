@@ -47,8 +47,8 @@
                         <header class="order-history-card__header">
                             <div>
                                 <p class="eyebrow">Order ID: @order.OrderNumber</p>
-                                <h3>@order.PlacedAtUtc.ToLocalTime().ToString("d MMMM yyyy")</h3>
-                                <time datetime="@order.PlacedAtUtc.ToString("O")">@order.PlacedAtUtc.ToLocalTime().ToString("h:mm tt")</time>
+                                <h3>@order.PlacedAtUtc.ToLocalTime().ToString("d MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture)</h3>
+                                <time datetime="@order.PlacedAtUtc.ToString("O")">@order.PlacedAtUtc.ToLocalTime().ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture)</time>
                             </div>
                             <span class="order-status order-status--@order.Status.ToLowerInvariant()">@order.Status</span>
                         </header>
