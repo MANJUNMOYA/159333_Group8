@@ -3,42 +3,42 @@
 @inject UserManager<IdentityUser> UserManager
 
 <ul class="navbar-nav site-nav__account">
-@if (SignInManager.IsSignedIn(User))
-{
-    @if (User.IsInRole(PlatformRoles.Customer))
+    @if (SignInManager.IsSignedIn(User))
     {
+        @if (User.IsInRole(PlatformRoles.Customer))
+        {
+            <li class="nav-item">
+                <a class="nav-link account-link" asp-area="" asp-controller="Home" asp-action="OrderHistory">Order History</a>
+            </li>
+        }
         <li class="nav-item">
-            <a class="nav-link account-link" asp-area="" asp-controller="Home" asp-action="OrderHistory">Order History</a>
+            @if (User.IsInRole(PlatformRoles.Administrator))
+            {
+                <a class="nav-link account-link" asp-area="" asp-controller="Home" asp-action="AdministratorDashboard" title="Administrator dashboard">@User.Identity?.Name</a>
+            }
+            else if (User.IsInRole(PlatformRoles.Merchant))
+            {
+                <a class="nav-link account-link" asp-area="" asp-controller="Home" asp-action="MerchantDashboard" title="Merchant dashboard">@User.Identity?.Name</a>
+            }
+            else if (User.IsInRole(PlatformRoles.Customer))
+            {
+                <a class="nav-link account-link" asp-area="" asp-controller="Home" asp-action="CustomerDashboard" title="Customer dashboard">My Account</a>
+            }
+            else
+            {
+                <a class="nav-link account-link" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage account">@User.Identity?.Name</a>
+            }
+        </li>
+        <li class="nav-item">
+            <form class="account-form" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                <button type="submit" class="nav-link account-link">Sign out</button>
+            </form>
         </li>
     }
-    <li class="nav-item">
-        @if (User.IsInRole(PlatformRoles.Administrator))
-        {
-            <a class="nav-link account-link" asp-area="" asp-controller="Home" asp-action="AdministratorDashboard" title="Administrator dashboard">@User.Identity?.Name</a>
-        }
-        else if (User.IsInRole(PlatformRoles.Merchant))
-        {
-            <a class="nav-link account-link" asp-area="" asp-controller="Home" asp-action="MerchantDashboard" title="Merchant dashboard">@User.Identity?.Name</a>
-        }
-        else if (User.IsInRole(PlatformRoles.Customer))
-        {
-            <a class="nav-link account-link" asp-area="" asp-controller="Home" asp-action="Profile" title="Customer profile">@User.Identity?.Name</a>
-        }
-        else
-        {
-            <a class="nav-link account-link" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage account">@User.Identity?.Name</a>
-        }
-    </li>
-    <li class="nav-item">
-        <form class="account-form" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-            <button type="submit" class="nav-link account-link">Sign out</button>
-        </form>
-    </li>
-}
-else
-{
-    <li class="nav-item">
-        <a class="button button--nav" asp-area="" asp-controller="Home" asp-action="Portal">Access Portal</a>
-    </li>
-}
+    else
+    {
+        <li class="nav-item">
+            <a class="button button--nav" asp-area="" asp-controller="Home" asp-action="Portal">Access Portal</a>
+        </li>
+    }
 </ul>
