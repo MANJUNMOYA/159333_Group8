@@ -11,8 +11,13 @@ namespace CampusCoffeeSystem.Controllers;
 [Route("api/platform")]
 public class PlatformController(
     ApplicationDbContext context,
-    UserManager<IdentityUser> userManager) : ControllerBase
+    UserManager<IdentityUser> userManager,
+    IWebHostEnvironment environment,
+    ILogger<PlatformController> logger) : ControllerBase
 {
+    private const long MaximumProductImageBytes = 5 * 1024 * 1024;
+    private const string DefaultProductImagePath = "/images/menu/Campus Flat White.jpg";
+
     [Authorize(Roles = PlatformRoles.Administrator)]
     [HttpPost("merchant-applications/{id:int}/status")]
     [ValidateAntiForgeryToken]
@@ -128,8 +133,21 @@ public class PlatformController(
 
     [Authorize(Roles = PlatformRoles.Merchant)]
     [HttpPost("products")]
+    [Consumes("application/json")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddProduct(ProductRequest request)
+    public Task<IActionResult> AddProduct([FromBody] ProductRequest request) =>
+        CreateProduct(request, image: null);
+
+    [Authorize(Roles = PlatformRoles.Merchant)]
+    [HttpPost("products")]
+    [Consumes("multipart/form-data")]
+    [ValidateAntiForgeryToken]
+    public Task<IActionResult> AddProductWithImage(
+        [FromForm] ProductRequest request,
+        [FromForm] IFormFile? image) =>
+        CreateProduct(request, image);
+
+    private async Task<IActionResult> CreateProduct(ProductRequest request, IFormFile? image)
     {
         if (await context.Products.AnyAsync(product => product.Name == request.Name.Trim()))
         {
@@ -145,13 +163,149 @@ public class PlatformController(
             Description = request.Description.Trim(),
             Price = request.Price,
             StockQuantity = request.StockQuantity,
-            ImagePath = request.ImagePath.Trim(),
+            ImagePath = string.IsNullOrWhiteSpace(request.ImagePath) ? DefaultProductImagePath : request.ImagePath.Trim(),
             SortOrder = maxSortOrder + 1,
             IsActive = true
         };
-        context.Products.Add(product);
-        await context.SaveChangesAsync();
+
+        string? savedImageFilePath = null;
+        if (image is not null)
+        {
+            if (image.Length == 0 || image.Length > MaximumProductImageBytes)
+            {
+                return BadRequest(new { message = "Choose a JPG, PNG or WebP image no larger than 5 MB." });
+            }
+
+            string? imageExtension;
+            try
+            {
+                imageExtension = await GetVerifiedProductImageExtension(image);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                logger.LogError(exception, "A product image could not be read.");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "The product image could not be read. Try again." });
+            }
+
+            if (imageExtension is null)
+            {
+                return BadRequest(new { message = "The product image must be a valid JPG, PNG or WebP image." });
+            }
+
+            try
+            {
+                var savedImage = await SaveProductImage(image, imageExtension);
+                product.ImagePath = savedImage.PublicPath;
+                savedImageFilePath = savedImage.FilePath;
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                logger.LogError(exception, "A product image could not be stored.");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "The product image could not be stored. Try again." });
+            }
+        }
+
+        try
+        {
+            context.Products.Add(product);
+            await context.SaveChangesAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            DeleteProductImage(savedImageFilePath);
+            throw;
+        }
+        catch (Exception exception)
+        {
+            DeleteProductImage(savedImageFilePath);
+            logger.LogError(exception, "Product {ProductName} could not be created.", product.Name);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "The product could not be saved. Try again." });
+        }
+
         return Ok(new { product.Id, message = $"{product.Name} has been added." });
+    }
+
+    private static async Task<string?> GetVerifiedProductImageExtension(IFormFile image)
+    {
+        var contentType = image.ContentType.Trim().ToLowerInvariant();
+        if (contentType is not ("image/jpeg" or "image/jpg" or "image/png" or "image/webp"))
+        {
+            return null;
+        }
+
+        var header = new byte[12];
+        await using var stream = image.OpenReadStream();
+        var bytesRead = await stream.ReadAsync(header.AsMemory(0, header.Length));
+
+        if (bytesRead >= 3 &&
+            header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF &&
+            contentType is "image/jpeg" or "image/jpg")
+        {
+            return ".jpg";
+        }
+
+        if (bytesRead >= 8 &&
+            header.AsSpan(0, 8).SequenceEqual(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }) &&
+            contentType == "image/png")
+        {
+            return ".png";
+        }
+
+        if (bytesRead >= 12 &&
+            header.AsSpan(0, 4).SequenceEqual("RIFF"u8) &&
+            header.AsSpan(8, 4).SequenceEqual("WEBP"u8) &&
+            contentType == "image/webp")
+        {
+            return ".webp";
+        }
+
+        return null;
+    }
+
+    private async Task<(string PublicPath, string FilePath)> SaveProductImage(IFormFile image, string extension)
+    {
+        var webRoot = environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot");
+        var uploadDirectory = Path.Combine(webRoot, "uploads", "products");
+        Directory.CreateDirectory(uploadDirectory);
+
+        var fileName = $"{Guid.NewGuid():N}{extension}";
+        var filePath = Path.Combine(uploadDirectory, fileName);
+        try
+        {
+            await using var output = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+            await image.CopyToAsync(output, HttpContext.RequestAborted);
+        }
+        catch
+        {
+            DeleteProductImage(filePath);
+            throw;
+        }
+
+        return ($"/uploads/products/{fileName}", filePath);
+    }
+
+    private void DeleteProductImage(string? filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            return;
+        }
+
+        try
+        {
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            logger.LogWarning(exception, "A product image could not be removed after product creation failed.");
+        }
     }
 
     [Authorize(Roles = PlatformRoles.Merchant)]

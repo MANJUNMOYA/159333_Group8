@@ -550,6 +550,73 @@
     </main>
 </div>
 
+<dialog class="merchant-modal" data-add-product-modal aria-labelledby="add-product-title">
+    <form class="merchant-modal__surface" action="/api/platform/products" method="post" enctype="multipart/form-data" data-add-product-form novalidate>
+        <header class="merchant-modal__header">
+            <div>
+                <p class="merchant-kicker">Menu collection</p>
+                <h2 id="add-product-title">Add a product</h2>
+            </div>
+            <button class="merchant-modal__close" type="button" data-add-product-close aria-label="Close Add Product">&times;</button>
+        </header>
+
+        <p class="merchant-modal__message" data-add-product-error role="alert" hidden></p>
+
+        <div class="merchant-modal__fields">
+            <label class="merchant-form-field merchant-form-field--wide">
+                <span>Product name</span>
+                <input type="text" name="Name" maxlength="160" autocomplete="off" required data-add-product-name />
+            </label>
+
+            <label class="merchant-form-field">
+                <span>Category</span>
+                <select name="Category" required>
+                    <option value="coffee">Coffee</option>
+                    <option value="food">Food</option>
+                </select>
+            </label>
+
+            <label class="merchant-form-field">
+                <span>Price</span>
+                <span class="merchant-form-field__money"><span aria-hidden="true">$</span><input type="number" name="Price" min="0.01" max="10000" step="0.01" inputmode="decimal" value="5.00" required /></span>
+            </label>
+
+            <label class="merchant-form-field">
+                <span>Starting stock</span>
+                <input type="number" name="StockQuantity" min="0" max="100000" step="1" inputmode="numeric" value="10" required />
+            </label>
+
+            <label class="merchant-form-field merchant-form-field--wide">
+                <span>Description</span>
+                <textarea name="Description" maxlength="1000" rows="4" required></textarea>
+            </label>
+
+            <div class="merchant-product-upload merchant-form-field--wide">
+                <div class="merchant-form-field">
+                    <span>Product image</span>
+                    <label class="merchant-image-picker">
+                        <span class="merchant-image-picker__button">
+                            Choose Image
+                            <input class="merchant-image-picker__input" type="file" name="Image" accept="image/jpeg,image/png,image/webp" required data-add-product-image />
+                        </span>
+                        <span class="merchant-image-picker__filename" data-add-product-filename aria-live="polite">No file selected</span>
+                    </label>
+                    <small>JPG, PNG or WebP, up to 5 MB.</small>
+                </div>
+                <div class="merchant-product-upload__preview" data-add-product-preview>
+                    <span data-add-product-preview-placeholder>Image preview</span>
+                    <img alt="Selected product preview" data-add-product-preview-image hidden />
+                </div>
+            </div>
+        </div>
+
+        <footer class="merchant-modal__actions">
+            <button class="merchant-modal__cancel" type="button" data-add-product-close>Cancel</button>
+            <button class="merchant-primary-button" type="submit" data-add-product-save>Save product</button>
+        </footer>
+    </form>
+</dialog>
+
 @section Scripts {
     <script src="~/js/merchant-dashboard.js" asp-append-version="true"></script>
 }

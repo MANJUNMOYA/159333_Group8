@@ -294,41 +294,182 @@
   });
 
   const addProductButton = dashboard.querySelector('[data-add-product]');
-  addProductButton?.addEventListener('click', async () => {
-    const name = window.prompt('Product name:');
-    if (!name?.trim()) return;
-    const category = window.prompt('Category (coffee or food):', 'coffee')?.trim().toLowerCase();
-    const price = Number(window.prompt('Price:', '5.00'));
-    const stockQuantity = Number.parseInt(window.prompt('Starting stock:', '10'), 10);
-    const description = window.prompt('Description:', '') ?? '';
+  const addProductTrigger = dashboard.querySelector('[data-trigger-add-product]');
+  const addProductModal = document.querySelector('[data-add-product-modal]');
+  const addProductForm = addProductModal?.querySelector('[data-add-product-form]');
+  const addProductName = addProductForm?.querySelector('[data-add-product-name]');
+  const addProductImage = addProductForm?.querySelector('[data-add-product-image]');
+  const addProductFilename = addProductForm?.querySelector('[data-add-product-filename]');
+  const addProductPreviewImage = addProductForm?.querySelector('[data-add-product-preview-image]');
+  const addProductPreviewPlaceholder = addProductForm?.querySelector('[data-add-product-preview-placeholder]');
+  const addProductError = addProductForm?.querySelector('[data-add-product-error]');
+  const addProductSave = addProductForm?.querySelector('[data-add-product-save]');
+  const addProductCloseButtons = [...(addProductForm?.querySelectorAll('[data-add-product-close]') ?? [])];
+  const allowedProductImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  const maximumProductImageBytes = 5 * 1024 * 1024;
+  let addProductPreviewUrl = '';
+  let addProductModalTrigger = null;
+  let isSavingProduct = false;
 
-    if (!['coffee', 'food'].includes(category) || !Number.isFinite(price) || price <= 0 || !Number.isInteger(stockQuantity) || stockQuantity < 0) {
-      showNotice('Enter a valid category, price and stock quantity.', true);
+  const setAddProductError = (message = '') => {
+    if (!addProductError) return;
+    addProductError.textContent = message;
+    addProductError.hidden = message.length === 0;
+  };
+
+  const clearAddProductPreview = () => {
+    if (addProductPreviewUrl) {
+      URL.revokeObjectURL(addProductPreviewUrl);
+      addProductPreviewUrl = '';
+    }
+    if (addProductPreviewImage) {
+      addProductPreviewImage.removeAttribute('src');
+      addProductPreviewImage.hidden = true;
+    }
+    if (addProductFilename) addProductFilename.textContent = 'No file selected';
+    if (addProductPreviewPlaceholder) addProductPreviewPlaceholder.hidden = false;
+  };
+
+  const setAddProductSaving = (isSaving) => {
+    isSavingProduct = isSaving;
+    if (addProductSave) {
+      addProductSave.disabled = isSaving;
+      addProductSave.textContent = isSaving ? 'Saving…' : 'Save product';
+    }
+    addProductCloseButtons.forEach((button) => { button.disabled = isSaving; });
+  };
+
+  const resetAddProductModal = () => {
+    addProductForm?.reset();
+    clearAddProductPreview();
+    setAddProductError();
+    setAddProductSaving(false);
+  };
+
+  const openAddProductModal = (trigger) => {
+    if (!addProductModal || !addProductForm || addProductModal.open) return;
+    resetAddProductModal();
+    addProductModalTrigger = trigger;
+    document.body.classList.add('is-add-product-modal-open');
+    addProductModal.showModal();
+    window.setTimeout(() => addProductName?.focus(), 0);
+  };
+
+  const closeAddProductModal = () => {
+    if (!addProductModal?.open || isSavingProduct) return;
+    addProductModal.close();
+  };
+
+  const productImageValidationMessage = (file) => {
+    if (!file) return 'Choose a product image.';
+    if (file.size === 0) return 'Choose a non-empty product image.';
+    if (file.size > maximumProductImageBytes) return 'Choose an image no larger than 5 MB.';
+    if (!allowedProductImageTypes.includes(file.type.toLowerCase())) return 'Choose a JPG, PNG or WebP image.';
+    return '';
+  };
+
+  addProductButton?.addEventListener('click', () => openAddProductModal(addProductButton));
+  addProductTrigger?.addEventListener('click', () => {
+    window.setTimeout(() => openAddProductModal(addProductTrigger), 120);
+  });
+
+  addProductCloseButtons.forEach((button) => button.addEventListener('click', closeAddProductModal));
+
+  addProductModal?.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    closeAddProductModal();
+  });
+
+  addProductModal?.addEventListener('click', (event) => {
+    if (event.target === addProductModal) closeAddProductModal();
+  });
+
+  addProductModal?.addEventListener('close', () => {
+    document.body.classList.remove('is-add-product-modal-open');
+    resetAddProductModal();
+    addProductModalTrigger?.focus();
+    addProductModalTrigger = null;
+  });
+
+  addProductImage?.addEventListener('change', () => {
+    clearAddProductPreview();
+    setAddProductError();
+    const file = addProductImage.files?.[0];
+    const validationMessage = productImageValidationMessage(file);
+    if (validationMessage) {
+      if (file) addProductImage.value = '';
+      setAddProductError(validationMessage);
       return;
     }
 
-    addProductButton.disabled = true;
+    addProductPreviewUrl = URL.createObjectURL(file);
+    if (addProductFilename) addProductFilename.textContent = file.name;
+    addProductPreviewImage.src = addProductPreviewUrl;
+    addProductPreviewImage.hidden = false;
+    if (addProductPreviewPlaceholder) addProductPreviewPlaceholder.hidden = true;
+  });
+
+  addProductForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (isSavingProduct) return;
+
+    setAddProductError();
+    const invalidField = addProductForm.querySelector(':invalid');
+    if (invalidField) {
+      setAddProductError('Complete all required fields using valid values.');
+      invalidField.focus();
+      return;
+    }
+
+    const price = Number(addProductForm.elements.namedItem('Price').value);
+    const stockQuantity = Number(addProductForm.elements.namedItem('StockQuantity').value);
+    const category = addProductForm.elements.namedItem('Category').value;
+    const imageFile = addProductImage?.files?.[0];
+    const imageValidationMessage = productImageValidationMessage(imageFile);
+
+    if (!['coffee', 'food'].includes(category)) {
+      setAddProductError('Choose Coffee or Food as the product category.');
+      return;
+    }
+    if (!Number.isFinite(price) || price <= 0 || price > 10000) {
+      setAddProductError('Enter a price between $0.01 and $10,000.');
+      return;
+    }
+    if (!Number.isInteger(stockQuantity) || stockQuantity < 0 || stockQuantity > 100000) {
+      setAddProductError('Enter a whole-number stock quantity between 0 and 100,000.');
+      return;
+    }
+    if (imageValidationMessage) {
+      setAddProductError(imageValidationMessage);
+      addProductImage?.focus();
+      return;
+    }
+
+    addProductForm.elements.namedItem('Name').value = addProductForm.elements.namedItem('Name').value.trim();
+    addProductForm.elements.namedItem('Description').value = addProductForm.elements.namedItem('Description').value.trim();
+    setAddProductSaving(true);
+
     try {
-      const displayCategory = category.charAt(0).toUpperCase() + category.slice(1);
-      const result = await post('/api/platform/products', {
-        name: name.trim(),
-        category,
-        displayCategory,
-        price,
-        stockQuantity,
-        description: description.trim(),
-        imagePath: '/images/menu/Campus Flat White.jpg'
+      const response = await fetch(addProductForm.action, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { RequestVerificationToken: token },
+        body: new FormData(addProductForm)
       });
+      const result = await response.json().catch(() => ({}));
+      const validationError = result.errors
+        ? Object.values(result.errors).flat().find((message) => typeof message === 'string')
+        : '';
+      if (!response.ok) throw new Error(result.message || validationError || 'The product could not be saved.');
+
+      setAddProductSaving(false);
+      addProductModal.close();
       showNotice(result.message);
       window.setTimeout(() => window.location.reload(), 650);
     } catch (error) {
-      addProductButton.disabled = false;
-      showNotice(error.message, true);
+      setAddProductSaving(false);
+      setAddProductError(error.message || 'The product could not be saved.');
     }
-  });
-
-  dashboard.querySelector('[data-trigger-add-product]')?.addEventListener('click', () => {
-    window.setTimeout(() => addProductButton?.click(), 120);
   });
 
   dashboard.querySelector('[data-refresh-dashboard]')?.addEventListener('click', () => {
