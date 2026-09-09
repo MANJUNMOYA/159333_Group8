@@ -229,6 +229,189 @@ public class PlatformController(
         return Ok(new { product.Id, message = $"{product.Name} has been added." });
     }
 
+    [Authorize(Roles = PlatformRoles.Merchant)]
+    [HttpPost("products/{id:int}")]
+    [Consumes("multipart/form-data")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateProduct(
+        int id,
+        [FromForm] ProductRequest request,
+        [FromForm] IFormFile? image)
+    {
+        var product = await context.Products.FindAsync(id);
+        if (product is null)
+        {
+            return NotFound(new { message = "Product was not found." });
+        }
+
+        var productName = request.Name.Trim();
+        if (await context.Products.AnyAsync(item => item.Id != id && item.Name == productName))
+        {
+            return Conflict(new { message = "A product with this name already exists." });
+        }
+
+        string? savedImageFilePath = null;
+        string? replacementImagePath = null;
+        if (image is not null)
+        {
+            if (image.Length == 0 || image.Length > MaximumProductImageBytes)
+            {
+                return BadRequest(new { message = "Choose a JPG, PNG or WebP image no larger than 5 MB." });
+            }
+
+            string? imageExtension;
+            try
+            {
+                imageExtension = await GetVerifiedProductImageExtension(image);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                logger.LogError(exception, "A replacement product image could not be read.");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "The replacement image could not be read. Try again." });
+            }
+
+            if (imageExtension is null)
+            {
+                return BadRequest(new { message = "The replacement image must be a valid JPG, PNG or WebP image." });
+            }
+
+            try
+            {
+                var savedImage = await SaveProductImage(image, imageExtension);
+                replacementImagePath = savedImage.PublicPath;
+                savedImageFilePath = savedImage.FilePath;
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                logger.LogError(exception, "A replacement product image could not be stored.");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "The replacement image could not be stored. Try again." });
+            }
+        }
+
+        var productCategory = request.Category.Trim().ToLowerInvariant();
+        var displayCategory = string.IsNullOrWhiteSpace(request.DisplayCategory)
+            ? char.ToUpperInvariant(productCategory[0]) + productCategory[1..]
+            : request.DisplayCategory.Trim();
+        var previousImagePath = product.ImagePath;
+        product.Name = productName;
+        product.Category = productCategory;
+        product.DisplayCategory = displayCategory;
+        product.Description = request.Description.Trim();
+        product.Price = request.Price;
+        product.StockQuantity = request.StockQuantity;
+        if (replacementImagePath is not null)
+        {
+            product.ImagePath = replacementImagePath;
+        }
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            DeleteProductImage(savedImageFilePath);
+            throw;
+        }
+        catch (Exception exception)
+        {
+            DeleteProductImage(savedImageFilePath);
+            logger.LogError(exception, "Product {ProductId} could not be updated.", product.Id);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "The product changes could not be saved. Try again." });
+        }
+
+        if (replacementImagePath is not null)
+        {
+            await DeleteManagedProductImageIfUnreferenced(previousImagePath, product.Id);
+        }
+
+        return Ok(new
+        {
+            product.Id,
+            product.Name,
+            product.Category,
+            product.DisplayCategory,
+            product.Description,
+            product.Price,
+            product.StockQuantity,
+            product.ImagePath,
+            message = $"{product.Name} has been updated."
+        });
+    }
+
+    [Authorize(Roles = PlatformRoles.Merchant)]
+    [HttpPost("products/{id:int}/delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteProduct(int id)
+    {
+        var product = await context.Products.FindAsync(id);
+        if (product is null)
+        {
+            return NotFound(new { message = "Product was not found." });
+        }
+
+        var hasOrderHistory = await context.OrderItems
+            .AsNoTracking()
+            .AnyAsync(item => item.ProductId == id);
+        var hasReviewHistory = await context.ProductReviewRatings
+            .AsNoTracking()
+            .AnyAsync(rating => rating.ProductId == id);
+
+        if (hasOrderHistory || hasReviewHistory)
+        {
+            product.IsActive = false;
+            try
+            {
+                await context.SaveChangesAsync();
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                logger.LogError(exception, "Product {ProductId} could not be deactivated during deletion.", product.Id);
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "The product could not be deactivated. Try again." });
+            }
+
+            return Ok(new
+            {
+                permanentlyDeleted = false,
+                deactivated = true,
+                isActive = product.IsActive,
+                message = $"{product.Name} has historical order or review data, so it was retained and deactivated instead of permanently deleted."
+            });
+        }
+
+        var imagePath = product.ImagePath;
+        context.Products.Remove(product);
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "Product {ProductId} could not be permanently deleted.", product.Id);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "The product could not be deleted. Try again." });
+        }
+
+        await DeleteManagedProductImageIfUnreferenced(imagePath, id);
+        return Ok(new
+        {
+            permanentlyDeleted = true,
+            deactivated = false,
+            message = $"{product.Name} has been permanently deleted."
+        });
+    }
+
     private static async Task<string?> GetVerifiedProductImageExtension(IFormFile image)
     {
         var contentType = image.ContentType.Trim().ToLowerInvariant();
@@ -268,8 +451,7 @@ public class PlatformController(
 
     private async Task<(string PublicPath, string FilePath)> SaveProductImage(IFormFile image, string extension)
     {
-        var webRoot = environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot");
-        var uploadDirectory = Path.Combine(webRoot, "uploads", "products");
+        var uploadDirectory = GetProductUploadDirectory();
         Directory.CreateDirectory(uploadDirectory);
 
         var fileName = $"{Guid.NewGuid():N}{extension}";
@@ -288,6 +470,74 @@ public class PlatformController(
         return ($"/uploads/products/{fileName}", filePath);
     }
 
+    private string GetProductUploadDirectory()
+    {
+        var webRoot = environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot");
+        return Path.Combine(webRoot, "uploads", "products");
+    }
+
+    private async Task DeleteManagedProductImageIfUnreferenced(string imagePath, int excludedProductId)
+    {
+        if (!TryGetManagedProductImageFilePath(imagePath, out var filePath))
+        {
+            return;
+        }
+
+        try
+        {
+            var isShared = await context.Products
+                .AsNoTracking()
+                .AnyAsync(product => product.Id != excludedProductId && product.ImagePath == imagePath);
+            if (isShared)
+            {
+                return;
+            }
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "Could not verify whether product image {ImagePath} is shared.", imagePath);
+            return;
+        }
+
+        DeleteProductImage(filePath);
+    }
+
+    private bool TryGetManagedProductImageFilePath(string imagePath, out string filePath)
+    {
+        filePath = string.Empty;
+        const string managedPrefix = "/uploads/products/";
+        if (string.IsNullOrWhiteSpace(imagePath) ||
+            !imagePath.StartsWith(managedPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var fileName = imagePath[managedPrefix.Length..];
+        if (fileName.Length == 0 || fileName.Contains('/') || fileName.Contains('\\'))
+        {
+            return false;
+        }
+
+        var extension = Path.GetExtension(fileName).ToLowerInvariant();
+        var identifier = Path.GetFileNameWithoutExtension(fileName);
+        if (extension is not (".jpg" or ".png" or ".webp") ||
+            !Guid.TryParseExact(identifier, "N", out _))
+        {
+            return false;
+        }
+
+        var uploadDirectory = Path.GetFullPath(GetProductUploadDirectory());
+        var candidatePath = Path.GetFullPath(Path.Combine(uploadDirectory, fileName));
+        var requiredPrefix = uploadDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        if (!candidatePath.StartsWith(requiredPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        filePath = candidatePath;
+        return true;
+    }
+
     private void DeleteProductImage(string? filePath)
     {
         if (string.IsNullOrWhiteSpace(filePath))
@@ -304,7 +554,7 @@ public class PlatformController(
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            logger.LogWarning(exception, "A product image could not be removed after product creation failed.");
+            logger.LogWarning(exception, "A managed product image could not be removed.");
         }
     }
 

@@ -472,6 +472,247 @@
     }
   });
 
+  const editProductModal = document.querySelector('[data-edit-product-modal]');
+  const editProductForm = editProductModal?.querySelector('[data-edit-product-form]');
+  const editProductContent = editProductForm?.querySelector('[data-edit-product-content]');
+  const editProductConfirmation = editProductForm?.querySelector('[data-delete-product-confirmation]');
+  const editProductName = editProductForm?.querySelector('[data-edit-product-name]');
+  const editProductCategory = editProductForm?.querySelector('[data-edit-product-category]');
+  const editProductPrice = editProductForm?.querySelector('[data-edit-product-price]');
+  const editProductStock = editProductForm?.querySelector('[data-edit-product-stock]');
+  const editProductDescription = editProductForm?.querySelector('[data-edit-product-description]');
+  const editProductImage = editProductForm?.querySelector('[data-edit-product-image]');
+  const editProductFilename = editProductForm?.querySelector('[data-edit-product-filename]');
+  const editProductPreviewImage = editProductForm?.querySelector('[data-edit-product-preview-image]');
+  const editProductError = editProductForm?.querySelector('[data-edit-product-error]');
+  const editProductSave = editProductForm?.querySelector('[data-edit-product-save]');
+  const editProductDelete = editProductForm?.querySelector('[data-edit-product-delete]');
+  const editProductCloseButtons = [...(editProductForm?.querySelectorAll('[data-edit-product-close]') ?? [])];
+  const deleteProductName = editProductForm?.querySelector('[data-delete-product-name]');
+  const deleteProductCancel = editProductForm?.querySelector('[data-delete-product-cancel]');
+  const deleteProductConfirm = editProductForm?.querySelector('[data-delete-product-confirm]');
+  let editProductId = '';
+  let editProductCurrentImagePath = '';
+  let editProductPreviewUrl = '';
+  let editProductTrigger = null;
+  let isEditingProduct = false;
+
+  const setEditProductError = (message = '') => {
+    if (!editProductError) return;
+    editProductError.textContent = message;
+    editProductError.hidden = message.length === 0;
+  };
+
+  const clearEditProductPreview = (showCurrentImage = true) => {
+    if (editProductPreviewUrl) {
+      URL.revokeObjectURL(editProductPreviewUrl);
+      editProductPreviewUrl = '';
+    }
+    if (editProductFilename) editProductFilename.textContent = 'No file selected';
+    if (!editProductPreviewImage) return;
+
+    if (showCurrentImage && editProductCurrentImagePath) {
+      editProductPreviewImage.src = editProductCurrentImagePath;
+      editProductPreviewImage.alt = `Current image for ${editProductName?.value || 'product'}`;
+      editProductPreviewImage.hidden = false;
+    } else {
+      editProductPreviewImage.removeAttribute('src');
+      editProductPreviewImage.hidden = true;
+    }
+  };
+
+  const showEditProductContent = () => {
+    if (editProductContent) editProductContent.hidden = false;
+    if (editProductConfirmation) editProductConfirmation.hidden = true;
+    setEditProductError();
+  };
+
+  const showDeleteProductConfirmation = () => {
+    if (editProductContent) editProductContent.hidden = true;
+    if (editProductConfirmation) editProductConfirmation.hidden = false;
+    setEditProductError();
+    window.setTimeout(() => deleteProductConfirm?.focus(), 0);
+  };
+
+  const setEditProductBusy = (isBusy, operation = 'save') => {
+    isEditingProduct = isBusy;
+    if (editProductSave) {
+      editProductSave.disabled = isBusy;
+      editProductSave.textContent = isBusy && operation === 'save' ? 'Saving…' : 'Save Changes';
+    }
+    if (editProductDelete) editProductDelete.disabled = isBusy;
+    if (deleteProductConfirm) {
+      deleteProductConfirm.disabled = isBusy;
+      deleteProductConfirm.textContent = isBusy && operation === 'delete' ? 'Deleting…' : 'Delete Product';
+    }
+    if (deleteProductCancel) deleteProductCancel.disabled = isBusy;
+    editProductCloseButtons.forEach((button) => { button.disabled = isBusy; });
+  };
+
+  const resetEditProductModal = () => {
+    editProductForm?.reset();
+    editProductCurrentImagePath = '';
+    clearEditProductPreview(false);
+    showEditProductContent();
+    setEditProductBusy(false);
+    editProductId = '';
+  };
+
+  const openEditProductModal = (button) => {
+    const row = button.closest('[data-product-row]');
+    if (!row || !editProductModal || !editProductForm || editProductModal.open) return;
+
+    resetEditProductModal();
+    editProductId = row.dataset.productId;
+    editProductCurrentImagePath = row.dataset.productImage;
+    editProductTrigger = button;
+    editProductName.value = row.dataset.productName;
+    editProductCategory.value = row.dataset.productCategory;
+    editProductPrice.value = row.dataset.productPrice;
+    editProductStock.value = row.dataset.productStock;
+    editProductDescription.value = row.dataset.productDescription;
+    if (deleteProductName) deleteProductName.textContent = row.dataset.productName;
+    clearEditProductPreview(true);
+
+    document.body.classList.add('is-add-product-modal-open');
+    editProductModal.showModal();
+    window.setTimeout(() => editProductName?.focus(), 0);
+  };
+
+  const closeEditProductModal = () => {
+    if (!editProductModal?.open || isEditingProduct) return;
+    editProductModal.close();
+  };
+
+  dashboard.querySelectorAll('[data-product-action="edit"]').forEach((button) => {
+    button.addEventListener('click', () => openEditProductModal(button));
+  });
+
+  editProductCloseButtons.forEach((button) => button.addEventListener('click', closeEditProductModal));
+  editProductDelete?.addEventListener('click', showDeleteProductConfirmation);
+  deleteProductCancel?.addEventListener('click', showEditProductContent);
+
+  editProductModal?.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    if (!editProductConfirmation?.hidden && !isEditingProduct) {
+      showEditProductContent();
+      return;
+    }
+    closeEditProductModal();
+  });
+
+  editProductModal?.addEventListener('click', (event) => {
+    if (event.target === editProductModal) closeEditProductModal();
+  });
+
+  editProductModal?.addEventListener('close', () => {
+    document.body.classList.remove('is-add-product-modal-open');
+    resetEditProductModal();
+    editProductTrigger?.focus();
+    editProductTrigger = null;
+  });
+
+  editProductImage?.addEventListener('change', () => {
+    clearEditProductPreview(true);
+    setEditProductError();
+    const file = editProductImage.files?.[0];
+    if (!file) return;
+
+    const validationMessage = productImageValidationMessage(file);
+    if (validationMessage) {
+      editProductImage.value = '';
+      setEditProductError(validationMessage);
+      return;
+    }
+
+    editProductPreviewUrl = URL.createObjectURL(file);
+    if (editProductFilename) editProductFilename.textContent = file.name;
+    editProductPreviewImage.src = editProductPreviewUrl;
+    editProductPreviewImage.alt = `Replacement image for ${editProductName?.value || 'product'}`;
+    editProductPreviewImage.hidden = false;
+  });
+
+  editProductForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (isEditingProduct || !editProductId) return;
+
+    setEditProductError();
+    const invalidField = editProductForm.querySelector(':invalid');
+    if (invalidField) {
+      setEditProductError('Complete all required fields using valid values.');
+      invalidField.focus();
+      return;
+    }
+
+    const price = Number(editProductPrice.value);
+    const stockQuantity = Number(editProductStock.value);
+    const imageFile = editProductImage?.files?.[0];
+    const imageValidationMessage = imageFile ? productImageValidationMessage(imageFile) : '';
+
+    if (!['coffee', 'food'].includes(editProductCategory.value)) {
+      setEditProductError('Choose Coffee or Food as the product category.');
+      return;
+    }
+    if (!Number.isFinite(price) || price <= 0 || price > 10000) {
+      setEditProductError('Enter a price between $0.01 and $10,000.');
+      return;
+    }
+    if (!Number.isInteger(stockQuantity) || stockQuantity < 0 || stockQuantity > 100000) {
+      setEditProductError('Enter a whole-number stock quantity between 0 and 100,000.');
+      return;
+    }
+    if (imageValidationMessage) {
+      setEditProductError(imageValidationMessage);
+      editProductImage?.focus();
+      return;
+    }
+
+    editProductName.value = editProductName.value.trim();
+    editProductDescription.value = editProductDescription.value.trim();
+    const formData = new FormData(editProductForm);
+    if (!imageFile) formData.delete('Image');
+    setEditProductBusy(true, 'save');
+
+    try {
+      const response = await fetch(`${editProductForm.action}/${editProductId}`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { RequestVerificationToken: token },
+        body: formData
+      });
+      const result = await response.json().catch(() => ({}));
+      const validationError = result.errors
+        ? Object.values(result.errors).flat().find((message) => typeof message === 'string')
+        : '';
+      if (!response.ok) throw new Error(result.message || validationError || 'The product changes could not be saved.');
+
+      setEditProductBusy(false);
+      editProductModal.close();
+      showNotice(result.message);
+      window.setTimeout(() => window.location.reload(), 650);
+    } catch (error) {
+      setEditProductBusy(false);
+      setEditProductError(error.message || 'The product changes could not be saved.');
+    }
+  });
+
+  deleteProductConfirm?.addEventListener('click', async () => {
+    if (isEditingProduct || !editProductId) return;
+    setEditProductError();
+    setEditProductBusy(true, 'delete');
+
+    try {
+      const result = await post(`/api/platform/products/${editProductId}/delete`);
+      setEditProductBusy(false);
+      editProductModal.close();
+      showNotice(result.message);
+      window.setTimeout(() => window.location.reload(), 1600);
+    } catch (error) {
+      setEditProductBusy(false);
+      setEditProductError(error.message || 'The product could not be deleted.');
+    }
+  });
+
   dashboard.querySelector('[data-refresh-dashboard]')?.addEventListener('click', () => {
     window.location.reload();
   });

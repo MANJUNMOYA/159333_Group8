@@ -512,7 +512,8 @@
                 }
                 @foreach (var product in Model.Products)
                 {
-                    <tr data-product-row data-product-id="@product.Id" data-product-name="@product.Name" data-search-item><td><strong>@product.Name</strong></td><td>@product.DisplayCategory</td><td>@CurrencyFormatter.NzDollars(product.Price)</td><td><span class="merchant-badge merchant-badge--@(product.IsActive ? "active" : "disabled")" data-product-status>@(product.IsActive ? "Active" : "Disabled")</span></td><td><div class="merchant-table__actions"><button type="button" data-product-action="stock">Manage stock</button><button type="button" data-product-action="toggle">@(product.IsActive ? "Disable" : "Enable")</button></div></td></tr>
+                    var productImagePath = string.IsNullOrWhiteSpace(product.ImagePath) ? "/images/menu/Campus Flat White.jpg" : product.ImagePath;
+                    <tr data-product-row data-product-id="@product.Id" data-product-name="@product.Name" data-product-category="@product.Category" data-product-price="@product.Price.ToString(CultureInfo.InvariantCulture)" data-product-stock="@product.StockQuantity" data-product-description="@product.Description" data-product-image="@productImagePath" data-search-item><td><strong>@product.Name</strong></td><td>@product.DisplayCategory</td><td>@CurrencyFormatter.NzDollars(product.Price)</td><td><span class="merchant-badge merchant-badge--@(product.IsActive ? "active" : "disabled")" data-product-status>@(product.IsActive ? "Active" : "Disabled")</span></td><td><div class="merchant-table__actions"><button type="button" data-product-action="edit">Edit</button><button type="button" data-product-action="stock">Manage stock</button><button type="button" data-product-action="toggle">@(product.IsActive ? "Disable" : "Enable")</button></div></td></tr>
                 }
             </tbody></table></div></div>
         </section>
@@ -614,6 +615,85 @@
             <button class="merchant-modal__cancel" type="button" data-add-product-close>Cancel</button>
             <button class="merchant-primary-button" type="submit" data-add-product-save>Save product</button>
         </footer>
+    </form>
+</dialog>
+
+<dialog class="merchant-modal" data-edit-product-modal aria-labelledby="edit-product-title">
+    <form class="merchant-modal__surface" action="/api/platform/products" method="post" enctype="multipart/form-data" data-edit-product-form novalidate>
+        <header class="merchant-modal__header">
+            <div>
+                <p class="merchant-kicker">Menu collection</p>
+                <h2 id="edit-product-title">Edit product</h2>
+            </div>
+            <button class="merchant-modal__close" type="button" data-edit-product-close aria-label="Close Edit Product">&times;</button>
+        </header>
+
+        <p class="merchant-modal__message" data-edit-product-error role="alert" hidden></p>
+
+        <div data-edit-product-content>
+            <div class="merchant-modal__fields">
+                <label class="merchant-form-field merchant-form-field--wide">
+                    <span>Product name</span>
+                    <input type="text" name="Name" maxlength="160" autocomplete="off" required data-edit-product-name />
+                </label>
+
+                <label class="merchant-form-field">
+                    <span>Category</span>
+                    <select name="Category" required data-edit-product-category>
+                        <option value="coffee">Coffee</option>
+                        <option value="food">Food</option>
+                    </select>
+                </label>
+
+                <label class="merchant-form-field">
+                    <span>Price</span>
+                    <span class="merchant-form-field__money"><span aria-hidden="true">$</span><input type="number" name="Price" min="0.01" max="10000" step="0.01" inputmode="decimal" required data-edit-product-price /></span>
+                </label>
+
+                <label class="merchant-form-field">
+                    <span>Stock</span>
+                    <input type="number" name="StockQuantity" min="0" max="100000" step="1" inputmode="numeric" required data-edit-product-stock />
+                </label>
+
+                <label class="merchant-form-field merchant-form-field--wide">
+                    <span>Description</span>
+                    <textarea name="Description" maxlength="1000" rows="4" required data-edit-product-description></textarea>
+                </label>
+
+                <div class="merchant-product-upload merchant-form-field--wide">
+                    <div class="merchant-form-field">
+                        <span>Replace image</span>
+                        <label class="merchant-image-picker">
+                            <span class="merchant-image-picker__button">
+                                Choose Image
+                                <input class="merchant-image-picker__input" type="file" name="Image" accept="image/jpeg,image/png,image/webp" data-edit-product-image />
+                            </span>
+                            <span class="merchant-image-picker__filename" data-edit-product-filename aria-live="polite">No file selected</span>
+                        </label>
+                        <small>Leave empty to keep the current image. JPG, PNG or WebP, up to 5 MB.</small>
+                    </div>
+                    <div class="merchant-product-upload__preview" data-edit-product-preview>
+                        <img alt="Current product image" data-edit-product-preview-image />
+                    </div>
+                </div>
+            </div>
+
+            <footer class="merchant-modal__actions">
+                <button class="merchant-danger-button merchant-modal__delete" type="button" data-edit-product-delete>Delete Product</button>
+                <button class="merchant-modal__cancel" type="button" data-edit-product-close>Cancel</button>
+                <button class="merchant-primary-button" type="submit" data-edit-product-save>Save Changes</button>
+            </footer>
+        </div>
+
+        <section class="merchant-delete-confirmation" data-delete-product-confirmation hidden aria-labelledby="delete-product-title">
+            <p class="merchant-kicker">Confirm deletion</p>
+            <h3 id="delete-product-title">Are you sure you want to delete this product?</h3>
+            <p><strong data-delete-product-name></strong> will be permanently deleted only when it has no order or review history. Otherwise, it will be retained and deactivated.</p>
+            <footer class="merchant-modal__actions">
+                <button class="merchant-modal__cancel" type="button" data-delete-product-cancel>Cancel</button>
+                <button class="merchant-danger-button" type="button" data-delete-product-confirm>Delete Product</button>
+            </footer>
+        </section>
     </form>
 </dialog>
 
