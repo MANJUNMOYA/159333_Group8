@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-CampusCoffeeSystem-36210fb8-97a3-4ed7-9dad-28b896a7921c</UserSecretsId>
+	 <DefaultItemExcludes>$(DefaultItemExcludes);CampusCoffeeSystem.Tests\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
