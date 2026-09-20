@@ -44,6 +44,13 @@
             <p class="menu-results" data-menu-results aria-live="polite">Showing @Model.Products.Count available items</p>
         </div>
 
+        <section class="coffee-recommendations reveal" id="coffee-agency-recommendations" data-ai-recommendations aria-labelledby="recommendations-title">
+            <div><p class="eyebrow">Your coffee agency</p><h2 id="recommendations-title">Picked for your day.</h2></div>
+            <div class="coffee-recommendations__answer" data-ai-recommendations-answer>
+                <p>@(User.Identity?.IsAuthenticated == true ? "Finding a few favourites for you…" : "Sign in to receive recommendations based on your own menu activity.")</p>
+            </div>
+            <div class="coffee-recommendation-grid" data-ai-recommendation-grid hidden></div>
+        </section>
         <div class="menu-empty" data-menu-empty hidden>
             <p class="eyebrow">Nothing found</p>
             <h2>No menu items match that search.</h2>

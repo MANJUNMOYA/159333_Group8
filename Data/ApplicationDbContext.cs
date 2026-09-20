@@ -18,10 +18,27 @@ namespace CampusCoffeeSystem.Data
         public DbSet<OrderReview> OrderReviews => Set<OrderReview>();
         public DbSet<ProductReviewRating> ProductReviewRatings => Set<ProductReviewRating>();
         public DbSet<CustomerProfile> CustomerProfiles => Set<CustomerProfile>();
+        public DbSet<UserActivity> UserActivities => Set<UserActivity>();
+        public DbSet<AiChatMessage> AiChatMessages => Set<AiChatMessage>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+            builder.Entity<UserActivity>(activity =>
+            {
+                activity.Property(item => item.UserId).HasMaxLength(450);
+                activity.Property(item => item.ActivityType).HasMaxLength(32);
+                activity.Property(item => item.ProductName).HasMaxLength(160);
+                activity.Property(item => item.ProductCategory).HasMaxLength(80);
+                activity.HasIndex(item => new { item.UserId, item.OccurredAt });
+            });
+            builder.Entity<AiChatMessage>(message =>
+            {
+                message.Property(item => item.UserId).HasMaxLength(450);
+                message.Property(item => item.Role).HasMaxLength(16);
+                message.Property(item => item.Content).HasMaxLength(2000);
+                message.HasIndex(item => new { item.UserId, item.CreatedAt });
+            });
 
             builder.Entity<MerchantApplication>()
                 .HasIndex(application => application.Email);

@@ -1,3 +1,4 @@
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,8 +9,10 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/CampusCoffeeSystem.styles.css" asp-append-version="true" />
+    <meta name="request-verification-token" content="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
+    <link rel="stylesheet" href="~/css/coffee-agency.css" asp-append-version="true" />
 </head>
-<body>
+<body data-ai-authenticated="@((User.Identity?.IsAuthenticated == true).ToString().ToLowerInvariant())">
     <a class="skip-link" href="#main-content">Skip to content</a>
     <div class="announcement-bar">
         <p>Fresh coffee, honest food, right here on campus.</p>
@@ -87,9 +90,12 @@
             <span>Made for the campus community.</span>
         </div>
     </footer>
+    <partial name="_CoffeeAgency" />
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/coffee-agency.js" asp-append-version="true"></script>
+    <script src="~/js/email-confirmation.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -1,0 +1,30 @@
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <aside class="coffee-agency" data-coffee-agency aria-label="Coffee agency assistant">
+            <button class="coffee-agency__launcher" type="button" data-ai-toggle aria-expanded="false" aria-controls="coffee-agency-panel">
+                <span aria-hidden="true">✦</span>
+                <span>Contract your coffee agency</span>
+            </button>
+            <section class="coffee-agency__panel" id="coffee-agency-panel" data-ai-panel hidden aria-label="Coffee agency chat">
+                <header class="coffee-agency__header">
+                    <div>
+                        <p>Campus Coffee</p>
+                        <h2>Your coffee agency</h2>
+                    </div>
+                    <button type="button" class="coffee-agency__close" data-ai-close aria-label="Close chat">×</button>
+                </header>
+                <div class="coffee-agency__messages" data-ai-messages aria-live="polite">
+                    <p class="coffee-agency__intro">Hello. I can help you discover menu favourites, explain the ordering flow, or find a good match for your day.</p>
+                </div>
+                <form class="coffee-agency__form" data-ai-chat-form>
+                    <label class="visually-hidden" for="coffee-agency-message">Ask your coffee agency</label>
+                    <textarea id="coffee-agency-message" data-ai-message maxlength="800" placeholder="Ask about coffee, food or ordering" required></textarea>
+                    <button class="button product-card__button" type="submit" data-ai-send>Send</button>
+                </form>
+            </section>
+        </aside>
+    }
+    else
+    {
+        <a class="coffee-agency__launcher coffee-agency__launcher--guest" asp-area="" asp-controller="Home" asp-action="Portal">Contract your coffee agency</a>
+    }

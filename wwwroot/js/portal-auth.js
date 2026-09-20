@@ -66,15 +66,15 @@
 
     setSubmitting(customerRegistration, true, 'Creating Account…');
     try {
-      await postJson(customerRegistration, '/api/auth/customers', {
+      const result = await postJson(customerRegistration, '/api/auth/customers', {
         firstName: String(formData.get('firstName') ?? ''),
         lastName: String(formData.get('lastName') ?? ''),
         email: String(formData.get('email') ?? ''),
         phone: String(formData.get('phone') ?? ''),
         password
       });
-      showStatus(customerRegistration, 'Your account has been created. Redirecting to sign in…');
-      window.setTimeout(() => window.location.assign(customerRegistration.dataset.loginUrl), 700);
+      showStatus(customerRegistration, result.message);
+      window.location.assign(result.redirectUrl);
     } catch (error) {
       showStatus(customerRegistration, error.message, true);
       setSubmitting(customerRegistration, false);
@@ -88,14 +88,14 @@
     const formData = new FormData(merchantRegistration);
 
     try {
-      await postJson(merchantRegistration, '/api/auth/merchants', {
+      const result = await postJson(merchantRegistration, '/api/auth/merchants', {
         businessName: String(formData.get('businessName') ?? ''),
         contactName: String(formData.get('contactName') ?? ''),
         email: String(formData.get('email') ?? ''),
         password: String(formData.get('password') ?? '')
       });
-      showStatus(merchantRegistration, 'Account created. Complete the merchant application next.');
-      window.setTimeout(() => window.location.assign(merchantRegistration.dataset.applicationUrl), 900);
+      showStatus(merchantRegistration, result.message);
+      window.location.assign(result.redirectUrl);
     } catch (error) {
       showStatus(merchantRegistration, error.message, true);
       setSubmitting(merchantRegistration, false);

@@ -22,6 +22,17 @@ public static class ApplicationSeed
         }
 
         await SeedAdministratorAsync(userManager, configuration);
+        // Old customer accounts predate roles. Exclude pending merchant accounts.
+        var legacyCustomers = await context.Users
+            .Where(user => !context.UserRoles.Any(role => role.UserId == user.Id) &&
+                !context.MerchantApplications.Any(application => application.UserId == user.Id || application.Email == user.Email))
+            .ToListAsync();
+        foreach (var customer in legacyCustomers)
+        {
+            var roleResult = await userManager.AddToRoleAsync(customer, PlatformRoles.Customer);
+            if (!roleResult.Succeeded)
+                throw new InvalidOperationException("Could not assign the Customer role to a legacy account.");
+        }
         await SeedProductsAsync(context);
 
         if (configuration.GetValue<bool>("FrontendDemoSeed:Enabled"))

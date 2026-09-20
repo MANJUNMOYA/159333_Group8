@@ -1,0 +1,11 @@
+.git
+.vs
+bin
+obj
+.env
+Dockerfile*
+compose*.yaml
+tmp
+CampusCoffeeSystem.Tests
+**/bin
+**/obj

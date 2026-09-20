@@ -1,0 +1,38 @@
+.auth-message { display: grid; gap: 25px; text-align: center; }
+.auth-message > p { max-width: 500px; margin: 0 auto; color: rgba(29, 27, 23, .72); line-height: 1.75; }
+.auth-message .button { justify-self: center; }
+.coffee-recommendations { margin: clamp(52px, 7vw, 92px) 0 0; padding: clamp(30px, 5vw, 54px); display: grid; grid-template-columns: .85fr 1.15fr; gap: clamp(30px, 6vw, 92px); color: white; background: var(--coffee); }
+.coffee-recommendations .eyebrow { margin-bottom: 16px; color: #f1d4bd; }
+.coffee-recommendations h2 { margin: 0; font-family: var(--serif); font-size: clamp(2.65rem, 5.1vw, 5.1rem); font-weight: 400; letter-spacing: -.05em; line-height: .9; }
+.coffee-recommendations__answer { align-self: center; padding-left: clamp(0px, 5vw, 52px); border-left: 1px solid rgba(255,255,255,.28); }
+.coffee-recommendations__answer p { margin: 0 0 16px; color: rgba(255,255,255,.82); line-height: 1.75; white-space: pre-line; }
+.coffee-recommendations__answer p:last-child { margin-bottom: 0; }
+.coffee-recommendation-grid { grid-column: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-self: stretch; padding-left: clamp(0px, 5vw, 52px); border-left: 1px solid rgba(255,255,255,.28); }
+.coffee-recommendation-card { min-width: 0; display: flex; flex-direction: column; color: var(--ink); background: var(--paper); border: 1px solid rgba(255,255,255,.18); }
+.coffee-recommendation-card__image { width: 100%; aspect-ratio: 1.42; object-fit: cover; }
+.coffee-recommendation-card__content { min-height: 100%; padding: 17px; display: flex; flex: 1; flex-direction: column; }
+.coffee-recommendation-card__category { margin: 0 0 9px; color: var(--rust); font-size: .61rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.coffee-recommendation-card h3 { margin: 0; font-family: var(--serif); font-size: clamp(1.42rem, 2vw, 2rem); font-weight: 400; letter-spacing: -.04em; line-height: .96; }
+.coffee-recommendation-card__price { margin: 12px 0 0; color: var(--rust); font-size: 1.05rem; }
+.coffee-recommendation-card__description { margin: 12px 0 18px; color: rgba(29,27,23,.72); font-size: .87rem; line-height: 1.55; }
+.coffee-recommendation-card__button { width: 100%; margin-top: auto; padding: 11px 12px; font-size: .62rem; }
+.coffee-agency { position: fixed; z-index: 100; right: 24px; bottom: 24px; display: flex; flex-direction: column; align-items: flex-end; gap: 13px; }
+.coffee-agency__launcher { max-width: min(315px, calc(100vw - 48px)); min-height: 52px; padding: 13px 19px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; color: white; background: var(--espresso); border: 1px solid rgba(255,255,255,.35); box-shadow: 0 14px 32px rgba(22, 12, 8, .26); font-size: .68rem; font-weight: 700; letter-spacing: .11em; line-height: 1.25; text-transform: uppercase; }
+.coffee-agency__launcher:hover { color: var(--espresso); background: var(--cream); transform: translateY(-2px); }
+.coffee-agency__launcher--guest { position: fixed; z-index: 100; right: 24px; bottom: 24px; }
+.coffee-agency__panel { width: min(390px, calc(100vw - 32px)); overflow: hidden; color: var(--ink); background: var(--paper); border: 1px solid rgba(29,27,23,.18); box-shadow: 0 24px 70px rgba(18,11,9,.28); }
+.coffee-agency__header { padding: 20px 22px; display: flex; align-items: start; justify-content: space-between; gap: 18px; color: white; background: var(--espresso); }
+.coffee-agency__header p { margin: 0 0 6px; color: #f1d4bd; font-size: .6rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.coffee-agency__header h2 { margin: 0; font-family: var(--serif); font-size: 1.75rem; font-weight: 400; }
+.coffee-agency__close { width: 32px; height: 32px; padding: 0; color: white; background: transparent; border: 1px solid rgba(255,255,255,.45); border-radius: 50%; font-size: 1.35rem; line-height: 1; }
+.coffee-agency__messages { max-height: min(48vh, 390px); min-height: 215px; padding: 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+.coffee-agency__intro, .coffee-agency__message { max-width: 88%; margin: 0; padding: 12px 14px; line-height: 1.55; white-space: pre-line; }
+.coffee-agency__intro, .coffee-agency__message--assistant { align-self: flex-start; background: var(--cream); }
+.coffee-agency__message--user { align-self: flex-end; color: white; background: var(--coffee); }
+.coffee-agency__form { padding: 16px; display: grid; grid-template-columns: 1fr auto; gap: 10px; border-top: 1px solid var(--line); }
+.coffee-agency__form textarea { min-height: 48px; padding: 12px; resize: vertical; color: var(--ink); background: white; border: 1px solid rgba(29,27,23,.28); border-radius: 0; font: inherit; line-height: 1.4; }
+.coffee-agency__form textarea:focus { outline: 0; border-color: var(--coffee); box-shadow: 0 0 0 3px rgba(92,57,43,.12); }
+.coffee-agency__form .button { min-height: 48px; padding-inline: 15px; }
+.coffee-agency [hidden], .coffee-recommendation-grid[hidden] { display: none !important; }
+@media (max-width: 1000px) { .coffee-recommendations { grid-template-columns: 1fr; gap: 24px; } .coffee-recommendation-grid { grid-column: 1; padding-left: 0; border-left: 0; } }
+@media (max-width: 600px) { .coffee-recommendation-grid { grid-template-columns: 1fr; } .coffee-agency__panel { width: calc(100vw - 32px); max-height: 75vh; } }
