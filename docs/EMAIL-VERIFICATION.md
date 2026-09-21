@@ -4,7 +4,7 @@
 
 Based on `main` commit `00204e1`, selectively ported from `codex/integrate-main-email-ai` (`134a8d9`).
 
-本分支仅迁入邮箱验证及其测试，不合入 AI、Ollama、推荐栏目、聊天窗口、Docker/Apache 配置或数据库迁移。保留 main 的个人账户导航、商品、订单、商家审核与原有页面样式。
+本分支仅迁入邮箱验证及其测试，不合入 AI、Ollama、推荐栏目、聊天窗口或数据库迁移。保留 main 的个人账户导航、商品、订单、商家审核与原有页面样式。为后续迷你主机部署补充了仅含 web/db 的 Docker 配置，不修改主机 Apache。
 
 ## Flow / 实现流程
 
@@ -47,6 +47,25 @@ dotnet run --project CampusCoffeeSystem.Tests/CampusCoffeeSystem.Tests.csproj
 集成测试需要 Windows SQL Server LocalDB 中名为 `CampusCoffeeIntegration` 的实例。测试创建唯一命名的临时数据库，执行 main 的迁移，并在 finally 中核对数据库名称后清理。邮件发送使用替身，不连接 Gmail，不触碰网站数据库。
 
 覆盖注册、密码哈希、HTML 编码、未验证登录拦截、无效/跨账户/过期令牌、真实确认页面处理、验证后登录 Cookie、角色限制、商家审核限制、SMTP 失败以及邮件重发。未验证真实 SMTP 投递或生产反向代理。
+
+## Existing mini PC deployment / 更新现有迷你主机
+
+本配置用于已经运行 CampusCoffeeSystem 且数据库完成迁移的主机；不会自动创建或清空数据库。保留旧 `.env`、Apache 站点设置和名为 `159333_group8_sqlserver-data` 的数据库卷。部署前应按现有备份流程备份数据库。不要执行 `docker compose down -v`，也不要用 `.env.example` 覆盖已有凭据。
+
+```sh
+cd ~/159333_Group8
+git status --short
+git fetch origin
+git switch codex/integrate-main-email-ai
+git pull --ff-only origin codex/integrate-main-email-ai
+docker compose config --quiet
+docker compose up -d --build web
+docker compose ps
+docker compose logs --tail=80 web
+curl -I http://127.0.0.1:8080/Home/Portal
+```
+
+逐条执行，任何步骤报错应先处理，不要强制丢弃服务器本地修改。如果已有容器使用不同的 Compose project 名称，应先确认卷的实际名称再启动，避免连接到新空卷。HTTP 上游仅绑定 127.0.0.1，不直接向公网开放；公网继续通过 Apache 的 HTTPS 访问。本版本不启动 AI 容器，旧 AI 容器可能仍在运行，可以在确认名称后单独停止，但不需删除模型卷。当前配置不自动信任代理转发的客户端 IP，邮箱发送限流可能由代理后的所有用户共享。
 
 ## English explanation
 

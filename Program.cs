@@ -81,7 +81,9 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// Apache terminates HTTPS on the mini PC; its Docker upstream is loopback HTTP.
+if (!app.Configuration.GetValue<bool>("DisableHttpsRedirection"))
+    app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
