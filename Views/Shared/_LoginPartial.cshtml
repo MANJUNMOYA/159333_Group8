@@ -22,7 +22,7 @@
             }
             else if (User.IsInRole(PlatformRoles.Customer))
             {
-                <a class="nav-link account-link" asp-area="" asp-controller="Home" asp-action="CustomerDashboard" title="Customer dashboard">My Account</a>
+                <a class="nav-link account-link" asp-area="" asp-controller="Home" asp-action="Profile" title="Customer profile">@User.Identity?.Name</a>
             }
             else
             {
