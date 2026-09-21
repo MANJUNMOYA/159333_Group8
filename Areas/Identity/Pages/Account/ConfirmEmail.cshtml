@@ -1,0 +1,34 @@
+@page
+@model ConfirmEmailModel
+@{
+    ViewData["Title"] = Model.Succeeded ? "Email confirmed" : "Email confirmation";
+}
+
+<section class="our-story-hero portal-surface" aria-labelledby="email-confirmed-title">
+    <div class="site-shell">
+        <header class="reveal">
+            <p class="eyebrow eyebrow--light">Email confirmation</p>
+            <h1 id="email-confirmed-title">@(Model.Succeeded ? "You are all set" : "Let's confirm your email")</h1>
+            <p>@(Model.Succeeded ? "Your email is confirmed. Merchant access still requires approval." : "Please check your confirmation link or request a new one.")</p>
+        </header>
+
+    </div>
+</section>
+<section class="menu-catalog portal-surface">
+    <div class="site-shell">
+        <div class="row justify-content-center">
+        <div class="col-lg-9 col-xl-7 reveal">
+            <div class="product-card auth-card">
+                <div class="product-card__body auth-card__body auth-message">
+                    <p class="auth-status @(Model.Succeeded ? "" : "is-error")">@Model.StatusMessage</p>
+                    <a class="button product-card__button" asp-area="" asp-controller="Home" asp-action="Portal">Sign in</a>
+                    @if (!Model.Succeeded)
+                    {
+                        <partial name="_ResendConfirmation" />
+                    }
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+</section>

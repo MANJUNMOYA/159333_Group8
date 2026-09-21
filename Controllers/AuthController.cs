@@ -4,6 +4,8 @@ using CampusCoffeeSystem.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using CampusCoffeeSystem.Services;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace CampusCoffeeSystem.Controllers;
 
@@ -12,7 +14,9 @@ namespace CampusCoffeeSystem.Controllers;
 public class AuthController(
     UserManager<IdentityUser> userManager,
     SignInManager<IdentityUser> signInManager,
-    ApplicationDbContext context) : ControllerBase
+    ApplicationDbContext context,
+    EmailConfirmationService confirmationService,
+    IConfiguration configuration) : ControllerBase
 {
     [HttpPost("login")]
     [ValidateAntiForgeryToken]
@@ -56,7 +60,18 @@ public class AuthController(
             return StatusCode(StatusCodes.Status403Forbidden, new { message = $"This account does not have {role} access." });
         }
 
-        await signInManager.SignInAsync(user, isPersistent: false);
+        // SignInAsync alone bypasses Identity's confirmation and lockout checks.
+        var signInResult = await signInManager.PasswordSignInAsync(
+            user, request.Password, isPersistent: false, lockoutOnFailure: true);
+        if (!signInResult.Succeeded)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                message = signInResult.IsNotAllowed
+                    ? "Please confirm your email address before signing in. You can request a new confirmation email below."
+                    : "Sign in is temporarily unavailable for this account. Please try again later."
+            });
+        }
         var redirectUrl = role switch
         {
             PlatformRoles.Administrator => Url.Action("AdministratorDashboard", "Home"),
@@ -69,6 +84,7 @@ public class AuthController(
 
     [HttpPost("customers")]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("email")]
     public async Task<IActionResult> RegisterCustomer(CustomerRegistrationRequest request)
     {
         var email = request.Email.Trim().ToLowerInvariant();
@@ -82,7 +98,7 @@ public class AuthController(
             UserName = email,
             Email = email,
             PhoneNumber = request.Phone.Trim(),
-            EmailConfirmed = true
+            EmailConfirmed = false
         };
 
         var result = await userManager.CreateAsync(user, request.Password);
@@ -99,11 +115,12 @@ public class AuthController(
             new Claim("display_name", $"{request.FirstName.Trim()} {request.LastName.Trim()}")
         ]);
 
-        return Ok(new { message = "Your customer account has been created." });
+        return await RegistrationResultAsync(user, request.FirstName.Trim());
     }
 
     [HttpPost("merchants")]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("email")]
     public async Task<IActionResult> RegisterMerchant(MerchantRegistrationRequest request)
     {
         var email = request.Email.Trim().ToLowerInvariant();
@@ -116,7 +133,7 @@ public class AuthController(
         {
             UserName = email,
             Email = email,
-            EmailConfirmed = true
+            EmailConfirmed = false
         };
 
         var result = await userManager.CreateAsync(user, request.Password);
@@ -160,7 +177,43 @@ public class AuthController(
         }
 
         await context.SaveChangesAsync();
-        return Ok(new { message = "Your merchant account and application have been created." });
+        return await RegistrationResultAsync(user, request.ContactName.Trim(), merchant: true);
+    }
+
+    [HttpPost("resend-confirmation")]
+    [ValidateAntiForgeryToken]
+    [EnableRateLimiting("email")]
+    public async Task<IActionResult> ResendConfirmation(ResendConfirmationRequest request)
+    {
+        var user = await userManager.FindByEmailAsync(request.Email.Trim().ToLowerInvariant());
+        if (user is not null && !await userManager.IsEmailConfirmedAsync(user))
+        {
+            await confirmationService.TrySendAsync(user, "Campus Coffee member", ConfirmationPageUrl());
+        }
+        // Do not reveal whether an account exists.
+        return Ok(new { message = "If this address has an unconfirmed account, a confirmation email has been requested. Please check your inbox and spam folder." });
+    }
+
+    private string ConfirmationPageUrl()
+    {
+        var publicUrl = configuration["PublicBaseUrl"];
+        return string.IsNullOrWhiteSpace(publicUrl)
+            ? Url.Page("/Account/ConfirmEmail", null, new { area = "Identity" }, Request.Scheme)!
+            : new Uri(new Uri(publicUrl.TrimEnd('/') + "/"), "Identity/Account/ConfirmEmail").AbsoluteUri;
+    }
+
+    private async Task<IActionResult> RegistrationResultAsync(IdentityUser user, string name, bool merchant = false)
+    {
+        var sent = await confirmationService.TrySendAsync(user, name, ConfirmationPageUrl());
+        return Ok(new
+        {
+            requiresEmailConfirmation = true,
+            emailSent = sent,
+            message = sent
+                ? "Your account has been created. Please check your inbox to confirm your email address."
+                : "Your account was created, but the confirmation email could not be sent. Please use Resend confirmation email to try again.",
+            redirectUrl = Url.Action("CustomerRegisterConfirmation", "Home", new { email = user.Email, sent, merchant })
+        });
     }
 
     [HttpPost("merchant-applications")]

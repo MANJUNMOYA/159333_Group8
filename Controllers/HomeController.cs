@@ -73,6 +73,14 @@ namespace CampusCoffeeSystem.Controllers
             return View();
         }
 
+        public IActionResult CustomerRegisterConfirmation(string? email, bool sent = true, bool merchant = false)
+        {
+            ViewData["Email"] = email;
+            ViewData["EmailSent"] = sent;
+            ViewData["IsMerchant"] = merchant;
+            return View();
+        }
+
         public IActionResult MerchantLogin()
         {
             return View();
