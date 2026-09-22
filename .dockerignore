@@ -1,0 +1,14 @@
+.git
+.vs
+**/bin
+**/obj
+tmp
+.env
+.env.*
+**/*.user
+**/*.pfx
+**/*.pem
+**/*.key
+**/*.log
+CampusCoffeeSystem.Tests
+docs

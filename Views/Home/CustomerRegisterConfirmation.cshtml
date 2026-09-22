@@ -1,0 +1,41 @@
+@{
+    ViewData["Title"] = "Welcome to Campus Coffee";
+    var email = ViewData["Email"] as string;
+}
+
+<section class="our-story-hero portal-surface" aria-labelledby="registration-confirmation-title">
+    <div class="site-shell reveal">
+        <p class="eyebrow eyebrow--light">Welcome to Campus Coffee</p>
+        <h1 id="registration-confirmation-title">Thank you for joining us</h1>
+        <p class="our-story-hero__subtitle">Your account is almost ready.</p>
+    </div>
+</section>
+
+<section class="menu-catalog portal-surface">
+    <div class="site-shell">
+        <div class="row justify-content-center">
+            <div class="col-lg-9 col-xl-7">
+                <div class="product-card auth-card reveal">
+                    <div class="product-card__body auth-message">
+                        @if (ViewData["EmailSent"] is true)
+                        {
+                            <p class="auth-status">We have sent a confirmation link to <strong>@email</strong>. Please check your inbox and spam folder, confirm your email address, and then return to sign in. The link expires after 24 hours.</p>
+                        }
+                        else
+                        {
+                            <p class="auth-status is-error">Your account was saved, but the email could not be sent. Please request another confirmation email below. You do not need to register again.</p>
+                        }
+                        <p>We are delighted to welcome you to the Campus Coffee &amp; Catering community. We look forward to serving you.</p>
+                        @if (ViewData["IsMerchant"] is true)
+                        {
+                            <p>Merchant access also requires an approved application.</p>
+                            <a class="button product-card__button" asp-controller="Home" asp-action="MerchantApplication">Complete merchant application</a>
+                        }
+                        <a class="button product-card__button" asp-controller="Home" asp-action="Portal">Continue to sign in</a>
+                        <partial name="_ResendConfirmation" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
