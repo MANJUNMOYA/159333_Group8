@@ -1,0 +1,12 @@
+<details class="mt-4">
+    <summary class="text-link">Resend confirmation email</summary>
+    <form class="mt-3" data-resend-confirmation>
+        @Html.AntiForgeryToken()
+        <label class="form-label">
+            Email address
+            <input class="form-control form-control-lg rounded-0" name="email" type="email" autocomplete="email" required />
+        </label>
+        <button class="button product-card__button" type="submit">Send confirmation link</button>
+        <p class="auth-status mt-3" data-auth-status aria-live="polite" hidden></p>
+    </form>
+</details>

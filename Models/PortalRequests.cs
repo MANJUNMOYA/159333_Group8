@@ -2,6 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CampusCoffeeSystem.Models;
 
+public class ResendConfirmationRequest
+{
+    [Required, EmailAddress]
+    public string Email { get; set; } = string.Empty;
+}
+
 public class LoginRequest
 {
     [Required]
