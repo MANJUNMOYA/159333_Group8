@@ -24,8 +24,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging.Abstractions;
 
-// Email-only integration checks. No real email is sent.
+// Email verification and notification integration checks. No real email is sent.
 // Every execution owns a newly generated database; cleanup never targets application data.
 var databaseName = "CampusCoffeeIntegration_" + Guid.NewGuid().ToString("N");
 var connection = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder
@@ -54,6 +55,14 @@ services.AddDefaultIdentity<IdentityUser>(options =>
 services.Configure<DataProtectionTokenProviderOptions>(options => options.TokenLifespan = TimeSpan.FromHours(24));
 services.AddSingleton<IEmailSender>(mail);
 services.AddScoped<EmailConfirmationService>();
+services.Configure<SmtpOptions>(options => { });
+services.AddSingleton(Options.Create(new SmtpOptions
+{
+    Host = "smtp.example.test", Username = "sender@example.test", Password = "test-only",
+    FromEmail = "sender@example.test"
+}));
+services.Configure<NotificationOptions>(options => { });
+services.AddScoped<NotificationService>();
 await using var provider = services.BuildServiceProvider();
 await using var scope = provider.CreateAsyncScope();
 var sp = scope.ServiceProvider;
@@ -73,12 +82,23 @@ DefaultHttpContext NewRequest()
 AuthController Auth()
 {
     var http = NewRequest();
-    return new AuthController(users, signIn, db, sp.GetRequiredService<EmailConfirmationService>(), config)
+    return new AuthController(users, signIn, db, sp.GetRequiredService<EmailConfirmationService>(), config,
+        sp.GetRequiredService<NotificationService>())
     {
         ControllerContext = new ControllerContext { HttpContext = http },
         Url = new TestUrlHelper()
     };
 }
+OrdersController Orders(NotificationService? notifications = null) => new(db,
+    notifications ?? sp.GetRequiredService<NotificationService>())
+{
+    ControllerContext = new ControllerContext { HttpContext = NewRequest() }, Url = new TestUrlHelper()
+};
+PlatformController Platform() => new(db, users, new TestEnvironment(), NullLogger<PlatformController>.Instance,
+    sp.GetRequiredService<NotificationService>())
+{
+    ControllerContext = new ControllerContext { HttpContext = NewRequest() }, Url = new TestUrlHelper()
+};
 void Check(bool condition, string label)
 {
     if (!condition) throw new Exception("FAILED: " + label);
@@ -158,6 +178,113 @@ try
     Check(!(await users.ConfirmEmailAsync(retry, DecodeToken(TokenFromLastEmail()))).Succeeded, "Expired confirmation rejected");
     expiryOptions.Value.TokenLifespan = TimeSpan.FromHours(24);
 
+    var notifications = sp.GetRequiredService<NotificationService>();
+    var product = await db.Products.FirstAsync(item => item.StockQuantity >= 5);
+    var beforeStock = product.StockQuantity;
+    PlaceOrderRequest OrderRequest() => new()
+    {
+        Name = "<script>Customer</script>", Email = "order@example.test", Phone = "021000002",
+        OrderMethod = "Delivery", AddressLine1 = "Private street", City = "Auckland", Postcode = "1010",
+        Items = [new PlaceOrderItemRequest { ProductId = product.Id, Quantity = 1 }]
+    };
+    var baselineMailCount = mail.Messages.Count;
+    mail.BeforeSend = async (_, subject, _) =>
+    {
+        if (!subject.Contains("Order cc_")) return;
+        await using var independentDb = new ApplicationDbContext(
+            new DbContextOptionsBuilder<ApplicationDbContext>().UseSqlServer(connection).Options);
+        Check(await independentDb.CustomerOrders.AnyAsync(item => item.Email == "order@example.test"),
+            "Order is committed and readable on a separate connection before notification");
+    };
+    var placed = (OkObjectResult)await Orders().PlaceOrder(OrderRequest());
+    mail.BeforeSend = null;
+    var placedResult = JsonSerializer.SerializeToElement(placed.Value);
+    var number = placedResult.GetProperty("orderNumber").GetString();
+    Check(placedResult.GetProperty("notificationStatus").GetString() == "sent"
+        && mail.Messages.Count == baselineMailCount + 1 && mail.LastRecipient == "order@example.test",
+        "Successful order sends exactly one notification to the checkout email");
+    Check(mail.LastBody.Contains(number!) && mail.LastBody.Contains(product.Name)
+        && mail.LastBody.Contains("NZ$") && mail.LastBody.Contains("Delivery")
+        && mail.LastBody.Contains("&lt;script&gt;") && !mail.LastBody.Contains("<script>")
+        && !mail.LastBody.Contains("Private street"), "Order mail includes receipt details and encodes text without exposing the address");
+    Check(product.StockQuantity == beforeStock - 1, "Order notification does not change stock handling");
+
+    baselineMailCount = mail.Messages.Count;
+    var invalidOrder = OrderRequest();
+    invalidOrder.OrderMethod = "Invalid";
+    Check(await Orders().PlaceOrder(invalidOrder) is BadRequestObjectResult
+        && mail.Messages.Count == baselineMailCount, "Rejected order sends no email");
+    mail.Fail = true;
+    var failedMailOrder = (OkObjectResult)await Orders().PlaceOrder(OrderRequest());
+    Check(JsonSerializer.SerializeToElement(failedMailOrder.Value).GetProperty("notificationStatus").GetString() == "failed"
+        && await db.CustomerOrders.CountAsync() == 2, "SMTP failure preserves a successful order and reports failed delivery");
+    mail.Fail = false;
+
+    var unavailable = new NotificationService(mail, Options.Create(new SmtpOptions()),
+        Options.Create(new NotificationOptions()), config, NullLogger<NotificationService>.Instance);
+    baselineMailCount = mail.Messages.Count;
+    var noMailOrder = (OkObjectResult)await Orders(unavailable).PlaceOrder(OrderRequest());
+    Check(JsonSerializer.SerializeToElement(noMailOrder.Value).GetProperty("notificationStatus").GetString() == "unavailable"
+        && mail.Messages.Count == baselineMailCount && await db.CustomerOrders.CountAsync() == 3,
+        "Missing SMTP skips notification while preserving checkout");
+    var disabled = new NotificationService(mail, sp.GetRequiredService<IOptions<SmtpOptions>>(),
+        Options.Create(new NotificationOptions { Enabled = false }), config, NullLogger<NotificationService>.Instance);
+    Check(await disabled.OrderConfirmedAsync(await db.CustomerOrders.FirstAsync()) == NotificationDelivery.Unavailable
+        && mail.Messages.Count == baselineMailCount, "Disabled notifications never call the mail sender");
+
+    var applicationRequest = new MerchantApplicationRequest
+    {
+        BusinessName = "<b>Test Cafe</b>", ContactName = "Merchant", Email = merchant.Email!,
+        Phone = "021000003", Address = "Private business address", Description = "PRIVATE_DESCRIPTION", Reason = "PRIVATE_REASON"
+    };
+    var draftId = await db.MerchantApplications.Where(item => item.UserId == merchant.Id).Select(item => item.Id).SingleAsync();
+    var submitted = (OkObjectResult)await Auth().SubmitMerchantApplication(applicationRequest);
+    var application = await db.MerchantApplications.SingleAsync(item => item.UserId == merchant.Id);
+    Check(application.Id == draftId && application.Status == MerchantApplicationStatuses.Pending,
+        "Submitting a merchant draft reuses the application and persists Pending");
+    Check(JsonSerializer.SerializeToElement(submitted.Value).GetProperty("notificationStatus").GetString() == "sent"
+        && mail.Messages.Count == baselineMailCount + 2
+        && mail.Messages[^2].Email == merchant.Email && mail.Messages[^1].Email == "sender@example.test",
+        "Application sends applicant acknowledgement and a review alert to the website mailbox");
+    Check(mail.LastBody.Contains("&lt;b&gt;") && !mail.LastBody.Contains("<b>Test Cafe</b>")
+        && !mail.LastBody.Contains("PRIVATE_DESCRIPTION") && !mail.LastBody.Contains("PRIVATE_REASON"),
+        "Review alert encodes business names and leaves private application details in the portal");
+    baselineMailCount = mail.Messages.Count;
+    await Auth().SubmitMerchantApplication(applicationRequest);
+    Check(mail.Messages.Count == baselineMailCount, "Updating an already pending application does not resend notifications");
+
+    var approved = (OkObjectResult)await Platform().UpdateMerchantApplication(application.Id,
+        new StatusUpdateRequest { Status = "Approved" });
+    Check(application.Status == MerchantApplicationStatuses.Approved
+        && await users.IsInRoleAsync(merchant, PlatformRoles.Merchant)
+        && JsonSerializer.SerializeToElement(approved.Value).GetProperty("notificationStatus").GetString() == "sent"
+        && mail.LastRecipient == merchant.Email && mail.LastBody.Contains("has been approved"),
+        "Approval persists role and status before sending the applicant welcome email");
+    baselineMailCount = mail.Messages.Count;
+    await Platform().UpdateMerchantApplication(application.Id, new StatusUpdateRequest { Status = "Approved" });
+    Check(mail.Messages.Count == baselineMailCount, "Repeated approval does not send a duplicate email");
+    Check(await Platform().UpdateMerchantApplication(application.Id, new StatusUpdateRequest { Status = "Invalid" })
+        is BadRequestObjectResult && mail.Messages.Count == baselineMailCount, "Invalid decision sends no notification");
+    mail.Fail = true;
+    var rejected = (OkObjectResult)await Platform().UpdateMerchantApplication(application.Id,
+        new StatusUpdateRequest { Status = "Rejected" });
+    Check(application.Status == MerchantApplicationStatuses.Rejected
+        && !await users.IsInRoleAsync(merchant, PlatformRoles.Merchant)
+        && JsonSerializer.SerializeToElement(rejected.Value).GetProperty("notificationStatus").GetString() == "failed",
+        "Email failure does not undo a saved review decision or role change");
+    mail.Fail = false;
+    Check(await notifications.MerchantDecisionAsync(application) == NotificationDelivery.Sent
+        && mail.LastBody.Contains("has not been approved"), "Rejection message is distinct from approval");
+
+    var customReview = new NotificationService(mail, sp.GetRequiredService<IOptions<SmtpOptions>>(),
+        Options.Create(new NotificationOptions { MerchantReviewEmail = "review@example.test" }), config,
+        NullLogger<NotificationService>.Instance);
+    await customReview.MerchantApplicationSubmittedAsync(application);
+    Check(mail.LastRecipient == "review@example.test", "Configured reviewer mailbox overrides sender mailbox");
+    mail.Timeout = true;
+    Check(await notifications.OrderConfirmedAsync(await db.CustomerOrders.FirstAsync()) == NotificationDelivery.Failed,
+        "Mail timeout is contained as a notification failure");
+    mail.Timeout = false;
     Console.WriteLine("All integration checks passed.");
 }
 finally
@@ -171,11 +298,16 @@ sealed class CapturingEmailSender : IEmailSender
 {
     public string LastBody = "", LastRecipient = "";
     public bool Fail;
-    public Task SendEmailAsync(string email, string subject, string htmlMessage)
+    public bool Timeout;
+    public List<(string Email, string Subject, string Body)> Messages { get; } = [];
+    public Func<string, string, string, Task>? BeforeSend;
+    public async Task SendEmailAsync(string email, string subject, string htmlMessage)
     {
         if (Fail) throw new SmtpException("Simulated delivery failure");
+        if (Timeout) throw new TaskCanceledException("Simulated timeout");
+        if (BeforeSend is not null) await BeforeSend(email, subject, htmlMessage);
         LastBody = htmlMessage; LastRecipient = email;
-        return Task.CompletedTask;
+        Messages.Add((email, subject, htmlMessage));
     }
 }
 sealed class TestUrlHelper : IUrlHelper

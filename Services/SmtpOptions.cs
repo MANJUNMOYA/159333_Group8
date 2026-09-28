@@ -11,4 +11,7 @@ public sealed class SmtpOptions
     public string Password { get; init; } = string.Empty;
     public string FromEmail { get; init; } = string.Empty;
     public string FromName { get; init; } = "Campus Coffee";
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(Host)
+        && !string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password)
+        && !string.IsNullOrWhiteSpace(FromEmail);
 }

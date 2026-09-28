@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using CampusCoffeeSystem.Data;
 using CampusCoffeeSystem.Models;
+using CampusCoffeeSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,7 +9,7 @@ namespace CampusCoffeeSystem.Controllers;
 
 [ApiController]
 [Route("api/orders")]
-public class OrdersController(ApplicationDbContext context) : ControllerBase
+public class OrdersController(ApplicationDbContext context, NotificationService notifications) : ControllerBase
 {
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -120,9 +121,12 @@ public class OrdersController(ApplicationDbContext context) : ControllerBase
         await context.SaveChangesAsync();
         await transaction.CommitAsync();
 
+        var delivery = await notifications.OrderConfirmedAsync(order);
+
         return Ok(new
         {
             orderNumber = order.OrderNumber,
+            notificationStatus = delivery.ToString().ToLowerInvariant(),
             redirectUrl = Url.Action("OrderConfirmation", "Home", new { orderNumber = order.OrderNumber })
         });
     }

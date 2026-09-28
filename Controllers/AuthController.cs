@@ -16,7 +16,8 @@ public class AuthController(
     SignInManager<IdentityUser> signInManager,
     ApplicationDbContext context,
     EmailConfirmationService confirmationService,
-    IConfiguration configuration) : ControllerBase
+    IConfiguration configuration,
+    NotificationService notifications) : ControllerBase
 {
     [HttpPost("login")]
     [ValidateAntiForgeryToken]
@@ -218,15 +219,18 @@ public class AuthController(
 
     [HttpPost("merchant-applications")]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("email")]
     public async Task<IActionResult> SubmitMerchantApplication(MerchantApplicationRequest request)
     {
         var email = request.Email.Trim().ToLowerInvariant();
         var user = await userManager.FindByEmailAsync(email);
         var application = await context.MerchantApplications
-            .Where(item => item.Email == email && item.Status == MerchantApplicationStatuses.Pending)
+            .Where(item => item.Email == email && (item.Status == MerchantApplicationStatuses.Pending
+                || item.Status == MerchantApplicationStatuses.Draft))
             .OrderByDescending(item => item.SubmittedAtUtc)
             .FirstOrDefaultAsync();
 
+        var wasPending = application?.Status == MerchantApplicationStatuses.Pending;
         if (application is null)
         {
             application = new MerchantApplication { Email = email };
@@ -245,7 +249,14 @@ public class AuthController(
         application.ReviewedAtUtc = null;
 
         await context.SaveChangesAsync();
-        return Ok(new { message = "Your application has been submitted and is awaiting administrator approval." });
+        var delivery = wasPending ? NotificationDelivery.Skipped
+            : await notifications.MerchantApplicationSubmittedAsync(application);
+        return Ok(new
+        {
+            message = ("Your application has been submitted and is awaiting administrator approval. "
+                + NotificationService.DeliveryMessage(delivery, "A confirmation email has been sent.")).Trim(),
+            notificationStatus = delivery.ToString().ToLowerInvariant()
+        });
     }
 
     [HttpPost("logout")]

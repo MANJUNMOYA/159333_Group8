@@ -12,10 +12,7 @@ public sealed class SmtpEmailSender(IOptions<SmtpOptions> options, ILogger<SmtpE
 
     public async Task SendEmailAsync(string email, string subject, string htmlMessage)
     {
-        if (string.IsNullOrWhiteSpace(_options.Host) ||
-            string.IsNullOrWhiteSpace(_options.Username) ||
-            string.IsNullOrWhiteSpace(_options.Password) ||
-            string.IsNullOrWhiteSpace(_options.FromEmail))
+        if (!_options.IsConfigured)
         {
             throw new InvalidOperationException(
                 "SMTP is not configured. Set Smtp__Host, Smtp__Username, Smtp__Password, and Smtp__FromEmail.");
@@ -36,7 +33,8 @@ public sealed class SmtpEmailSender(IOptions<SmtpOptions> options, ILogger<SmtpE
             Credentials = new NetworkCredential(_options.Username, _options.Password)
         };
 
-        await client.SendMailAsync(message);
-        _logger.LogInformation("Email confirmation message sent to {Email}", email);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        await client.SendMailAsync(message, timeout.Token);
+        _logger.LogInformation("Email accepted by SMTP server.");
     }
 }
