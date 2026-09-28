@@ -25,7 +25,7 @@ public sealed class EmailConfirmationService(
             return true;
         }
         catch (Exception exception) when (exception is System.Net.Mail.SmtpException
-            or InvalidOperationException or ArgumentException)
+            or InvalidOperationException or ArgumentException or OperationCanceledException)
         {
             // Keep the unconfirmed account so the user can retry delivery.
             logger.LogWarning("Confirmation delivery failed ({ErrorType}).", exception.GetType().Name);

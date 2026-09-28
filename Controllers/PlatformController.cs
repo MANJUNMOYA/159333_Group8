@@ -1,5 +1,6 @@
 using CampusCoffeeSystem.Data;
 using CampusCoffeeSystem.Models;
+using CampusCoffeeSystem.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +14,8 @@ public class PlatformController(
     ApplicationDbContext context,
     UserManager<IdentityUser> userManager,
     IWebHostEnvironment environment,
-    ILogger<PlatformController> logger) : ControllerBase
+    ILogger<PlatformController> logger,
+    NotificationService notifications) : ControllerBase
 {
     private const long MaximumProductImageBytes = 5 * 1024 * 1024;
     private const string DefaultProductImagePath = "/images/menu/Campus Flat White.jpg";
@@ -44,24 +46,37 @@ public class PlatformController(
             return BadRequest(new { message = "The applicant must create a merchant account before approval." });
         }
 
+        var statusChanged = application.Status != requestedStatus;
+        await using var transaction = await context.Database.BeginTransactionAsync();
         application.Status = requestedStatus;
         application.ReviewedAtUtc = DateTime.UtcNow;
         if (user is not null)
         {
             application.UserId = user.Id;
             var hasMerchantRole = await userManager.IsInRoleAsync(user, PlatformRoles.Merchant);
+            var roleResult = IdentityResult.Success;
             if (requestedStatus == MerchantApplicationStatuses.Approved && !hasMerchantRole)
             {
-                await userManager.AddToRoleAsync(user, PlatformRoles.Merchant);
+                roleResult = await userManager.AddToRoleAsync(user, PlatformRoles.Merchant);
             }
             else if (requestedStatus == MerchantApplicationStatuses.Rejected && hasMerchantRole)
             {
-                await userManager.RemoveFromRoleAsync(user, PlatformRoles.Merchant);
+                roleResult = await userManager.RemoveFromRoleAsync(user, PlatformRoles.Merchant);
             }
+            if (!roleResult.Succeeded)
+                return BadRequest(new { message = "The merchant role could not be updated. Please try again." });
         }
 
         await context.SaveChangesAsync();
-        return Ok(new { status = requestedStatus, message = $"{application.BusinessName} is now {requestedStatus.ToLowerInvariant()}." });
+        await transaction.CommitAsync();
+        var delivery = statusChanged ? await notifications.MerchantDecisionAsync(application) : NotificationDelivery.Skipped;
+        return Ok(new
+        {
+            status = requestedStatus,
+            message = ($"{application.BusinessName} is now {requestedStatus.ToLowerInvariant()}. "
+                + NotificationService.DeliveryMessage(delivery, "The applicant has been notified by email.")).Trim(),
+            notificationStatus = delivery.ToString().ToLowerInvariant()
+        });
     }
 
     [Authorize(Roles = PlatformRoles.Merchant)]

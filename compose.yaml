@@ -27,10 +27,12 @@ services:
       Smtp__Host: ${SMTP_HOST:-smtp.gmail.com}
       Smtp__Port: ${SMTP_PORT:-587}
       Smtp__EnableSsl: ${SMTP_ENABLE_SSL:-true}
-      Smtp__Username: ${SMTP_USERNAME:?Keep the sending address in .env}
-      Smtp__Password: ${SMTP_PASSWORD:?Keep the SMTP credential in .env}
-      Smtp__FromEmail: ${SMTP_FROM_EMAIL:?Keep the sender address in .env}
+      Smtp__Username: ${SMTP_USERNAME:-}
+      Smtp__Password: ${SMTP_PASSWORD:-}
+      Smtp__FromEmail: ${SMTP_FROM_EMAIL:-}
       Smtp__FromName: ${SMTP_FROM_NAME:-Campus Coffee}
+      Notifications__Enabled: ${NOTIFICATIONS_ENABLED:-true}
+      Notifications__MerchantReviewEmail: ${MERCHANT_REVIEW_EMAIL:-}
     depends_on:
       db:
         condition: service_started
