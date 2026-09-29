@@ -16,6 +16,14 @@ namespace CampusCoffeeSystem.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IWebHostEnvironment _environment;
         private const long MaximumProfileImageBytes = 5 * 1024 * 1024;
+        private static readonly IReadOnlyList<MenuRecommendationViewModel> MockMenuRecommendations =
+        [
+            new() { Rank = 1, ProductId = 1001, ProductName = "Caramel Latte", RecommendationReason = "Because you often choose milk-based coffee." },
+            new() { Rank = 2, ProductId = 1002, ProductName = "Mocha", RecommendationReason = "Based on your previous coffee choices." },
+            new() { Rank = 3, ProductId = 1003, ProductName = "Flat White", RecommendationReason = "Similar to drinks you have enjoyed before." },
+            new() { Rank = 4, ProductId = 1004, ProductName = "Cappuccino", RecommendationReason = "Matches your recent order preferences." },
+            new() { Rank = 5, ProductId = 1005, ProductName = "Iced Latte", RecommendationReason = "Recommended from your purchase history." }
+        ];
 
         public HomeController(
             ILogger<HomeController> logger,
@@ -44,7 +52,8 @@ namespace CampusCoffeeSystem.Controllers
             return View(new MenuViewModel
             {
                 Products = products,
-                Ratings = await GetProductRatingsAsync(products.Select(product => product.Id))
+                Ratings = await GetProductRatingsAsync(products.Select(product => product.Id)),
+                Recommendations = MockMenuRecommendations
             });
         }
 

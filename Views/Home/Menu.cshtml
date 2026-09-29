@@ -2,18 +2,43 @@
 @{
     ViewData["Title"] = "Menu";
     var categories = new[] { "coffee", "food" };
+    var showRecommendations = User.Identity?.IsAuthenticated == true
+        && User.IsInRole(PlatformRoles.Customer)
+        && !User.IsInRole(PlatformRoles.Merchant)
+        && !User.IsInRole(PlatformRoles.Administrator);
 }
 
-<section class="menu-hero page-hero--animated" data-video-hero aria-labelledby="menu-title">
+<section class="menu-hero page-hero--animated @(showRecommendations ? "menu-hero--personalised" : string.Empty)" data-video-hero aria-labelledby="menu-title">
     <video class="page-hero__video" data-hero-video autoplay muted loop playsinline preload="auto"
            poster="@Url.Content("~/images/home/coffee-hero-top-view.jpg")" aria-hidden="true" tabindex="-1">
         <source src="@Url.Content("~/videos/menuvideo.mp4")" type="video/mp4" />
     </video>
     <div class="menu-hero__shade page-hero__overlay"></div>
-    <div class="site-shell menu-hero__content page-hero__copy">
+    <div class="site-shell menu-hero__content page-hero__copy @(showRecommendations ? "menu-hero__content--personalised" : string.Empty)">
         <p class="eyebrow eyebrow--light">Made fresh on campus</p>
         <h1 id="menu-title">Find your<br />favourite.</h1>
         <p>Good coffee, honest food and something for every kind of campus day.</p>
+        @if (showRecommendations)
+        {
+            <aside class="menu-recommendations" aria-labelledby="recommendations-title">
+                <header class="menu-recommendations__heading">
+                    <h2 id="recommendations-title">Recommended for You</h2>
+                    <p>Picked for you based on your previous orders</p>
+                </header>
+                <ol class="menu-recommendations__list">
+                    @foreach (var recommendation in Model.Recommendations)
+                    {
+                        <li data-product-id="@recommendation.ProductId">
+                            <span class="menu-recommendations__rank">@recommendation.Rank.ToString("00")</span>
+                            <div>
+                                <h3>@recommendation.ProductName</h3>
+                                <p>@recommendation.RecommendationReason</p>
+                            </div>
+                        </li>
+                    }
+                </ol>
+            </aside>
+        }
     </div>
 </section>
 
