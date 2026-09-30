@@ -2,20 +2,54 @@
 @{
     ViewData["Title"] = "Menu";
     var categories = new[] { "coffee", "food" };
+    var showRecommendations = User.Identity?.IsAuthenticated == true
+        && User.IsInRole(PlatformRoles.Customer)
+        && !User.IsInRole(PlatformRoles.Merchant)
+        && !User.IsInRole(PlatformRoles.Administrator);
 }
 
-<section class="menu-hero page-hero--animated" data-video-hero aria-labelledby="menu-title">
+<section class="menu-hero page-hero--animated @(showRecommendations ? "menu-hero--personalised" : string.Empty)" data-video-hero aria-labelledby="menu-title">
     <video class="page-hero__video" data-hero-video autoplay muted loop playsinline preload="auto"
            poster="@Url.Content("~/images/home/coffee-hero-top-view.jpg")" aria-hidden="true" tabindex="-1">
         <source src="@Url.Content("~/videos/menuvideo.mp4")" type="video/mp4" />
     </video>
     <div class="menu-hero__shade page-hero__overlay"></div>
-    <div class="site-shell menu-hero__content page-hero__copy">
+    <div class="site-shell menu-hero__content page-hero__copy @(showRecommendations ? "menu-hero__content--personalised" : string.Empty)">
         <p class="eyebrow eyebrow--light">Made fresh on campus</p>
         <h1 id="menu-title">Find your<br />favourite.</h1>
         <p>Good coffee, honest food and something for every kind of campus day.</p>
+        @if (showRecommendations)
+        {
+            <aside class="menu-recommendations is-loading"
+                   aria-labelledby="recommendations-title"
+                   data-menu-recommendations
+                   data-endpoint="@Url.Content("~/api/menu-recommendations")">
+                @Html.AntiForgeryToken()
+                <header class="menu-recommendations__heading">
+                    <div class="menu-recommendations__title-row">
+                        <h2 id="recommendations-title">Recommended for You</h2>
+                        <span class="menu-recommendations__source"
+                              data-recommendations-source
+                              aria-live="polite"
+                              hidden></span>
+                    </div>
+                    <p data-recommendations-summary>Looking at your orders and the current menu</p>
+                </header>
+                <p class="menu-recommendations__status" data-recommendations-status role="status" aria-live="polite">
+                    Personalising your recommendations…
+                </p>
+                <ol class="menu-recommendations__list" data-recommendations-list hidden></ol>
+            </aside>
+        }
     </div>
 </section>
+
+@section Scripts {
+    @if (showRecommendations)
+    {
+        <script src="~/js/menu-recommendations.js" asp-append-version="true"></script>
+    }
+}
 
 <div class="promise-strip" aria-label="Menu highlights">
     <div class="promise-strip__track">

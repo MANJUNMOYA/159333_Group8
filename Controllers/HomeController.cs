@@ -16,7 +16,6 @@ namespace CampusCoffeeSystem.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IWebHostEnvironment _environment;
         private const long MaximumProfileImageBytes = 5 * 1024 * 1024;
-
         public HomeController(
             ILogger<HomeController> logger,
             ApplicationDbContext context,
