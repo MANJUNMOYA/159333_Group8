@@ -104,6 +104,21 @@ void Check(bool condition, string label)
     if (!condition) throw new Exception("FAILED: " + label);
     Console.WriteLine("PASS: " + label);
 }
+if (args.Contains("--recommendations-only", StringComparer.OrdinalIgnoreCase))
+{
+    try
+    {
+        await MenuRecommendationChecks.RunAsync(Check);
+        await MenuRecommendationApiChecks.RunAsync(Check);
+    }
+    catch (Exception exception)
+    {
+        Console.Error.WriteLine("Recommendation checks failed:");
+        Console.Error.WriteLine(exception);
+        Environment.ExitCode = 1;
+    }
+    return;
+}
 string TokenFromLastEmail()
 {
     var match = Regex.Match(WebUtility.HtmlDecode(mail.LastBody), "href=\"([^\"]+)\"");
@@ -285,6 +300,65 @@ try
     Check(await notifications.OrderConfirmedAsync(await db.CustomerOrders.FirstAsync()) == NotificationDelivery.Failed,
         "Mail timeout is contained as a notification failure");
     mail.Timeout = false;
+
+    var recommendationOrder = new CustomerOrder
+    {
+        OrderNumber = "recommendation-test-" + Guid.NewGuid().ToString("N"),
+        CustomerUserId = customer.Id,
+        CustomerName = "Private Recommendation Customer",
+        Email = customer.Email!,
+        Phone = "021999999",
+        OrderMethod = "Pickup",
+        SpecialNotes = "PRIVATE_ORDER_NOTE",
+        Status = OrderStatuses.Completed,
+        Subtotal = product.Price * 2,
+        Total = product.Price * 2,
+        PlacedAtUtc = DateTime.UtcNow.AddDays(-1),
+        Items =
+        [
+            new OrderItem
+            {
+                ProductId = product.Id,
+                ProductName = product.Name,
+                UnitPrice = product.Price,
+                Quantity = 2
+            }
+        ],
+        Review = new OrderReview
+        {
+            UserId = customer.Id,
+            CustomerDisplayName = "Private Recommendation Customer",
+            OverallRating = 5,
+            OverallComment = "PRIVATE_REVIEW_COMMENT",
+            Status = ReviewStatuses.Active,
+            ProductRatings =
+            [
+                new ProductReviewRating { ProductId = product.Id, Rating = 5 }
+            ]
+        }
+    };
+    db.CustomerOrders.Add(recommendationOrder);
+    await db.SaveChangesAsync();
+
+    var recommendationContext = await new MenuRecommendationContextService(db)
+        .BuildAsync(customer.Id, customer.Email, CancellationToken.None);
+    Check(recommendationContext.PurchaseHistory.Any(item =>
+            item.ProductId == product.Id && item.TotalQuantity >= 2),
+        "Recommendation context aggregates the current customer's order quantities");
+    Check(recommendationContext.UserRatings.Any(item =>
+            item.ProductId == product.Id && item.AverageRating == 5),
+        "Recommendation context aggregates the current customer's numeric ratings");
+    Check(recommendationContext.Candidates.All(item =>
+            db.Products.Any(productItem =>
+                productItem.Id == item.ProductId && productItem.IsActive && productItem.StockQuantity > 0)),
+        "Recommendation candidates are active and in stock");
+    var serializedRecommendationContext = JsonSerializer.Serialize(recommendationContext);
+    Check(!serializedRecommendationContext.Contains(customer.Email!, StringComparison.OrdinalIgnoreCase)
+        && !serializedRecommendationContext.Contains("Private Recommendation Customer")
+        && !serializedRecommendationContext.Contains("PRIVATE_ORDER_NOTE")
+        && !serializedRecommendationContext.Contains("PRIVATE_REVIEW_COMMENT"),
+        "Recommendation model context excludes customer identity, notes and review comments");
+
     Console.WriteLine("All integration checks passed.");
 }
 finally
