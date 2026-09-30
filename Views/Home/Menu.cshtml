@@ -20,27 +20,36 @@
         <p>Good coffee, honest food and something for every kind of campus day.</p>
         @if (showRecommendations)
         {
-            <aside class="menu-recommendations" aria-labelledby="recommendations-title">
+            <aside class="menu-recommendations is-loading"
+                   aria-labelledby="recommendations-title"
+                   data-menu-recommendations
+                   data-endpoint="@Url.Content("~/api/menu-recommendations")">
+                @Html.AntiForgeryToken()
                 <header class="menu-recommendations__heading">
-                    <h2 id="recommendations-title">Recommended for You</h2>
-                    <p>Picked for you based on your previous orders</p>
+                    <div class="menu-recommendations__title-row">
+                        <h2 id="recommendations-title">Recommended for You</h2>
+                        <span class="menu-recommendations__source"
+                              data-recommendations-source
+                              aria-live="polite"
+                              hidden></span>
+                    </div>
+                    <p data-recommendations-summary>Looking at your orders and the current menu</p>
                 </header>
-                <ol class="menu-recommendations__list">
-                    @foreach (var recommendation in Model.Recommendations)
-                    {
-                        <li data-product-id="@recommendation.ProductId">
-                            <span class="menu-recommendations__rank">@recommendation.Rank.ToString("00")</span>
-                            <div>
-                                <h3>@recommendation.ProductName</h3>
-                                <p>@recommendation.RecommendationReason</p>
-                            </div>
-                        </li>
-                    }
-                </ol>
+                <p class="menu-recommendations__status" data-recommendations-status role="status" aria-live="polite">
+                    Personalising your recommendations…
+                </p>
+                <ol class="menu-recommendations__list" data-recommendations-list hidden></ol>
             </aside>
         }
     </div>
 </section>
+
+@section Scripts {
+    @if (showRecommendations)
+    {
+        <script src="~/js/menu-recommendations.js" asp-append-version="true"></script>
+    }
+}
 
 <div class="promise-strip" aria-label="Menu highlights">
     <div class="promise-strip__track">

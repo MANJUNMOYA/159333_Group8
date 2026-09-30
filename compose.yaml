@@ -33,6 +33,9 @@ services:
       Smtp__FromName: ${SMTP_FROM_NAME:-Campus Coffee}
       Notifications__Enabled: ${NOTIFICATIONS_ENABLED:-true}
       Notifications__MerchantReviewEmail: ${MERCHANT_REVIEW_EMAIL:-}
+      Gemini__Enabled: ${GEMINI_ENABLED:-false}
+      Gemini__ApiKey: ${GEMINI_API_KEY:-}
+      Gemini__Model: ${GEMINI_MODEL:-gemini-3.1-flash-lite}
     depends_on:
       db:
         condition: service_started

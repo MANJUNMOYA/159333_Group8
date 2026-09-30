@@ -8,20 +8,11 @@ public sealed class ProductRatingSummary
     public int ReviewCount { get; init; }
 }
 
-public sealed class MenuRecommendationViewModel
-{
-    public int Rank { get; init; }
-    public int ProductId { get; init; }
-    public string ProductName { get; init; } = string.Empty;
-    public string RecommendationReason { get; init; } = string.Empty;
-}
-
 public sealed class MenuViewModel
 {
     public IReadOnlyList<Product> Products { get; init; } = [];
     public IReadOnlyDictionary<int, ProductRatingSummary> Ratings { get; init; } =
         new Dictionary<int, ProductRatingSummary>();
-    public IReadOnlyList<MenuRecommendationViewModel> Recommendations { get; init; } = [];
 }
 
 public sealed class ProductDetailsViewModel
