@@ -21,6 +21,10 @@ builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<EmailConfirmationService>();
 builder.Services.Configure<NotificationOptions>(builder.Configuration.GetSection(NotificationOptions.SectionName));
 builder.Services.AddScoped<NotificationService>();
+builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection(GeminiOptions.SectionName));
+builder.Services.AddHttpClient<IGeminiRecommendationClient, GeminiRecommendationClient>();
+builder.Services.AddScoped<IMenuRecommendationContextService, MenuRecommendationContextService>();
+builder.Services.AddScoped<IMenuRecommendationService, MenuRecommendationService>();
 // A persistent directory keeps confirmation links valid across application restarts.
 var keysPath = builder.Configuration["DataProtection:KeysPath"];
 if (!string.IsNullOrWhiteSpace(keysPath))
@@ -55,6 +59,12 @@ builder.Services.AddRateLimiter(options =>
         _ => new FixedWindowRateLimiterOptions
         {
             PermitLimit = 5, Window = TimeSpan.FromMinutes(10), QueueLimit = 0
+        }));
+    options.AddPolicy("recommendations", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0
         }));
 });
 builder.Services.AddAuthorization(options =>
