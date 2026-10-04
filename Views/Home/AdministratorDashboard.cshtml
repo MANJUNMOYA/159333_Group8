@@ -30,6 +30,8 @@
         new { Label = "Completed", Count = completedOrders },
         new { Label = "Cancelled", Count = Model.Orders.Count(item => item.Status == OrderStatuses.Cancelled) }
     };
+    string ProductCategoryLabel(string category) =>
+        string.Equals(category, "coffee", StringComparison.OrdinalIgnoreCase) ? "Coffee" : "Food";
     var largestStatusCount = Math.Max(1, orderStatusCounts.Max(item => item.Count));
     var activityItems = Model.Orders
         .Select(order => new
@@ -243,7 +245,7 @@
                         var imagePath = string.IsNullOrWhiteSpace(product.ImagePath) ? "~/images/home/coffee-hero-top-view.jpg" : product.ImagePath;
                         <article class="administrator-product-card administrator-reveal" data-admin-search-item data-product-row data-product-id="@product.Id" data-product-name="@product.Name">
                             <img src="@Url.Content(imagePath)" alt="@product.Name" />
-                            <div><span class="administrator-badge administrator-badge--@(product.IsActive ? "active" : "inactive")" data-product-status>@(product.IsActive ? "Active" : "Disabled")</span><h3>@product.Name</h3><p>@product.DisplayCategory · @CurrencyFormatter.NzDollars(product.Price) · @product.StockQuantity in stock</p><div class="administrator-product-actions"><button type="button" data-product-toggle>@(product.IsActive ? "Disable" : "Enable")</button></div></div>
+                            <div><span class="administrator-badge administrator-badge--@(product.IsActive ? "active" : "inactive")" data-product-status>@(product.IsActive ? "Active" : "Disabled")</span><h3>@product.Name</h3><p>@ProductCategoryLabel(product.Category) · @CurrencyFormatter.NzDollars(product.Price) · @product.StockQuantity in stock</p><div class="administrator-product-actions"><button type="button" data-product-toggle>@(product.IsActive ? "Disable" : "Enable")</button></div></div>
                         </article>
                     }
                 </div>
