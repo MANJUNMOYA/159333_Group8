@@ -537,7 +537,16 @@
         <section class="merchant-panel" id="merchant-catering" data-dashboard-panel="catering" aria-labelledby="catering-requests-title" hidden>
             <div class="merchant-section-heading"><div><p class="merchant-kicker">Gatherings</p><h2 id="catering-requests-title">Catering requests.</h2></div><p>Thoughtful service for the next campus occasion.</p></div>
             <div class="merchant-content-card">
-                <div class="table-responsive"><table class="merchant-table"><thead><tr><th>Event</th><th>Date</th><th>Guests</th><th>Status</th><th>Actions</th></tr></thead><tbody><tr><td colspan="5">No catering request table exists in the current database, so there are no requests to display.</td></tr></tbody></table></div>
+                <div class="table-responsive"><table class="merchant-table"><thead><tr><th>Event</th><th>Date</th><th>Guests</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+                    @if (Model.CateringRequests.Count == 0)
+                    {
+                        <tr><td colspan="5">No catering requests have been submitted yet.</td></tr>
+                    }
+                    else
+                    {
+                        <partial name="_CateringRequestRows" model="Model.CateringRequests" />
+                    }
+                </tbody></table></div>
             </div>
         </section>
 
@@ -699,4 +708,5 @@
 
 @section Scripts {
     <script src="~/js/merchant-dashboard.js" asp-append-version="true"></script>
+    <script src="~/js/catering-requests.js" asp-append-version="true"></script>
 }

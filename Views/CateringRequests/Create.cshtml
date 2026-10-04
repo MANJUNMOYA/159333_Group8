@@ -1,0 +1,85 @@
+@model CampusCoffeeSystem.Models.CreateCateringRequestViewModel
+@{
+    ViewData["Title"] = "Catering Request";
+}
+
+<section class="our-story-hero portal-surface" aria-labelledby="catering-request-title">
+    <div class="site-shell reveal">
+        <a class="text-link text-link--light mb-5" asp-controller="Home" asp-action="Catering"><span aria-hidden="true">←</span> Back to Catering</a>
+        <p class="eyebrow eyebrow--light">Plan your occasion</p>
+        <h1 id="catering-request-title">Request catering.</h1>
+        <p class="our-story-hero__subtitle">Tell us about your event and our team will review your request.</p>
+    </div>
+</section>
+
+<section class="section section--cream" aria-labelledby="catering-form-title">
+    <div class="site-shell">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="product-card reveal">
+                    <div class="product-card__body">
+                        <div class="product-card__heading mb-4"><h2 id="catering-form-title">Your event details</h2></div>
+                        @if (TempData["CateringMessage"] is string message)
+                        {
+                            <p class="alert alert-success" role="status">@message</p>
+                        }
+                        <p>Submitting as <strong>@Model.CustomerDisplayName</strong> · @Model.CustomerEmail</p>
+                        <form asp-controller="CateringRequests" asp-action="Create" method="post">
+                            <div class="validation-summary text-danger" asp-validation-summary="All" role="alert"></div>
+                            <div class="mb-4">
+                                <label class="form-label cart-item__label" asp-for="EventName"></label>
+                                <input class="form-control form-control-lg rounded-0" asp-for="EventName" maxlength="160" required />
+                                <span class="text-danger" asp-validation-for="EventName"></span>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label cart-item__label" asp-for="EventDate"></label>
+                                    <input class="form-control form-control-lg rounded-0" asp-for="EventDate" type="date" asp-format="{0:yyyy-MM-dd}" required />
+                                    <span class="text-danger" asp-validation-for="EventDate"></span>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label cart-item__label" asp-for="EventTime"></label>
+                                    <input class="form-control form-control-lg rounded-0" asp-for="EventTime" type="time" asp-format="{0:HH:mm}" required />
+                                    <span class="text-danger" asp-validation-for="EventTime"></span>
+                                </div>
+                            </div>
+                            <p class="mb-4">Use the local date and time at your event location.</p>
+                            <div class="mb-4">
+                                <label class="form-label cart-item__label" asp-for="Location"></label>
+                                <input class="form-control form-control-lg rounded-0" asp-for="Location" maxlength="240" required />
+                                <span class="text-danger" asp-validation-for="Location"></span>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label cart-item__label" asp-for="NumberOfGuests"></label>
+                                    <input class="form-control form-control-lg rounded-0" asp-for="NumberOfGuests" type="number" min="1" max="10000" required />
+                                    <span class="text-danger" asp-validation-for="NumberOfGuests"></span>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label cart-item__label" asp-for="Budget"></label>
+                                    <input class="form-control form-control-lg rounded-0" asp-for="Budget" type="number" min="0" max="99999999.99" step="0.01" />
+                                    <span class="text-danger" asp-validation-for="Budget"></span>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label cart-item__label" asp-for="DietaryRequirements"></label>
+                                <textarea class="form-control form-control-lg rounded-0" asp-for="DietaryRequirements" rows="3" maxlength="2000"></textarea>
+                                <span class="text-danger" asp-validation-for="DietaryRequirements"></span>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label cart-item__label" asp-for="AdditionalRequirements"></label>
+                                <textarea class="form-control form-control-lg rounded-0" asp-for="AdditionalRequirements" rows="4" maxlength="2000"></textarea>
+                                <span class="text-danger" asp-validation-for="AdditionalRequirements"></span>
+                            </div>
+                            <button class="button product-card__button w-100" type="submit">Submit Catering Request</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

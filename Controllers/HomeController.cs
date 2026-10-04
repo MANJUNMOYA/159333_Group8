@@ -378,6 +378,7 @@ namespace CampusCoffeeSystem.Controllers
                 DisplayName = User.FindFirstValue("display_name") ?? user.Email ?? "Merchant",
                 Email = user.Email ?? string.Empty,
                 Products = await _context.Products.AsNoTracking().OrderBy(product => product.SortOrder).ToListAsync(),
+                CateringRequests = await _context.CateringRequests.AsNoTracking().OrderByDescending(request => request.SubmittedAtUtc).ToListAsync(),
                 Orders = orders,
                 RevenuePeriod = selectedRevenuePeriod,
                 RevenueOrders = await _context.CustomerOrders

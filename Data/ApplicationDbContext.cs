@@ -18,6 +18,7 @@ namespace CampusCoffeeSystem.Data
         public DbSet<OrderReview> OrderReviews => Set<OrderReview>();
         public DbSet<ProductReviewRating> ProductReviewRatings => Set<ProductReviewRating>();
         public DbSet<CustomerProfile> CustomerProfiles => Set<CustomerProfile>();
+        public DbSet<CateringRequest> CateringRequests => Set<CateringRequest>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -90,6 +91,21 @@ namespace CampusCoffeeSystem.Data
                     .WithMany()
                     .HasForeignKey(item => item.ProductId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<CateringRequest>(request =>
+            {
+                request.HasIndex(item => new { item.Status, item.SubmittedAtUtc });
+                request.HasOne(item => item.CustomerUser)
+                    .WithMany()
+                    .HasForeignKey(item => item.CustomerUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                request.ToTable(table =>
+                {
+                    table.HasCheckConstraint("CK_CateringRequests_NumberOfGuests", "[NumberOfGuests] >= 1 AND [NumberOfGuests] <= 10000");
+                    table.HasCheckConstraint("CK_CateringRequests_Budget", "[Budget] IS NULL OR [Budget] >= 0");
+                    table.HasCheckConstraint("CK_CateringRequests_Status", "[Status] IN ('Pending', 'Accepted', 'Declined', 'Completed')");
+                });
             });
         }
     }

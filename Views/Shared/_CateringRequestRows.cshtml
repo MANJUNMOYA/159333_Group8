@@ -1,0 +1,45 @@
+@model IReadOnlyList<CampusCoffeeSystem.Models.CateringRequest>
+@using System.Globalization
+@foreach (var request in Model)
+{
+    var nextStatuses = CateringRequestStatuses.NextStatuses(request.Status);
+    <tr data-catering-request-row>
+        <td>
+            <strong>@request.EventName</strong>
+            <details class="mt-2">
+                <summary>View details · #@request.Id</summary>
+                <dl class="mt-2 mb-0">
+                    <dt>Customer</dt><dd>@request.CustomerDisplayName · @request.CustomerEmail</dd>
+                    <dt>Location</dt><dd>@request.Location</dd>
+                    <dt>Budget</dt><dd>@(request.Budget.HasValue ? CurrencyFormatter.NzDollars(request.Budget.Value) : "Not specified")</dd>
+                    <dt>Dietary requirements</dt><dd class="text-break">@(string.IsNullOrWhiteSpace(request.DietaryRequirements) ? "None specified" : request.DietaryRequirements)</dd>
+                    <dt>Additional requirements / notes</dt><dd class="text-break">@(string.IsNullOrWhiteSpace(request.AdditionalRequirements) ? "None specified" : request.AdditionalRequirements)</dd>
+                    <dt>Submitted</dt><dd>@request.SubmittedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm", CultureInfo.InvariantCulture)</dd>
+                </dl>
+            </details>
+        </td>
+        <td>@request.EventDate.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)<br />@request.EventTime.ToString("HH:mm", CultureInfo.InvariantCulture)</td>
+        <td>@request.NumberOfGuests</td>
+        <td><span class="merchant-badge merchant-badge--@request.Status.ToLowerInvariant()" data-catering-status>@request.Status</span></td>
+        <td>
+            <form action="@Url.Action("UpdateStatus", "CateringRequests", new { id = request.Id })" method="post" data-catering-status-form data-current-status="@request.Status">
+                @Html.AntiForgeryToken()
+                <div class="merchant-table__actions">
+                    <label class="visually-hidden" for="catering-status-@request.Id">New status for @request.EventName</label>
+                    <select class="form-select form-select-sm" id="catering-status-@request.Id" name="Status" disabled="@(nextStatuses.Count == 0)">
+                        @if (nextStatuses.Count == 0)
+                        {
+                            <option value="@request.Status">@request.Status</option>
+                        }
+                        @foreach (var status in nextStatuses)
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                    <button type="submit" disabled="@(nextStatuses.Count == 0)">Update</button>
+                </div>
+                <p class="mt-2 mb-0" data-catering-feedback role="status" hidden></p>
+            </form>
+        </td>
+    </tr>
+}
