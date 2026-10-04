@@ -114,7 +114,7 @@
                                 <a asp-controller="Home" asp-action="ProductDetails" asp-route-id="@product.Id" aria-label="View @product.Name">
                                     <img src="@product.ImagePath" alt="@product.Name" />
                                 </a>
-                                <span class="product-card__category">@product.DisplayCategory</span>
+                                <span class="product-card__category">@(isCoffee ? "Coffee" : "Food")</span>
                             </div>
                             <div class="product-card__body">
                                 <div class="product-card__heading">
