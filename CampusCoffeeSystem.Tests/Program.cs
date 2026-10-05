@@ -104,6 +104,11 @@ void Check(bool condition, string label)
     if (!condition) throw new Exception("FAILED: " + label);
     Console.WriteLine("PASS: " + label);
 }
+if (args.Contains("--remote-coffee-model-smoke", StringComparer.OrdinalIgnoreCase))
+{
+    await RemoteCoffeeModelChecks.SmokeAsync(Check);
+    return;
+}
 if (args.Contains("--recommendations-only", StringComparer.OrdinalIgnoreCase) ||
     args.Contains("--coffee-agency-only", StringComparer.OrdinalIgnoreCase))
 {
@@ -111,6 +116,7 @@ if (args.Contains("--recommendations-only", StringComparer.OrdinalIgnoreCase) ||
     {
         await CoffeeAgencyChecks.RunAsync(Check);
         await CoffeeModelApiChecks.RunAsync(Check);
+        await RemoteCoffeeModelChecks.RunAsync(Check);
         if (args.Contains("--recommendations-only", StringComparer.OrdinalIgnoreCase))
         {
             await MenuRecommendationChecks.RunAsync(Check);

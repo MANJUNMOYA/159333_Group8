@@ -29,8 +29,19 @@ builder.Services.AddScoped<IMenuRecommendationService, MenuRecommendationService
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<CoffeeAgencyConversations>();
 builder.Services.Configure<CoffeeModelOptions>(builder.Configuration.GetSection(CoffeeModelOptions.SectionName));
-builder.Services.AddHttpClient("coffee-model", client => client.Timeout = Timeout.InfiniteTimeSpan);
-builder.Services.AddSingleton<ICoffeeModelClient, OllamaCoffeeModelClient>();
+builder.Services.AddHttpClient("coffee-model", client => client.Timeout = Timeout.InfiniteTimeSpan)
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+builder.Services.AddSingleton<OllamaCoffeeModelClient>();
+builder.Services.AddSingleton<RemoteCoffeeModelClient>();
+builder.Services.AddSingleton<ICoffeeModelClient>(services =>
+{
+    var provider = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<CoffeeModelOptions>>().Value.Provider;
+    return provider.Equals("Local", StringComparison.OrdinalIgnoreCase)
+        ? services.GetRequiredService<OllamaCoffeeModelClient>()
+        : provider.Equals("Remote", StringComparison.OrdinalIgnoreCase)
+            ? services.GetRequiredService<RemoteCoffeeModelClient>()
+            : throw new InvalidOperationException("CoffeeModel:Provider must be Local or Remote.");
+});
 builder.Services.AddScoped<CoffeeAgencyClient>();
 builder.Services.AddAuthentication().AddScheme<AuthenticationSchemeOptions, CoffeeModelKeyHandler>(
     CoffeeModelKeyHandler.SchemeName, _ => { });

@@ -15,7 +15,10 @@ public sealed class CoffeeModelKeyHandler(IOptionsMonitor<AuthenticationSchemeOp
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        var expected = modelOptions.Value.PublicApiKey;
+        var config = modelOptions.Value;
+        if (!config.PublicApiEnabled || !config.Provider.Equals("Local", StringComparison.OrdinalIgnoreCase))
+            return Task.FromResult(AuthenticateResult.NoResult());
+        var expected = config.PublicApiKey;
         var authorization = Request.Headers.Authorization.ToString();
         if (string.IsNullOrEmpty(expected) || !authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
             return Task.FromResult(AuthenticateResult.NoResult());

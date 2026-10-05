@@ -24,7 +24,11 @@ internal static class CoffeeModelApiChecks
         builder.Logging.ClearProviders();
         builder.WebHost.ConfigureKestrel(options => options.Listen(IPAddress.Loopback, 0));
         builder.Services.AddSingleton<ICoffeeModelClient>(fake);
-        builder.Services.Configure<CoffeeModelOptions>(options => { options.Enabled = true; options.PublicApiKey = "test-only-secret"; });
+        builder.Services.Configure<CoffeeModelOptions>(options =>
+        {
+            options.Enabled = true; options.PublicApiKey = "test-only-secret";
+            options.Provider = "Local"; options.PublicApiEnabled = true;
+        });
         builder.Services.AddControllers().AddApplicationPart(typeof(CoffeeModelController).Assembly);
         builder.Services.AddAuthentication().AddScheme<AuthenticationSchemeOptions, CoffeeModelKeyHandler>(CoffeeModelKeyHandler.SchemeName, _ => { });
         builder.Services.AddAuthorization();
@@ -93,6 +97,19 @@ internal static class CoffeeModelApiChecks
             using var listResponse = await client.SendAsync(listRequest);
             check(listResponse.IsSuccessStatusCode && !(await listResponse.Content.ReadAsStringAsync()).Contains("test-only-secret"),
                 "Model discovery returns the configured model without credentials");
+            var settings = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<CoffeeModelOptions>>().Value;
+            settings.PublicApiEnabled = false;
+            using (var response = await Send(valid, rate: "disabled"))
+                check(response.StatusCode == HttpStatusCode.Unauthorized, "Disabling the public API revokes access despite a valid key");
+            settings.PublicApiEnabled = true;
+            settings.PublicApiKey = "replacement-test-secret";
+            using (var response = await Send(valid, rate: "revoked"))
+                check(response.StatusCode == HttpStatusCode.Unauthorized, "Rotating the API key rejects the previous shared credential");
+            using (var response = await Send(valid, "replacement-test-secret", "new-key"))
+                check(response.StatusCode == HttpStatusCode.OK, "The replacement key restores authorized calling");
+            settings.Provider = "Remote";
+            using (var response = await Send(valid, "replacement-test-secret", "remote-copy"))
+                check(response.StatusCode == HttpStatusCode.Unauthorized, "Remote project copies cannot become forwarding gateways");
         }
         finally { await app.StopAsync(); }
     }

@@ -37,20 +37,22 @@ services:
       Gemini__ApiKey: ${GEMINI_API_KEY:-}
       Gemini__Model: ${GEMINI_MODEL:-gemini-3.1-flash-lite}
       CoffeeModel__Enabled: ${COFFEE_MODEL_ENABLED:-true}
+      CoffeeModel__Provider: ${COFFEE_MODEL_PROVIDER:-Remote}
       CoffeeModel__BaseUrl: http://ollama:11434/
+      CoffeeModel__RemoteBaseUrl: ${COFFEE_MODEL_REMOTE_BASE_URL:-https://campuscoffee.duckdns.org/api/coffee-model/v1/}
       CoffeeModel__Model: ${COFFEE_MODEL_NAME:-qwen2.5:0.5b-instruct}
       CoffeeModel__PublicApiKey: ${COFFEE_MODEL_API_KEY:-}
+      CoffeeModel__PublicApiEnabled: ${COFFEE_MODEL_PUBLIC_API_ENABLED:-false}
       CoffeeModel__TimeoutSeconds: "90"
     depends_on:
       db:
-        condition: service_started
-      ollama:
         condition: service_started
     volumes:
       - data-protection-keys:/app/data-protection-keys
       - uploads-data:/app/wwwroot/uploads
 
   ollama:
+    profiles: [model-host]
     image: ollama/ollama:latest
     container_name: campus-coffee-ai
     restart: unless-stopped
