@@ -3,7 +3,6 @@
     var product = Model.Product;
     ViewData["Title"] = product.Name;
     var stockLabel = product.StockQuantity == 0 ? "Sold out" : product.StockQuantity <= 8 ? $"Low stock ({product.StockQuantity} left)" : "In stock";
-    var categoryLabel = string.Equals(product.Category, "coffee", StringComparison.OrdinalIgnoreCase) ? "Coffee" : "Food";
 }
 
 <section class="catering" aria-labelledby="product-title" data-product-details
@@ -11,11 +10,11 @@
          data-product-name="@product.Name"
          data-product-price="@product.Price"
          data-product-image="@product.ImagePath"
-         data-product-category="@categoryLabel">
+         data-product-category="@product.DisplayCategory">
     <div class="catering__image" style="background-image: url('@product.ImagePath');" role="img" aria-label="@product.Name"></div>
     <div class="catering__panel reveal">
         <a class="text-link text-link--light mb-5" asp-controller="Home" asp-action="Menu"><span aria-hidden="true">←</span> Back to menu</a>
-        <p class="eyebrow eyebrow--light">Product type · @product.DisplayCategory</p>
+        <p class="eyebrow eyebrow--light">@product.DisplayCategory</p>
         <h2 id="product-title">@product.Name</h2>
         <p>@product.Description</p>
         <ul class="catering__features">
