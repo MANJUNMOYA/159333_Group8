@@ -22,6 +22,9 @@
             : string.Concat(parts.Take(2).Select(part => char.ToUpperInvariant(part[0])));
     }
 
+    string ProductCategoryLabel(string category) =>
+        string.Equals(category, "coffee", StringComparison.OrdinalIgnoreCase) ? "Coffee" : "Food";
+
     var merchantInitial = string.IsNullOrWhiteSpace(Model.DisplayName)
         ? "M"
         : char.ToUpperInvariant(Model.DisplayName[0]).ToString();
@@ -346,7 +349,7 @@
                             <article class="merchant-product-card merchant-reveal" data-featured-product data-product-id="@product.Id" data-featured-stock="@product.StockQuantity">
                                 <div class="merchant-product-card__image"><img src="@imagePath" alt="@product.Name" /></div>
                                 <div class="merchant-product-card__body">
-                                    <div class="merchant-product-card__heading"><div><span>@product.DisplayCategory</span><h3>@product.Name</h3></div><span class="merchant-badge merchant-badge--@stockClass" data-featured-status>@stockLabel</span></div>
+                                    <div class="merchant-product-card__heading"><div><span>@ProductCategoryLabel(product.Category)</span><h3>@product.Name</h3></div><span class="merchant-badge merchant-badge--@stockClass" data-featured-status>@stockLabel</span></div>
                                     <div class="merchant-stock-line"><span><strong data-featured-count>@product.StockQuantity</strong> left</span><span>Database stock</span></div>
                                     <div class="merchant-progress merchant-progress--@stockClass"><span style="width:@stockProgress%"></span></div>
                                     <div class="merchant-card-actions">
@@ -513,7 +516,7 @@
                 @foreach (var product in Model.Products)
                 {
                     var productImagePath = string.IsNullOrWhiteSpace(product.ImagePath) ? "/images/menu/Campus Flat White.jpg" : product.ImagePath;
-                    <tr data-product-row data-product-id="@product.Id" data-product-name="@product.Name" data-product-category="@product.Category" data-product-price="@product.Price.ToString(CultureInfo.InvariantCulture)" data-product-stock="@product.StockQuantity" data-product-description="@product.Description" data-product-image="@productImagePath" data-search-item><td><strong>@product.Name</strong></td><td>@product.DisplayCategory</td><td>@CurrencyFormatter.NzDollars(product.Price)</td><td><span class="merchant-badge merchant-badge--@(product.IsActive ? "active" : "disabled")" data-product-status>@(product.IsActive ? "Active" : "Disabled")</span></td><td><div class="merchant-table__actions"><button type="button" data-product-action="edit">Edit</button><button type="button" data-product-action="stock">Manage stock</button><button type="button" data-product-action="toggle">@(product.IsActive ? "Disable" : "Enable")</button></div></td></tr>
+                    <tr data-product-row data-product-id="@product.Id" data-product-name="@product.Name" data-product-category="@product.Category" data-product-price="@product.Price.ToString(CultureInfo.InvariantCulture)" data-product-stock="@product.StockQuantity" data-product-description="@product.Description" data-product-image="@productImagePath" data-search-item><td><strong>@product.Name</strong></td><td>@ProductCategoryLabel(product.Category)</td><td>@CurrencyFormatter.NzDollars(product.Price)</td><td><span class="merchant-badge merchant-badge--@(product.IsActive ? "active" : "disabled")" data-product-status>@(product.IsActive ? "Active" : "Disabled")</span></td><td><div class="merchant-table__actions"><button type="button" data-product-action="edit">Edit</button><button type="button" data-product-action="stock">Manage stock</button><button type="button" data-product-action="toggle">@(product.IsActive ? "Disable" : "Enable")</button></div></td></tr>
                 }
             </tbody></table></div></div>
         </section>
