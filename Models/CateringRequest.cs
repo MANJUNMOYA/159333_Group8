@@ -55,8 +55,12 @@ public static class CateringRequestStatuses
 
     public static IReadOnlyList<string> NextStatuses(string status) => status switch
     {
-        Pending => [Accepted, Declined],
-        Accepted => [Completed, Declined],
+        Pending => [Accepted, Declined, Completed],
+        Accepted => [Pending, Declined, Completed],
+        Declined => [Pending, Accepted, Completed],
+        Completed => [Pending, Accepted, Declined],
         _ => []
     };
+
+
 }
