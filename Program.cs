@@ -6,6 +6,7 @@ using CampusCoffeeSystem.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +28,12 @@ builder.Services.AddScoped<IMenuRecommendationContextService, MenuRecommendation
 builder.Services.AddScoped<IMenuRecommendationService, MenuRecommendationService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<CoffeeAgencyConversations>();
-builder.Services.AddHttpClient<GeminiCoffeeAgencyClient>();
+builder.Services.Configure<CoffeeModelOptions>(builder.Configuration.GetSection(CoffeeModelOptions.SectionName));
+builder.Services.AddHttpClient("coffee-model", client => client.Timeout = Timeout.InfiniteTimeSpan);
+builder.Services.AddSingleton<ICoffeeModelClient, OllamaCoffeeModelClient>();
+builder.Services.AddScoped<CoffeeAgencyClient>();
+builder.Services.AddAuthentication().AddScheme<AuthenticationSchemeOptions, CoffeeModelKeyHandler>(
+    CoffeeModelKeyHandler.SchemeName, _ => { });
 // A persistent directory keeps confirmation links valid across application restarts.
 var keysPath = builder.Configuration["DataProtection:KeysPath"];
 if (!string.IsNullOrWhiteSpace(keysPath))
@@ -57,6 +63,11 @@ builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("coffee-model", _ => RateLimitPartition.GetFixedWindowLimiter(
+        "coffee-model", _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 20, Window = TimeSpan.FromMinutes(1), QueueLimit = 0
+        }));
     options.AddPolicy("coffee-agency", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions

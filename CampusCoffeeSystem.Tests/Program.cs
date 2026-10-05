@@ -110,6 +110,7 @@ if (args.Contains("--recommendations-only", StringComparer.OrdinalIgnoreCase) ||
     try
     {
         await CoffeeAgencyChecks.RunAsync(Check);
+        await CoffeeModelApiChecks.RunAsync(Check);
         if (args.Contains("--recommendations-only", StringComparer.OrdinalIgnoreCase))
         {
             await MenuRecommendationChecks.RunAsync(Check);

@@ -10,7 +10,7 @@ namespace CampusCoffeeSystem.Controllers;
 [ApiController, Authorize, Route("api/coffee-agency")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class CoffeeAgencyController(CoffeeAgencyConversations conversations,
-    IMenuRecommendationContextService contextService, GeminiCoffeeAgencyClient client) : ControllerBase
+    IMenuRecommendationContextService contextService, CoffeeAgencyClient client) : ControllerBase
 {
     [HttpGet("history")]
     public async Task<IActionResult> History(CancellationToken cancellationToken)

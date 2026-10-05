@@ -38,9 +38,8 @@ internal static class MenuRecommendationApiChecks
         builder.Services.AddMemoryCache();
         builder.Services.AddSingleton<CoffeeAgencyConversations>();
         builder.Services.AddSingleton<IMenuRecommendationContextService, ChatContext>();
-        builder.Services.AddSingleton(new GeminiCoffeeAgencyClient(new HttpClient(new ChatTransport()),
-            Options.Create(new GeminiOptions { Enabled = true, ApiKey = "test-key", Model = "test-model" }),
-            Microsoft.Extensions.Logging.Abstractions.NullLogger<GeminiCoffeeAgencyClient>.Instance));
+        builder.Services.AddSingleton<ICoffeeModelClient, ChatModel>();
+        builder.Services.AddSingleton<CoffeeAgencyClient>();
         builder.Services.AddControllersWithViews()
             .AddApplicationPart(typeof(MenuRecommendationsController).Assembly);
         builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
@@ -270,14 +269,10 @@ internal static class MenuRecommendationApiChecks
             Task.FromResult(new MenuRecommendationContext());
     }
 
-    private sealed class ChatTransport : HttpMessageHandler
+    private sealed class ChatModel : ICoffeeModelClient
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("""{"candidates":[{"finishReason":"STOP","content":{"parts":[{"text":"Please browse our Menu."}]}}]}""",
-                    System.Text.Encoding.UTF8, "application/json")
-            });
+        public Task<CoffeeModelResult> GenerateAsync(IReadOnlyList<CoffeeModelMessage> messages,
+            int maxTokens, CancellationToken cancellationToken) => Task.FromResult(new CoffeeModelResult("Please browse our Menu."));
     }
 
     private sealed class TestAuthenticationHandler(

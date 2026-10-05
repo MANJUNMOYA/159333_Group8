@@ -21,91 +21,104 @@ internal static class CoffeeAgencyChecks
             PurchaseHistory = [new RecommendationPurchase { ProductName = "Long Black", TotalQuantity = 2 }]
         };
         var transport = new Transport();
-        var client = Client(transport);
-        transport.Responses.Enqueue(Response("STOP", "A complete reply.", " With another part."));
-        var reply = await client.ReplyAsync("Recommend a drink.", [new("user", "Hi"), new("model", "Hello")], context, default);
-        check(reply.Text == "A complete reply.\n With another part.", "Chat joins every text part without cutting the reply");
-        check(transport.Uri?.AbsolutePath.EndsWith("/models/test-model:generateContent") == true && transport.Key == "test-key",
-            "Chat uses the shared Gemini model endpoint and server-side key header");
+        transport.Responses.Enqueue(Response("stop", "A complete reply."));
+        var reply = await new CoffeeAgencyClient(Model(transport)).ReplyAsync("Recommend a drink.",
+            [new("user", "Hi"), new("model", "Hello")], context, default);
+        check(reply.Text == "A complete reply.", "Coffee agency receives a complete local model answer");
+        check(transport.Uri?.AbsolutePath == "/api/chat", "Coffee agency calls the private Ollama chat endpoint");
         using (var payload = JsonDocument.Parse(transport.Bodies[0]))
         {
-            check(payload.RootElement.GetProperty("contents").GetArrayLength() == 3, "Recent history precedes the new question");
-            var prompt = payload.RootElement.GetProperty("systemInstruction").GetProperty("parts")[0].GetProperty("text").GetString()!;
-            check(prompt.Contains("Long Black") && !prompt.Contains("Email") && !prompt.Contains("CustomerUserId"),
-                "Catalog and anonymous preferences omit account identifiers");
-            check(!transport.Bodies[0].Contains("test-key"), "Credentials are not embedded in the prompt");
+            var root = payload.RootElement;
+            check(root.GetProperty("model").GetString() == "qwen2.5:0.5b-instruct" && !root.GetProperty("stream").GetBoolean(),
+                "Local inference uses the fixed Qwen model without streaming");
+            var messages = root.GetProperty("messages");
+            check(messages.GetArrayLength() == 4 && messages[2].GetProperty("role").GetString() == "assistant",
+                "Recent conversation is translated to local model roles");
+            var prompt = messages[0].GetProperty("content").GetString()!;
+            check(prompt.Contains("Long Black") && !prompt.Contains("CustomerUserId") && !prompt.Contains("Email"),
+                "Model context contains menu preferences but no account identifiers");
+            check(root.GetProperty("options").GetProperty("num_ctx").GetInt32() == 4096,
+                "Local inference has an explicit bounded context window");
         }
-
         var truncation = new Transport();
-        truncation.Responses.Enqueue(Response("MAX_TOKENS", "Incomplete"));
-        truncation.Responses.Enqueue(Response("STOP", "Complete replacement."));
-        reply = await Client(truncation).ReplyAsync("Coffee?", [], context, default);
-        check(reply.Text == "Complete replacement." && truncation.Bodies.Count == 2, "Truncated answers retry once instead of being displayed");
-        check(truncation.Bodies[1].Contains("4096"), "Truncation retry increases output allowance");
-
+        truncation.Responses.Enqueue(Response("length", "Incomplete"));
+        truncation.Responses.Enqueue(Response("stop", "Complete replacement."));
+        var result = await Model(truncation).GenerateAsync([new("user", "Coffee?")], 256, default);
+        check(result.Text == "Complete replacement." && truncation.Bodies.Count == 2,
+            "Length-limited replies retry once rather than being shown halfway");
         var incomplete = new Transport();
-        incomplete.Responses.Enqueue(Response("MAX_TOKENS", "Half"));
-        incomplete.Responses.Enqueue(Response("MAX_TOKENS", "Still half"));
-        reply = await Client(incomplete).ReplyAsync("Coffee?", [], context, default);
-        check(reply.Text is null && reply.Error!.Contains("complete answer"), "Repeated truncation returns an explicit failure");
-        foreach (var reason in new[] { "SAFETY", "RECITATION" })
-        {
-            var blocked = new Transport();
-            blocked.Responses.Enqueue(Response(reason, "Not a usable answer"));
-            check((await Client(blocked).ReplyAsync("Coffee?", [], context, default)).Text is null, "Blocked output is not shown: " + reason);
-        }
-        var rate = new Transport();
-        rate.Responses.Enqueue(new HttpResponseMessage(HttpStatusCode.TooManyRequests));
-        reply = await Client(rate).ReplyAsync("Coffee?", [], context, default);
-        check(reply.Text is null && reply.Error!.Contains("request limit"), "Provider rate limits have a useful error");
+        incomplete.Responses.Enqueue(Response("length", "Half"));
+        incomplete.Responses.Enqueue(Response("length", "Still half"));
+        result = await Model(incomplete).GenerateAsync([new("user", "Coffee?")], 256, default);
+        check(result.Text is null && result.Error!.Contains("complete answer"), "Repeated truncation fails explicitly");
         var invalid = new Transport();
         invalid.Responses.Enqueue(new(HttpStatusCode.OK) { Content = new StringContent("not json") });
-        check((await Client(invalid).ReplyAsync("Coffee?", [], context, default)).Text is null, "Malformed provider output fails safely");
-        var disabled = new Transport();
-        var disabledClient = new GeminiCoffeeAgencyClient(new HttpClient(disabled), Options.Create(new GeminiOptions()), NullLogger<GeminiCoffeeAgencyClient>.Instance);
-        check((await disabledClient.ReplyAsync("Coffee?", [], context, default)).Text is null && disabled.Bodies.Count == 0,
-            "Disabled configuration never calls the provider");
+        check((await Model(invalid).GenerateAsync([new("user", "Coffee?")], 256, default)).Text is null,
+            "Invalid local model output fails safely");
+        var disabled = new OllamaCoffeeModelClient(new Factory(new Transport()), Options.Create(new CoffeeModelOptions()),
+            NullLogger<OllamaCoffeeModelClient>.Instance);
+        check((await disabled.GenerateAsync([new("user", "Coffee?")], 256, default)).Text is null,
+            "Disabled local model never starts inference");
+
+        var dairyTransport = new Transport();
+        dairyTransport.Responses.Enqueue(Response("stop", "Try Long Black."));
+        await new CoffeeAgencyClient(Model(dairyTransport)).ReplyAsync("Coffee without milk?", [], new MenuRecommendationContext
+        {
+            Candidates =
+            [
+                new RecommendationCandidate { ProductName = "Long Black", DietaryLabel = "Vegan", AllergenLabel = "No major allergens" },
+                new RecommendationCandidate { ProductName = "Campus Flat White", DietaryLabel = "Vegetarian", AllergenLabel = "Contains milk" }
+            ]
+        }, default);
+        check(dairyTransport.Bodies[0].Contains("Long Black") && !dairyTransport.Bodies[0].Contains("Campus Flat White"),
+            "Explicit milk-free questions exclude milk-labelled menu candidates");
+
+        var blocking = new BlockingTransport();
+        var serializedModel = new OllamaCoffeeModelClient(new BlockingFactory(blocking),
+            Options.Create(new CoffeeModelOptions { Enabled = true }), NullLogger<OllamaCoffeeModelClient>.Instance);
+        var firstCall = serializedModel.GenerateAsync([new("user", "First")], 128, default);
+        await blocking.Entered.Task;
+        var secondCall = await serializedModel.GenerateAsync([new("user", "Second")], 128, default);
+        check(secondCall.Busy && secondCall.Text is null, "Only one model inference can run at a time across all callers");
+        blocking.Finish.TrySetResult();
+        check((await firstCall).Text is not null, "The active inference completes after another request is rejected");
 
         using var cache = new MemoryCache(new MemoryCacheOptions());
         var conversations = new CoffeeAgencyConversations(cache);
         var one = conversations.Get("one");
         for (var i = 0; i < 10; i++) one.Add("Question " + i, "Answer " + i);
-        check(one.History.Count == 8 && one.History[0].Text == "Question 6", "Chat retains at most four recent exchanges");
-        check(conversations.Get("two").History.Count == 0, "Conversation history is isolated by authenticated account");
+        check(one.History.Count == 8 && one.History[0].Text == "Question 6", "Retained history is limited to four exchanges");
+        check(conversations.Get("two").History.Count == 0, "Conversation history remains isolated by account");
         one.Clear();
-        check(one.History.Count == 0, "Clear conversation removes retained messages");
-
         var fakeContext = new Context(context);
         var controllerTransport = new Transport();
-        var controller = new CoffeeAgencyController(conversations, fakeContext, Client(controllerTransport))
+        var controller = new CoffeeAgencyController(conversations, fakeContext, new CoffeeAgencyClient(Model(controllerTransport)))
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };
-        check(await controller.Chat(new() { Message = "Coffee?" }, default) is UnauthorizedResult, "Controller requires an authenticated user ID");
+        check(await controller.Chat(new() { Message = "Coffee?" }, default) is UnauthorizedResult, "Website chat requires an authenticated user ID");
         controller.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, "one")], "test"));
         check(await controller.Chat(new() { Message = " " }, default) is BadRequestObjectResult, "Whitespace questions are rejected");
         await one.Gate.WaitAsync();
-        check(await controller.Chat(new() { Message = "Coffee?" }, default) is ConflictObjectResult, "Concurrent requests for one account are rejected");
+        check(await controller.Chat(new() { Message = "Coffee?" }, default) is ConflictObjectResult, "Parallel questions from one account are rejected");
         one.Gate.Release();
-        controllerTransport.Responses.Enqueue(Response("STOP", "Try Long Black."));
-        check(await controller.Chat(new() { Message = "Coffee?" }, default) is OkObjectResult, "Controller returns completed provider replies");
-        check(fakeContext.UserId == "one" && fakeContext.Email is null, "Personal context is selected only from the server-side identity");
-        check(one.History.Count == 2, "Only completed exchanges enter history");
-        controllerTransport.Responses.Enqueue(new(HttpStatusCode.Unauthorized));
+        controllerTransport.Responses.Enqueue(Response("stop", "Try Long Black."));
+        check(await controller.Chat(new() { Message = "Coffee?" }, default) is OkObjectResult, "Website chat returns completed local model replies");
+        check(fakeContext.UserId == "one" && fakeContext.Email is null, "Context comes only from the signed-in account");
+        controllerTransport.Responses.Enqueue(new(HttpStatusCode.ServiceUnavailable));
         check(await controller.Chat(new() { Message = "More?" }, default) is ObjectResult { StatusCode: 503 } && one.History.Count == 2,
-            "Provider failures do not contaminate history");
-        check(await controller.Clear(default) is NoContentResult && one.History.Count == 0, "Controller clears the signed-in user's conversation");
+            "Failed inference is not added to history");
+        check(await controller.Clear(default) is NoContentResult && one.History.Count == 0, "Clearing the conversation still works");
     }
 
-    private static GeminiCoffeeAgencyClient Client(Transport transport) => new(new HttpClient(transport),
-        Options.Create(new GeminiOptions { Enabled = true, ApiKey = "test-key", Model = "test-model" }),
-        NullLogger<GeminiCoffeeAgencyClient>.Instance);
+    private static OllamaCoffeeModelClient Model(Transport transport) => new(new Factory(transport),
+        Options.Create(new CoffeeModelOptions { Enabled = true }), NullLogger<OllamaCoffeeModelClient>.Instance);
 
-    private static HttpResponseMessage Response(string reason, params string[] parts) => new(HttpStatusCode.OK)
+    private static HttpResponseMessage Response(string reason, string text) => new(HttpStatusCode.OK)
     {
         Content = new StringContent(JsonSerializer.Serialize(new
         {
-            candidates = new[] { new { finishReason = reason, content = new { parts = parts.Select(text => new { text }) } } }
+            done = true, done_reason = reason, message = new { content = text }, prompt_eval_count = 10, eval_count = 5
         }), Encoding.UTF8, "application/json")
     };
 
@@ -114,14 +127,34 @@ internal static class CoffeeAgencyChecks
         public Queue<HttpResponseMessage> Responses { get; } = new();
         public List<string> Bodies { get; } = [];
         public Uri? Uri { get; private set; }
-        public string? Key { get; private set; }
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Uri = request.RequestUri;
-            Key = request.Headers.GetValues("x-goog-api-key").Single();
             Bodies.Add(await request.Content!.ReadAsStringAsync(cancellationToken));
             return Responses.Dequeue();
         }
+    }
+
+    private sealed class Factory(Transport transport) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => new(transport, disposeHandler: false);
+    }
+
+    private sealed class BlockingTransport : HttpMessageHandler
+    {
+        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Finish { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Entered.TrySetResult();
+            await Finish.Task.WaitAsync(cancellationToken);
+            return Response("stop", "Done.");
+        }
+    }
+
+    private sealed class BlockingFactory(BlockingTransport transport) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => new(transport, disposeHandler: false);
     }
 
     private sealed class Context(MenuRecommendationContext context) : IMenuRecommendationContextService
