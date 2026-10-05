@@ -1,0 +1,30 @@
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <aside class="coffee-agency" data-coffee-agency aria-label="Coffee agency assistant">
+        <button class="coffee-agency__launcher" type="button" data-agency-toggle aria-expanded="false" aria-controls="coffee-agency-panel">
+            <span aria-hidden="true">✦</span><span>Contract your coffee agency</span>
+        </button>
+        <section class="coffee-agency__panel" id="coffee-agency-panel" hidden aria-label="Coffee agency chat">
+            <header class="coffee-agency__header">
+                <div><p>Campus Coffee</p><h2>Your coffee agency</h2></div>
+                <button type="button" class="coffee-agency__close" data-agency-close aria-label="Close chat">×</button>
+            </header>
+            <div class="coffee-agency__messages" data-agency-messages role="log" aria-live="polite">
+                <p class="coffee-agency__intro">Hello. I can help you discover menu favourites, explain ordering, or find a good match for your day.</p>
+            </div>
+            <p class="coffee-agency__notice">An automated assistant powered by our external service. Questions, recent chat and limited menu preferences are sent to the service. Please do not share personal details. Chat expires after 30 minutes of inactivity.</p>
+            <form class="coffee-agency__form" data-agency-form>
+                @Html.AntiForgeryToken()
+                <label class="visually-hidden" for="coffee-agency-message">Ask your coffee agency</label>
+                <textarea id="coffee-agency-message" maxlength="800" placeholder="Ask about coffee, food or ordering" required></textarea>
+                <button class="button" type="submit" data-agency-send>Send</button>
+                <button class="coffee-agency__clear" type="button" data-agency-clear>Clear conversation</button>
+                <p class="coffee-agency__status" data-agency-status role="status"></p>
+            </form>
+        </section>
+    </aside>
+}
+else
+{
+    <a class="coffee-agency__launcher coffee-agency__launcher--guest" asp-area="" asp-controller="Home" asp-action="Portal">Contract your coffee agency</a>
+}

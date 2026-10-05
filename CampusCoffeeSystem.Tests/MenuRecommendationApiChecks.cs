@@ -35,6 +35,12 @@ internal static class MenuRecommendationApiChecks
         builder.Logging.ClearProviders();
         builder.WebHost.ConfigureKestrel(options => options.Listen(IPAddress.Loopback, 0));
         builder.Services.AddSingleton<IMenuRecommendationService>(recommendationService);
+        builder.Services.AddMemoryCache();
+        builder.Services.AddSingleton<CoffeeAgencyConversations>();
+        builder.Services.AddSingleton<IMenuRecommendationContextService, ChatContext>();
+        builder.Services.AddSingleton(new GeminiCoffeeAgencyClient(new HttpClient(new ChatTransport()),
+            Options.Create(new GeminiOptions { Enabled = true, ApiKey = "test-key", Model = "test-model" }),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<GeminiCoffeeAgencyClient>.Instance));
         builder.Services.AddControllersWithViews()
             .AddApplicationPart(typeof(MenuRecommendationsController).Assembly);
         builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
@@ -47,6 +53,9 @@ internal static class MenuRecommendationApiChecks
         builder.Services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.AddPolicy("coffee-agency", context => RateLimitPartition.GetFixedWindowLimiter(
+                context.Request.Headers["X-Test-Rate-Key"].ToString(),
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = 2, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
             options.AddPolicy("recommendations", context => RateLimitPartition.GetFixedWindowLimiter(
                 context.Request.Headers["X-Test-Rate-Key"].ToString(),
                 _ => new FixedWindowRateLimiterOptions
@@ -142,6 +151,55 @@ internal static class MenuRecommendationApiChecks
                   rateLimitStatuses[1] == HttpStatusCode.OK &&
                   rateLimitStatuses[2] == HttpStatusCode.TooManyRequests,
                 "Recommendation API returns HTTP 429 after the configured request limit");
+
+            async Task<HttpStatusCode> Chat(string? user, string? token, string message, string rateKey)
+            {
+                using var request = CreateRequest(token, user, PlatformRoles.Customer, rateKey);
+                request.RequestUri = new Uri("/api/coffee-agency/chat", UriKind.Relative);
+                request.Content = new StringContent(JsonSerializer.Serialize(new { message }), System.Text.Encoding.UTF8, "application/json");
+                using var response = await client.SendAsync(request);
+                return response.StatusCode;
+            }
+            check(await Chat(null, null, "Coffee?", "chat-anon") == HttpStatusCode.Unauthorized,
+                "Chat API rejects anonymous requests");
+            check(await Chat("customer-1", null, "Coffee?", "chat-csrf") == HttpStatusCode.BadRequest,
+                "Chat API rejects missing antiforgery tokens");
+            check(await Chat("customer-1", requestToken, new string('x', 801), "chat-long") == HttpStatusCode.BadRequest,
+                "Chat API enforces the question length limit");
+            check(await Chat("customer-1", requestToken, " ", "chat-blank") == HttpStatusCode.BadRequest,
+                "Chat API rejects blank questions");
+            check(await Chat("customer-1", requestToken, "Coffee?", "chat-success") == HttpStatusCode.OK,
+                "Authenticated chat requests reach the shared provider client");
+            async Task<int> HistoryCount(string user)
+            {
+                using var request = CreateRequest(null, user, PlatformRoles.Customer, "chat-history");
+                request.Method = HttpMethod.Get;
+                request.RequestUri = new Uri("/api/coffee-agency/history", UriKind.Relative);
+                using var response = await client.SendAsync(request);
+                using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                return body.RootElement.GetProperty("messages").GetArrayLength();
+            }
+            check(await HistoryCount("customer-1") == 2 && await HistoryCount("customer-2") == 0,
+                "History endpoint never exposes another customer's conversation");
+            using (var request = CreateRequest(null, "customer-1", PlatformRoles.Customer, "chat-clear"))
+            {
+                request.Method = HttpMethod.Delete;
+                request.RequestUri = new Uri("/api/coffee-agency/history", UriKind.Relative);
+                using var response = await client.SendAsync(request);
+                check(response.StatusCode == HttpStatusCode.BadRequest, "Clearing chat requires an antiforgery token");
+            }
+            using (var request = CreateRequest(requestToken, "customer-1", PlatformRoles.Customer, "chat-clear"))
+            {
+                request.Method = HttpMethod.Delete;
+                request.RequestUri = new Uri("/api/coffee-agency/history", UriKind.Relative);
+                using var response = await client.SendAsync(request);
+                check(response.StatusCode == HttpStatusCode.NoContent && await HistoryCount("customer-1") == 0,
+                    "Authenticated clear removes history through the API");
+            }
+            var chatStatuses = new List<HttpStatusCode>();
+            for (var i = 0; i < 3; i++) chatStatuses.Add(await Chat("customer-1", requestToken, "Coffee?", "chat-limit"));
+            check(chatStatuses.SequenceEqual(new[] { HttpStatusCode.OK, HttpStatusCode.OK, HttpStatusCode.TooManyRequests }),
+                "Chat API enforces its request rate limit");
         }
         finally
         {
@@ -204,6 +262,22 @@ internal static class MenuRecommendationApiChecks
                 ]
             });
         }
+    }
+
+    private sealed class ChatContext : IMenuRecommendationContextService
+    {
+        public Task<MenuRecommendationContext> BuildAsync(string userId, string? email, CancellationToken cancellationToken) =>
+            Task.FromResult(new MenuRecommendationContext());
+    }
+
+    private sealed class ChatTransport : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"candidates":[{"finishReason":"STOP","content":{"parts":[{"text":"Please browse our Menu."}]}}]}""",
+                    System.Text.Encoding.UTF8, "application/json")
+            });
     }
 
     private sealed class TestAuthenticationHandler(

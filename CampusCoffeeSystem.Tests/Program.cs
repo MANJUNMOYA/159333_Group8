@@ -104,12 +104,17 @@ void Check(bool condition, string label)
     if (!condition) throw new Exception("FAILED: " + label);
     Console.WriteLine("PASS: " + label);
 }
-if (args.Contains("--recommendations-only", StringComparer.OrdinalIgnoreCase))
+if (args.Contains("--recommendations-only", StringComparer.OrdinalIgnoreCase) ||
+    args.Contains("--coffee-agency-only", StringComparer.OrdinalIgnoreCase))
 {
     try
     {
-        await MenuRecommendationChecks.RunAsync(Check);
-        await MenuRecommendationApiChecks.RunAsync(Check);
+        await CoffeeAgencyChecks.RunAsync(Check);
+        if (args.Contains("--recommendations-only", StringComparer.OrdinalIgnoreCase))
+        {
+            await MenuRecommendationChecks.RunAsync(Check);
+            await MenuRecommendationApiChecks.RunAsync(Check);
+        }
     }
     catch (Exception exception)
     {
@@ -303,7 +308,7 @@ try
 
     var recommendationOrder = new CustomerOrder
     {
-        OrderNumber = "recommendation-test-" + Guid.NewGuid().ToString("N"),
+        OrderNumber = "rec-" + Guid.NewGuid().ToString("N"),
         CustomerUserId = customer.Id,
         CustomerName = "Private Recommendation Customer",
         Email = customer.Email!,

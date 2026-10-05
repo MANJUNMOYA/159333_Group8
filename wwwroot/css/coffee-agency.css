@@ -1,0 +1,23 @@
+.coffee-agency { position: fixed; z-index: 1050; right: 24px; bottom: 24px; display: flex; flex-direction: column; align-items: flex-end; gap: 13px; }
+.coffee-agency__launcher { max-width: min(315px, calc(100vw - 48px)); min-height: 52px; padding: 13px 19px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; color: white; background: var(--espresso); border: 1px solid rgba(255,255,255,.35); box-shadow: 0 14px 32px rgba(22,12,8,.26); font-size: .68rem; font-weight: 700; letter-spacing: .11em; line-height: 1.25; text-transform: uppercase; }
+.coffee-agency__launcher:hover { color: var(--espresso); background: var(--cream); }
+.coffee-agency__launcher--guest { position: fixed; z-index: 1050; right: 24px; bottom: 24px; }
+.coffee-agency__panel { width: min(390px, calc(100vw - 32px)); max-height: calc(100dvh - 110px); display: flex; flex-direction: column; overflow: hidden; color: var(--ink); background: var(--paper); border: 1px solid rgba(29,27,23,.18); box-shadow: 0 24px 70px rgba(18,11,9,.28); }
+.coffee-agency__panel[hidden] { display: none !important; }
+.coffee-agency__header { padding: 20px 22px; display: flex; align-items: start; justify-content: space-between; gap: 18px; color: white; background: var(--espresso); }
+.coffee-agency__header p { margin: 0 0 6px; color: #f1d4bd; font-size: .6rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.coffee-agency__header h2 { margin: 0; font-family: var(--serif); font-size: 1.75rem; font-weight: 400; }
+.coffee-agency__close { width: 32px; height: 32px; padding: 0; color: white; background: transparent; border: 1px solid rgba(255,255,255,.45); border-radius: 50%; font-size: 1.35rem; line-height: 1; }
+.coffee-agency__messages { max-height: min(40dvh, 360px); min-height: 120px; padding: 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+.coffee-agency__intro, .coffee-agency__message { max-width: 88%; margin: 0; padding: 12px 14px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; flex-shrink: 0; }
+.coffee-agency__intro, .coffee-agency__message--assistant { align-self: flex-start; background: var(--cream); }
+.coffee-agency__message--user { align-self: flex-end; color: white; background: var(--coffee); }
+.coffee-agency__notice { margin: 0; padding: 0 16px 12px; font-size: .7rem; line-height: 1.5; color: #65564c; }
+.coffee-agency__form { padding: 16px; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; border-top: 1px solid var(--line); }
+.coffee-agency__form textarea { width: 100%; min-height: 48px; max-height: 100px; padding: 12px; resize: vertical; color: var(--ink); background: white; border: 1px solid rgba(29,27,23,.28); font: inherit; line-height: 1.4; }
+.coffee-agency__form textarea:focus { outline: 2px solid var(--coffee); outline-offset: 2px; }
+.coffee-agency__form .button { min-height: 48px; padding-inline: 15px; }
+.coffee-agency__clear { grid-column: 1 / -1; justify-self: start; border: 0; background: transparent; color: var(--coffee); font-size: .75rem; text-decoration: underline; }
+.coffee-agency__status { grid-column: 1 / -1; margin: 0; font-size: .8rem; line-height: 1.5; }
+.coffee-agency button:disabled { opacity: .65; cursor: wait; }
+@media (max-width: 600px) { .coffee-agency, .coffee-agency__launcher--guest { right: 16px; bottom: 16px; } }

@@ -25,6 +25,9 @@ builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection(Gemin
 builder.Services.AddHttpClient<IGeminiRecommendationClient, GeminiRecommendationClient>();
 builder.Services.AddScoped<IMenuRecommendationContextService, MenuRecommendationContextService>();
 builder.Services.AddScoped<IMenuRecommendationService, MenuRecommendationService>();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<CoffeeAgencyConversations>();
+builder.Services.AddHttpClient<GeminiCoffeeAgencyClient>();
 // A persistent directory keeps confirmation links valid across application restarts.
 var keysPath = builder.Configuration["DataProtection:KeysPath"];
 if (!string.IsNullOrWhiteSpace(keysPath))
@@ -54,6 +57,12 @@ builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("coffee-agency", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 8, Window = TimeSpan.FromMinutes(1), QueueLimit = 0
+        }));
     options.AddPolicy("email", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions
