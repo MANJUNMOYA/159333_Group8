@@ -511,3 +511,6 @@ FodyWeavers.xsd
 *.msm
 *.msp
 >>>>>>> 5c114a44795843013c998cf34f4325570c2c16ed
+
+# Local presentation files
+/docs/Final-Video-Presentation*
