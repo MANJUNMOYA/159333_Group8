@@ -40,6 +40,7 @@ services:
       CoffeeModel__Provider: ${COFFEE_MODEL_PROVIDER:-Remote}
       CoffeeModel__BaseUrl: http://ollama:11434/
       CoffeeModel__RemoteBaseUrl: ${COFFEE_MODEL_REMOTE_BASE_URL:-https://campuscoffee.duckdns.org/api/coffee-model/v1/}
+      CoffeeModel__RemoteApiKey: ${COFFEE_MODEL_REMOTE_API_KEY:-}
       CoffeeModel__Model: ${COFFEE_MODEL_NAME:-qwen2.5:0.5b-instruct}
       CoffeeModel__PublicApiKey: ${COFFEE_MODEL_API_KEY:-}
       CoffeeModel__PublicApiEnabled: ${COFFEE_MODEL_PUBLIC_API_ENABLED:-false}

@@ -45,15 +45,27 @@ internal static class RemoteCoffeeModelChecks
             .GenerateAsync([new("user", "Hi")], 128, default);
         check(invalid.Text is null, "Malformed remote replies fail safely");
         var defaults = LoadProjectOptions();
-        check(defaults.Enabled && defaults.Provider == "Remote" && !string.IsNullOrWhiteSpace(defaults.RemoteApiKey),
-            "Project defaults enable remote calling without member-specific model setup");
+        check(defaults.Enabled && defaults.Provider == "Remote" && string.IsNullOrEmpty(defaults.RemoteApiKey),
+            "Project configuration contains no real remote credential");
         check(!defaults.PublicApiEnabled && string.IsNullOrEmpty(defaults.PublicApiKey),
             "Ordinary project copies do not expose their own model gateway");
+        const string testVariable = "COFFEE_SECRET_TEST_CoffeeModel__RemoteApiKey";
+        var previousValue = Environment.GetEnvironmentVariable(testVariable);
+        try
+        {
+            Environment.SetEnvironmentVariable(testVariable, "test-only-runtime-key");
+            var runtime = new ConfigurationBuilder()
+                .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json"))
+                .AddEnvironmentVariables("COFFEE_SECRET_TEST_")
+                .Build().GetSection(CoffeeModelOptions.SectionName).Get<CoffeeModelOptions>()!;
+            check(runtime.RemoteApiKey == "test-only-runtime-key", "Environment configuration injects a credential over the empty project default");
+        }
+        finally { Environment.SetEnvironmentVariable(testVariable, previousValue); }
     }
 
     public static async Task SmokeAsync(Action<bool, string> check)
     {
-        var config = LoadProjectOptions();
+        var config = LoadProjectOptions(includeRuntimeEnvironment: true);
         var client = new RemoteCoffeeModelClient(new LiveFactory(), Options.Create(config), NullLogger<RemoteCoffeeModelClient>.Instance);
         var reply = await new CoffeeAgencyClient(client).ReplyAsync("What is the available black coffee and its price?", [],
             new MenuRecommendationContext
@@ -61,13 +73,17 @@ internal static class RemoteCoffeeModelChecks
                 Candidates = [new RecommendationCandidate
                 { ProductName = "Long Black", Price = 4.20m, Description = "Espresso and hot water.", DietaryLabel = "Vegan", AllergenLabel = "No major allergens" }]
             }, default);
-        check(reply.Text is not null, "Default project configuration reaches the live public coffee service: " + (reply.Error ?? "completed"));
+        check(reply.Text is not null, "Runtime-configured credential reaches the live public coffee service: " + (reply.Error ?? "completed"));
         Console.WriteLine("Remote coffee answer: " + reply.Text);
     }
 
-    private static CoffeeModelOptions LoadProjectOptions() => new ConfigurationBuilder()
-        .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json"))
-        .Build().GetSection(CoffeeModelOptions.SectionName).Get<CoffeeModelOptions>()!;
+    private static CoffeeModelOptions LoadProjectOptions(bool includeRuntimeEnvironment = false)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile(Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json"));
+        if (includeRuntimeEnvironment) configuration.AddEnvironmentVariables();
+        return configuration.Build().GetSection(CoffeeModelOptions.SectionName).Get<CoffeeModelOptions>()!;
+    }
 
     private static RemoteCoffeeModelClient Client(Transport transport, CoffeeModelOptions? options = null) => new(new Factory(transport),
         Options.Create(options ?? new CoffeeModelOptions { Enabled = true, RemoteApiKey = "test-only-key" }),
