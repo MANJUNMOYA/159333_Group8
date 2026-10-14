@@ -6,7 +6,7 @@ Authenticated customers receive up to five menu recommendations after the Menu p
 
 1. `POST /api/menu-recommendations` identifies the signed-in Customer from the Identity cookie.
 2. The server aggregates that customer's non-cancelled order items and active numeric product ratings.
-3. Only active, in-stock menu candidates and anonymous aggregate history are sent to Gemini.
+3. Only active, in-stock menu candidates and aggregate purchase/rating history without direct customer identifiers are sent to Gemini.
 4. Gemini returns structured `productId + reason` values.
 5. The server rejects unknown, duplicate, inactive or unavailable products, fills missing places with a deterministic fallback, and supplies trusted product names from SQL Server.
 
@@ -44,16 +44,30 @@ Response:
 `source` is `gemini` when at least one valid Gemini selection was used and `fallback` when the local ranking supplied the complete result.
 The Menu page displays this honestly as `AI-assisted` or `Local fallback`; fallback results are never labelled as AI-generated.
 
-## Local setup
+## Local setup (coursework demonstration)
 
-Keep the key out of `appsettings.json` and Git. From the project directory:
+For **demonstration convenience**, this coursework version includes a shared Gemini API key in `appsettings.json` and enables Gemini menu recommendations by default:
+
+| Setting | Demo configuration |
+| --- | --- |
+| `Gemini:Enabled` | `true` |
+| `Gemini:ApiKey` | Shared demonstration key supplied in `appsettings.json` |
+| `Gemini:Model` | `gemini-3.1-flash-lite` |
+
+The server reads this key for menu recommendations. It is separate from `CoffeeModel:RemoteApiKey`, which is used by the Coffee Agency chat assistant. No additional User Secrets setup is required to use the supplied demo configuration. Restart the application after changing these settings.
+
+The shared key is **for demonstration purposes only**. Do not reuse it in production. For non-demo deployments, supply your own private credential through User Secrets, environment variables or a managed secret store, rather than committing it to Git.
+
+Optional: to use your own key for local development, run these commands from the project directory:
 
 ```powershell
-dotnet user-secrets set "Gemini:ApiKey" "YOUR_KEY"
+dotnet user-secrets set "Gemini:ApiKey" "YOUR_OWN_KEY"
 dotnet user-secrets set "Gemini:Enabled" "true"
 ```
 
-The model is configurable:
+User Secrets and environment variables override values in `appsettings.json`. Check these overrides if changes to the project configuration do not take effect.
+
+The model is also configurable through User Secrets:
 
 ```powershell
 dotnet user-secrets set "Gemini:Model" "gemini-3.1-flash-lite"
@@ -77,3 +91,5 @@ dotnet run --project .\CampusCoffeeSystem.Tests\CampusCoffeeSystem.Tests.csproj 
 
 The checks cover structured model output, Product ID validation, deterministic fallback,
 customer-only authorization, antiforgery protection, successful customer responses and HTTP 429 rate limiting.
+
+These checks use simulated Gemini responses; they do not verify the shared demo key or a live connection to Gemini.

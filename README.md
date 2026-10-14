@@ -65,7 +65,7 @@ dotnet ef database update   # apply migrations (requires the dotnet-ef tool)
 dotnet run
 ```
 
-- The default connection string is `Server=.;Database=CampusCoffeeSystem;Trusted_Connection=True;...` (see `appsettings.json`), using Windows authentication against a local SQL Server
+- The default connection string is `Server=.\SQLEXPRESS;Database=CampusCoffeeSystem;Trusted_Connection=True;...` (see `appsettings.json`), using Windows authentication against a local SQL Server
 - On startup the application seeds data automatically: the three roles, sample products (coffee / bakery / light meals) and demo accounts
 
 **Demo accounts** (`FrontendDemoSeed`, password `123456`):
@@ -113,7 +113,7 @@ Key sections in `appsettings.json`:
 | --- | --- |
 | `ConnectionStrings:DefaultConnection` | Database connection string |
 | `CoffeeModel` | AI model: `Provider` (`Local` = Ollama / `Remote` = shared remote), `BaseUrl`, `RemoteBaseUrl`, `Model`, `TimeoutSeconds`, etc. |
-| `Gemini` | Optional Gemini menu recommendations (disabled by default) |
+| `Gemini` | Gemini menu recommendations (enabled by default in the coursework demo configuration; local fallback is used when Gemini is unavailable) |
 | `Smtp` | Email sending (Host / Port / credentials / sender) |
 | `Notifications` | Toggles for order confirmation and merchant application notifications |
 | `DataProtection` | Data protection key persistence path |
@@ -125,7 +125,7 @@ Key sections in `appsettings.json`:
 
 For **demonstration convenience**, this project deliberately writes some sensitive values into the configuration files:
 
-- `CoffeeModel:RemoteApiKey` (shared key for the remote AI service) in `appsettings.json`
+- `Gemini:ApiKey` (shared demonstration key for Gemini menu recommendations) in `appsettings.json`
 - Development seed account passwords in `appsettings.Development.json`
 
 These values are for demo purposes only. **Do not reuse them in production**; inject real secrets via `.env` / Compose environment variables and rotate any key that has been exposed. The current Docker deployment already supports overriding all sensitive configuration through environment variables, so it can run securely without editing the committed files.
